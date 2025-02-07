@@ -1,5 +1,5 @@
 """Keyboard shortcuts."""
-from qtextra._napari.image.components.viewer_model import ViewerModel
+from qtextraplot._napari.image.components.viewer_model import ViewerModel
 
 
 @ViewerModel.bind_key("Control")

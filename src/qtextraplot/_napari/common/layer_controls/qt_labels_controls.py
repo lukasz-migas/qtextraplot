@@ -10,12 +10,12 @@ from qtpy.QtGui import QColor, QPainter
 from qtpy.QtWidgets import QButtonGroup, QHBoxLayout, QSpinBox, QWidget
 
 import qtextra.helpers as hp
-from qtextra._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
-from qtextra._napari.common.layers._labels_constants import (
+from qtextraplot._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
+from qtextraplot._napari.common.layers._labels_constants import (
     LABEL_COLOR_MODE_TRANSLATIONS,
     RENDER_MODE_TRANSLATIONS,
 )
-from qtextra._napari.common.widgets.qt_mode_button import QtModePushButton, QtModeRadioButton
+from qtextraplot._napari.common.widgets.qt_mode_button import QtModePushButton, QtModeRadioButton
 
 
 # noinspection PyMissingOrEmptyDocstring

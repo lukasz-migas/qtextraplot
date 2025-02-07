@@ -10,12 +10,12 @@ from napari_plot._vispy.overlays.axis import VispyXAxisVisual, VispyYAxisVisual
 from napari_plot._vispy.tools.drag import VispyDragTool
 from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout
 
-from qtextra._napari.common.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
-from qtextra._napari.common.qt_viewer import QtViewerBase
-from qtextra._napari.line._vispy.canvas import VispyCanvas
-from qtextra._napari.line.component_controls.qt_view_toolbar import QtViewLeftToolbar, QtViewRightToolbar
-from qtextra._napari.line.layer_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
-from qtextra.config.theme import CANVAS
+from qtextraplot._napari.common.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
+from qtextraplot._napari.common.qt_viewer import QtViewerBase
+from qtextraplot._napari.line._vispy.canvas import VispyCanvas
+from qtextraplot._napari.line.component_controls.qt_view_toolbar import QtViewLeftToolbar, QtViewRightToolbar
+from qtextraplot._napari.line.layer_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
+from qtextraplot.config import CANVAS
 
 if TYPE_CHECKING:
     from napari_plot.viewer import ViewerModel
@@ -218,7 +218,7 @@ class QtViewer(QtViewerBase):
 
     def on_open_controls_dialog(self, event=None):
         """Open dialog responsible for layer settings."""
-        from qtextra._napari.line.component_controls.qt_layers_dialog import DialogLineControls
+        from qtextraplot._napari.line.component_controls.qt_layers_dialog import DialogLineControls
 
         if self._disable_controls:
             return

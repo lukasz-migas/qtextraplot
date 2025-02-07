@@ -16,12 +16,12 @@ from napari.utils._register import create_func as create_add_method
 from napari.utils.events import Event
 from pydantic import Field
 
-from qtextra._napari.common.components.overlays.color_bar import ColorBarOverlay
-from qtextra._napari.common.components.overlays.crosshair import CrossHairOverlay
-from qtextra._napari.common.components.viewer_model import ViewerModelBase
+from qtextraplot._napari.common.components.overlays.color_bar import ColorBarOverlay
+from qtextraplot._napari.common.components.overlays.crosshair import CrossHairOverlay
+from qtextraplot._napari.common.components.viewer_model import ViewerModelBase
 
-# from qtextra._napari.image import layers
-from qtextra._napari.image.components._viewer_mouse_bindings import crosshair
+# from qtextraplot._napari.image import layers
+from qtextraplot._napari.image.components._viewer_mouse_bindings import crosshair
 
 DEFAULT_OVERLAYS = {
     "scale_bar": ScaleBarOverlay,

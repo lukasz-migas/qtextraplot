@@ -1,7 +1,6 @@
 """Init."""
 
-from qtextra.config.theme import THEMES, CANVAS, CanvasThemes, Themes, is_dark  # noqa
-from qtextra.config.events import EVENTS
+from qtextra.config.theme import CANVAS, CanvasThemes
 
 
 def get_settings():
@@ -9,4 +8,4 @@ def get_settings():
     pass
 
 
-__all__ = ["CanvasThemes", "Themes", "CANVAS", "THEMES", "EVENTS", "get_settings", "is_dark"]
+__all__ = ["CanvasThemes", "CANVAS","get_settings"]

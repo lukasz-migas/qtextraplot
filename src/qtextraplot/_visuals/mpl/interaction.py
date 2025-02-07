@@ -13,8 +13,8 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QColor, QCursor, QGuiApplication, QPen
 from qtpy.QtWidgets import QWidget
 
-from qtextra._visuals.interaction import ExtractEvent, Polygon, get_center
-from qtextra._visuals.mpl.gids import PlotIds
+from qtextraplot._visuals.interaction import ExtractEvent, Polygon, get_center
+from qtextraplot._visuals.mpl.gids import PlotIds
 
 # TODO: add new class to handle return of extraction windows to enable better handling of different rois
 

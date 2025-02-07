@@ -11,7 +11,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QHBoxLayout
 
 import qtextra.helpers as hp
-from qtextra._napari.common.layer_controls.qt_image_controls_base import QtBaseImageControls
+from qtextraplot._napari.common.layer_controls.qt_image_controls_base import QtBaseImageControls
 
 
 # noinspection PyMissingOrEmptyDocstring

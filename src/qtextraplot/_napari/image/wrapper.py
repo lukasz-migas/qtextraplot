@@ -11,10 +11,10 @@ from napari.layers import Image, Labels, Points, Shapes
 from qtpy.QtCore import QMutex, QMutexLocker, Slot  # type: ignore[attr-defined]
 from qtpy.QtWidgets import QWidget
 
-from qtextra._napari.common.components.overlays.color_bar import ColorBarItem
-from qtextra._napari.common.wrapper import ViewerBase
-from qtextra._napari.image.components.viewer_model import ViewerModel as Viewer
-from qtextra._napari.image.qt_viewer import QtViewer
+from qtextraplot._napari.common.components.overlays.color_bar import ColorBarItem
+from qtextraplot._napari.common.wrapper import ViewerBase
+from qtextraplot._napari.image.components.viewer_model import ViewerModel as Viewer
+from qtextraplot._napari.image.qt_viewer import QtViewer
 
 MUTEX = QMutex()
 IMAGE_NAME, PAINT_NAME, MASK_NAME, LABELS_NAME, SHAPES_NAME = (

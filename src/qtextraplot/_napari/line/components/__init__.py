@@ -3,6 +3,6 @@
 # by our users and so is deleted below
 # from napari_plot.viewer import ViewerModel
 
-# from qtextra._napari.line.components import _viewer_key_bindings
+# from qtextraplot._napari.line.components import _viewer_key_bindings
 #
 # del _viewer_key_bindings

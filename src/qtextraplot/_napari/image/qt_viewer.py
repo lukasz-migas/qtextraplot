@@ -7,10 +7,10 @@ from napari._vispy import VispyCamera
 from napari._vispy.utils.visual import create_vispy_layer
 from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout
 
-from qtextra._napari.common.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
-from qtextra._napari.common.qt_viewer import QtViewerBase
-from qtextra._napari.image.component_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
-from qtextra._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
+from qtextraplot._napari.common.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
+from qtextraplot._napari.common.qt_viewer import QtViewerBase
+from qtextraplot._napari.image.component_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
+from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
 
 
 class QtViewer(QtViewerBase):
@@ -170,7 +170,7 @@ class QtViewer(QtViewerBase):
 
     def on_open_controls_dialog(self, event=None):
         """Open dialog responsible for layer settings."""
-        from qtextra._napari.image.component_controls.qt_layers_dialog import DialogNapariControls
+        from qtextraplot._napari.image.component_controls.qt_layers_dialog import DialogNapariControls
 
         if self._disable_controls:
             return

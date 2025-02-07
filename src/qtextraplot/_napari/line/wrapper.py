@@ -12,10 +12,10 @@ from napari_plot.viewer import ViewerModel as Viewer
 from qtpy.QtCore import QMutex
 from qtpy.QtWidgets import QWidget
 
-from qtextra._napari.common.wrapper import ViewerBase
-from qtextra._napari.line._vispy.overrides.axis import tick_formatter
-from qtextra._napari.line.qt_viewer import QtViewer
-from qtextra.config.theme import CANVAS
+from qtextraplot._napari.common.wrapper import ViewerBase
+from qtextraplot._napari.line._vispy.overrides.axis import tick_formatter
+from qtextraplot._napari.line.qt_viewer import QtViewer
+from qtextraplot.config import CANVAS
 
 MUTEX = QMutex()
 
@@ -27,7 +27,7 @@ def get_font_for_os() -> str:
     """Get font that supports unicode characters."""
     from vispy.util.fonts import list_fonts
 
-    from qtextra.utils.utilities import IS_LINUX, IS_MAC, IS_WIN
+    from koyo.system import IS_LINUX, IS_MAC, IS_WIN
 
     fonts = list_fonts()
     if IS_WIN:
@@ -160,7 +160,7 @@ class NapariLineView(ViewerBase):
         **kwargs: ty.Any,
     ) -> Shapes:
         """Add histogram using Shapes layer."""
-        from qtextra._napari.line.plotting import convert_hist_to_shapes
+        from qtextraplot._napari.line.plotting import convert_hist_to_shapes
 
         shapes = convert_hist_to_shapes(array, bins, orientation, rel_width)
         layer = self.try_reuse(name, Shapes)
@@ -302,7 +302,7 @@ if __name__ == "__main__":  # pragma: no cover
     def _main():  # type: ignore[no-untyped-def]
         import sys
 
-        from qtextra.config.theme import THEMES
+        from qtextra.config import THEMES
         from qtextra.helpers import make_btn
         from qtextra.utils.dev import qframe
 

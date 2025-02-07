@@ -11,8 +11,8 @@ import qtextra.helpers as hp
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 
 if ty.TYPE_CHECKING:
-    from qtextra._napari.image.wrapper import NapariImageView
-    from qtextra._napari.line.wrapper import NapariLineView
+    from qtextraplot._napari.image.wrapper import NapariImageView
+    from qtextraplot._napari.line.wrapper import NapariLineView
 
 
 class QtScreenshotDialog(QtFramelessPopup):

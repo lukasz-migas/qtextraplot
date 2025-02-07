@@ -12,11 +12,11 @@ from qtpy.QtCore import QPoint, Qt
 from qtpy.QtWidgets import QFrame, QHBoxLayout, QLabel, QSlider, QVBoxLayout, QWidget
 
 import qtextra.helpers as hp
-from qtextra._napari.image.components._viewer_key_bindings import toggle_grid, toggle_ndisplay
+from qtextraplot._napari.image.components._viewer_key_bindings import toggle_grid, toggle_ndisplay
 from qtextra.widgets.qt_button_icon import QtImagePushButton
 
 if ty.TYPE_CHECKING:
-    from qtextra._napari.image.components.viewer_model import ViewerModel
+    from qtextraplot._napari.image.components.viewer_model import ViewerModel
 
 
 def make_qta_btn(parent, icon_name: str, tooltip: str, **kwargs: ty.Any) -> QtImagePushButton:

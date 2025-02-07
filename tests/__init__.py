@@ -7,7 +7,7 @@ from koyo.system import IS_MAC
 from loguru import logger
 
 # os.environ["QTEXTRA_PYTEST"] = "1"
-logger.enable("qtextra")
+logger.enable("qtextraplot")
 logger.remove()
 
 

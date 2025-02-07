@@ -10,7 +10,7 @@ from qtpy.QtGui import QIcon, QImage, QPixmap
 from superqt.sliders import QDoubleRangeSlider
 
 import qtextra.helpers as hp
-from qtextra._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
+from qtextraplot._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
 
 
 class _QDoubleRangeSlider(QDoubleRangeSlider):

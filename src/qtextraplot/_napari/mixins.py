@@ -13,9 +13,9 @@ import qtextra.helpers as hp
 if ty.TYPE_CHECKING:
     from napari.layers import Image
 
-    from qtextra._napari.image.wrapper import NapariImageView
-    from qtextra._napari.line.wrapper import NapariLineView
-    from qtextra._napari.line.wrapper import Viewer as LineViewer
+    from qtextraplot._napari.image.wrapper import NapariImageView
+    from qtextraplot._napari.line.wrapper import NapariLineView
+    from qtextraplot._napari.line.wrapper import Viewer as LineViewer
 
 
 class ImageViewMixin:
@@ -34,7 +34,7 @@ class ImageViewMixin:
         **kwargs: ty.Any,
     ) -> NapariImageView:
         """Make image view."""
-        from qtextra._napari.image.wrapper import NapariImageView
+        from qtextraplot._napari.image.wrapper import NapariImageView
 
         return NapariImageView(
             widget,
@@ -97,7 +97,7 @@ class LineViewMixin:
         **kwargs: ty.Any,
     ) -> NapariLineView:
         """Make line view."""
-        from qtextra._napari.line.wrapper import NapariLineView
+        from qtextraplot._napari.line.wrapper import NapariLineView
 
         return NapariLineView(
             widget,

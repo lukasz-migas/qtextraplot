@@ -30,22 +30,13 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "qtpy",
-    "superqt",
     "koyo",
     "numpy",
-    "appdirs",
-    "qtawesome",
-    "psygnal",
-    "sentry_sdk>2",
-    "qtconsole>=4.5.1,!=4.7.6,!=5.4.2",
-    "ipykernel>=5.2.0",
 ]
 
 # extras
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
 [project.optional-dependencies]
-notify = ["pyqt-toast-notification"]
-palette = ["qt-command-palette"]
 pyside2 = ["pyside2"]
 pyside6 = ["pyside6"]
 pyqt5 = ["pyqt5"]
@@ -55,7 +46,6 @@ pyqt6 = ["pyqt6"]
 plot = ["qtextraplot[1d]", "qtextraplot[2d]"]
 test = ["pytest>=6.0", "pytest-cov", "pytest-qt"]
 dev = [
-    "black",
     "ipython",
     "mypy",
     "pdbpp",
@@ -68,15 +58,6 @@ dev = [
 [project.urls]
 homepage = "https://github.com/illumion-io/qtextraplot"
 repository = "https://github.com/illumion-io/qtextraplot"
-
-# same as console_scripts entry point
-# [project.scripts]
-# spam-cli = "spam:main_cli"
-
-# Entry points
-# https://peps.python.org/pep-0621/#entry-points
-# [project.entry-points."spam.magical"]
-# tomatoes = "spam:main_tomatoes"
 
 [tool.setuptools_scm]
 write_to = "src/qtextraplot/_version.py"
@@ -193,23 +174,3 @@ ignore = [
     ".idea/**/*",
     "_version.py"
 ]
-
-# https://python-semantic-release.readthedocs.io/en/latest/configuration.html
-[tool.semantic_release]
-version_source = "tag_only"
-branch = "main"
-changelog_sections = "feature,fix,breaking,documentation,performance,chore,:boom:,:sparkles:,:children_crossing:,:lipstick:,:iphone:,:egg:,:chart_with_upwards_trend:,:ambulance:,:lock:,:bug:,:zap:,:goal_net:,:alien:,:wheelchair:,:speech_balloon:,:mag:,:apple:,:penguin:,:checkered_flag:,:robot:,:green_apple:,Other"
-# commit_parser=semantic_release.history.angular_parser
-build_command = "pip install build && python -m build"
-
-# # for things that require compilation
-# # https://cibuildwheel.readthedocs.io/en/stable/options/
-# [tool.cibuildwheel]
-# # Skip 32-bit builds & PyPy wheels on all platforms
-# skip = ["*-manylinux_i686", "*-musllinux_i686", "*-win32", "pp*"]
-# test-extras = ["test"]
-# test-command = "pytest {project}/tests -v"
-# test-skip = "*-musllinux*"
-
-# [tool.cibuildwheel.environment]
-# HATCH_BUILD_HOOKS_ENABLE = "1"

@@ -8,7 +8,7 @@ from napari.utils.events.event import EmitterGroup, Event
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QWidget
 
-from qtextra._napari.image.components._viewer_key_bindings import toggle_grid
+from qtextraplot._napari.image.components._viewer_key_bindings import toggle_grid
 from qtextra.helpers import make_radio_btn_group
 from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
 
@@ -188,7 +188,7 @@ class QtViewToolbar(QWidget):
 
     def open_grid_popup(self) -> None:
         """Open grid options pop up widget."""
-        from qtextra._napari.image.component_controls.qt_layer_buttons import make_grid_popup
+        from qtextraplot._napari.image.component_controls.qt_layer_buttons import make_grid_popup
 
         make_grid_popup(self, self.viewer)
 
@@ -246,35 +246,35 @@ class QtViewToolbar(QWidget):
 
     def on_open_crosshair_config(self) -> None:
         """Open text config."""
-        from qtextra._napari.common.component_controls.qt_crosshair_controls import QtCrosshairControls
+        from qtextraplot._napari.common.component_controls.qt_crosshair_controls import QtCrosshairControls
 
         dlg = QtCrosshairControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_text_config(self) -> None:
         """Open text config."""
-        from qtextra._napari.common.component_controls.qt_text_overlay_controls import QtTextOverlayControls
+        from qtextraplot._napari.common.component_controls.qt_text_overlay_controls import QtTextOverlayControls
 
         dlg = QtTextOverlayControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_scalebar_config(self) -> None:
         """Open scalebar config."""
-        from qtextra._napari.common.component_controls.qt_scalebar_controls import QtScaleBarControls
+        from qtextraplot._napari.common.component_controls.qt_scalebar_controls import QtScaleBarControls
 
         dlg = QtScaleBarControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_colorbar_config(self) -> None:
         """Open colorbar config."""
-        from qtextra._napari.common.component_controls.qt_colorbar_controls import QtColorBarControls
+        from qtextraplot._napari.common.component_controls.qt_colorbar_controls import QtColorBarControls
 
         dlg = QtColorBarControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_save_figure(self) -> None:
         """Show scale bar controls for the viewer."""
-        from qtextra._napari.common.widgets.screenshot_dialog import QtScreenshotDialog
+        from qtextraplot._napari.common.widgets.screenshot_dialog import QtScreenshotDialog
 
         dlg = QtScreenshotDialog(self.view, self)
         dlg.show_above_widget(self.tools_save_btn)

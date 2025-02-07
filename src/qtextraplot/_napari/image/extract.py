@@ -14,15 +14,15 @@ from qtpy.QtWidgets import (
 )
 
 import qtextra.helpers as hp
-from qtextra._napari.common.layer_controls.qt_labels_controls import QtLabelsControls
-from qtextra._napari.common.layer_controls.qt_shapes_controls import QtShapesControls
+from qtextraplot._napari.common.layer_controls.qt_labels_controls import QtLabelsControls
+from qtextraplot._napari.common.layer_controls.qt_shapes_controls import QtShapesControls
 from qtextra.widgets.qt_dialog import QtFramelessTool
 
 if ty.TYPE_CHECKING:
     from napari.layers import Labels, Shapes
     from napari_plot.layers import Region
 
-    from qtextra._napari.image import NapariImageView
+    from qtextraplot._napari.image import NapariImageView
 
 
 class ImageMaskROIExtractPopupBase(QtFramelessTool):

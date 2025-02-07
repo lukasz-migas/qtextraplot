@@ -7,14 +7,14 @@ from napari.utils.events import Event
 from napari_plot.components.dragtool import DragMode
 from qtpy.QtCore import Qt
 
-from qtextra.helpers import make_radio_btn_group
-from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
+from qtextraplot.helpers import make_radio_btn_group
+from qtextraplot.widgets.qt_mini_toolbar import QtMiniToolbar
 
 if ty.TYPE_CHECKING:
     from napari_plot.viewer import Viewer
     from vispy.scene import Grid
 
-    from qtextra._napari.line.qt_viewer import QtViewer
+    from qtextraplot._napari.line.qt_viewer import QtViewer
 
 
 class QtViewLeftToolbar(QtMiniToolbar):
@@ -91,7 +91,7 @@ class QtViewLeftToolbar(QtMiniToolbar):
 
     def on_open_zoom(self) -> None:
         """Open zoom dialog."""
-        from qtextra._napari.common.widgets.zoom_widget import XZoomPopup
+        from qtextraplot._napari.common.widgets.zoom_widget import XZoomPopup
 
         dlg = XZoomPopup(
             self.ref_viewer(),
@@ -184,7 +184,7 @@ class QtViewRightToolbar(QtMiniToolbar):
 
     def on_open_text_config(self) -> None:
         """Open text config."""
-        from qtextra._napari.common.component_controls.qt_text_overlay_controls import QtTextOverlayControls
+        from qtextraplot._napari.common.component_controls.qt_text_overlay_controls import QtTextOverlayControls
 
         dlg = QtTextOverlayControls(self.ref_viewer(), self.ref_qt_viewer())
         dlg.show_left_of_mouse()
@@ -194,21 +194,21 @@ class QtViewRightToolbar(QtMiniToolbar):
 
     def on_open_axes_config(self) -> None:
         """Open scalebar config."""
-        from qtextra._napari.line.component_controls.qt_axis_controls import QtAxisControls
+        from qtextraplot._napari.line.component_controls.qt_axis_controls import QtAxisControls
 
         dlg = QtAxisControls(self.ref_viewer(), self.ref_qt_viewer())
         dlg.show_left_of_mouse()
 
     def on_open_camera_config(self) -> None:
         """Open scalebar config."""
-        from qtextra._napari.line.component_controls.qt_camera_controls import QtCameraControls
+        from qtextraplot._napari.line.component_controls.qt_camera_controls import QtCameraControls
 
         dlg = QtCameraControls(self.ref_viewer(), self.ref_qt_viewer())
         dlg.show_left_of_mouse()
 
     def on_open_save_figure(self) -> None:
         """Show scale bar controls for the viewer."""
-        from qtextra._napari.common.widgets.screenshot_dialog import QtScreenshotDialog
+        from qtextraplot._napari.common.widgets.screenshot_dialog import QtScreenshotDialog
 
         dlg = QtScreenshotDialog(self.ref_view(), self)
         dlg.show_above_widget(self.tools_save_btn)

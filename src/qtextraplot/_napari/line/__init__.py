@@ -1,6 +1,6 @@
 """Init."""
 
-# Need to import to ensure that `qtextra` to modify mouse action
+# Need to import to ensure that `qtextraplot` to modify mouse action
 
 from .wrapper import NapariLineView
 

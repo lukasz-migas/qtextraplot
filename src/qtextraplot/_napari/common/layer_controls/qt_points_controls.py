@@ -9,9 +9,9 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QButtonGroup, QHBoxLayout
 
 import qtextra.helpers as hp
-from qtextra._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
-from qtextra._napari.common.layers._points_constants import SYMBOL_TRANSLATION
-from qtextra._napari.common.widgets.qt_mode_button import QtModePushButton, QtModeRadioButton
+from qtextraplot._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
+from qtextraplot._napari.common.layers._points_constants import SYMBOL_TRANSLATION
+from qtextraplot._napari.common.widgets.qt_mode_button import QtModePushButton, QtModeRadioButton
 
 
 class QtPointsControls(QtLayerControls):

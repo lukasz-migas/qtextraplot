@@ -7,9 +7,9 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout
 
 import qtextra.helpers as hp
-from qtextra._napari.common.components._scalebar_constants import UNITS_TRANSLATIONS
-from qtextra._napari.common.components._viewer_constants import POSITION_TRANSLATIONS
-from qtextra._napari.image.components.viewer_model import ViewerModel
+from qtextraplot._napari.common.components._scalebar_constants import UNITS_TRANSLATIONS
+from qtextraplot._napari.common.components._viewer_constants import POSITION_TRANSLATIONS
+from qtextraplot._napari.image.components.viewer_model import ViewerModel
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 import qtextra.helpers as hp
-from qtextra._visuals.mpl.views import ViewMplLine
+from qtextraplot._visuals.mpl.views import ViewMplLine
 from qtpy.QtWidgets import QVBoxLayout, QWidget
 from qtextra.widgets.qt_dialog import QtFramelessTool
 

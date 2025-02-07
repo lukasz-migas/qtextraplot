@@ -6,8 +6,8 @@ import numpy as np
 from koyo.secret import get_short_hash
 from qtpy.QtCore import QMutexLocker
 
-from qtextra._visuals.views_base import MUTEX, ViewBase
-from qtextra._visuals.vispy.base import PlotLine, PlotScatter
+from qtextraplot._visuals.views_base import MUTEX, ViewBase
+from qtextraplot._visuals.vispy.base import PlotLine, PlotScatter
 
 
 class ViewVispyLine(ViewBase):

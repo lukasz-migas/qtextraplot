@@ -19,9 +19,9 @@ from qtpy.QtCore import QCoreApplication, Qt
 from qtpy.QtGui import QCursor, QGuiApplication, QImage
 from qtpy.QtWidgets import QWidget
 
-from qtextra._napari.common._utilities import crosshair_pixmap
-from qtextra._napari.common._vispy.vispy_canvas import VispyCanvas
-from qtextra._napari.common._vispy.visual import create_vispy_overlay
+from qtextraplot._napari.common._utilities import crosshair_pixmap
+from qtextraplot._napari.common._vispy.vispy_canvas import VispyCanvas
+from qtextraplot._napari.common._vispy.visual import create_vispy_overlay
 
 
 class QtViewerBase(QWidget):

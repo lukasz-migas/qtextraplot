@@ -1,4 +1,5 @@
 """Init."""
+
 try:
     import napari
 except ImportError:
@@ -14,8 +15,8 @@ except ImportError:
 # Monkey patch icons
 import napari.resources._icons
 
-from qtextra.assets import ICONS
+from qtextraplot.assets import ICONS
 
 # overwrite napari list of icons
 # This is required because we've added several new layer types that have custom icons associated with them.
-napari.resources._icons.ICONS = ICONS
+napari.resources._icons.ICONS.update(ICONS)

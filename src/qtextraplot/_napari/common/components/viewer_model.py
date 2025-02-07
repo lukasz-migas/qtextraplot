@@ -17,7 +17,7 @@ from napari.utils.mouse_bindings import MousemapProvider
 from napari.utils.theme import available_themes, is_theme_available
 from pydantic import Extra, Field, PrivateAttr, validator
 
-from qtextra._napari.common.components.layerlist import LayerList
+from qtextraplot._napari.common.components.layerlist import LayerList
 
 try:
     from napari_plot.components.gridlines import GridLines

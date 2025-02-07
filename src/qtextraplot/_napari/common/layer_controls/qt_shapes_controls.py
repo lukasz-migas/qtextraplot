@@ -11,8 +11,8 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QButtonGroup, QCheckBox, QGridLayout
 
 import qtextra.helpers as hp
-from qtextra._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
-from qtextra._napari.common.widgets.qt_mode_button import QtModePushButton, QtModeRadioButton
+from qtextraplot._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
+from qtextraplot._napari.common.widgets.qt_mode_button import QtModePushButton, QtModeRadioButton
 
 if ty.TYPE_CHECKING:
     from napari.layers import Shapes

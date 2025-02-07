@@ -7,7 +7,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout, QLabel, QWidget
 
 import qtextra.helpers as hp
-from qtextra._napari.image.components.viewer_model import ViewerModel
+from qtextraplot._napari.image.components.viewer_model import ViewerModel
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtextra.widgets.qt_label_icon import QtQtaTooltipLabel
 
