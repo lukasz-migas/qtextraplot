@@ -6,8 +6,8 @@ from vispy.scene import BaseCamera, Ellipse, PanZoomCamera, Polygon
 from vispy.util import keys
 from vispy.util.event import Event
 
-from qtextraplot._visuals.interaction import ExtractEvent
-from qtextraplot._visuals.interaction import Polygon as PolygonEvent
+from qtextraplot.utils.interaction import ExtractEvent
+from qtextraplot.utils.interaction import Polygon as PolygonEvent
 
 
 def to_rect(center, width, height):

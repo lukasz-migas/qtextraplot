@@ -11,8 +11,8 @@ from vispy.scene.visuals import Line as LineNode
 from vispy.scene.visuals import Markers as MarkersNode
 from vispy.util import keys
 
-from qtextraplot._visuals.vispy.camera import BoxZoomCameraMixin
-from qtextraplot._visuals.vispy.models.extents import Extents
+from qtextraplot.vispy.camera import BoxZoomCameraMixin
+from qtextraplot.vispy.models.extents import Extents
 from qtextra.utils.color import hex_to_rgb
 
 

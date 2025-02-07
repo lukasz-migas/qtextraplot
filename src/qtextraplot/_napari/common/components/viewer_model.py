@@ -1,4 +1,5 @@
 """Base viewer."""
+
 import typing as ty
 import warnings
 
@@ -21,7 +22,7 @@ from qtextraplot._napari.common.components.layerlist import LayerList
 
 try:
     from napari_plot.components.gridlines import GridLines
-except ImportError:
+except (ImportError, TypeError):
     GridLines = None
 
 

@@ -351,11 +351,10 @@ if __name__ == "__main__":  # pragma: no cover
     def _main() -> None:
         import sys
 
-        from skimage import data
-
         from qtextra.config.theme import THEMES
         from qtextra.helpers import make_btn
         from qtextra.utils.dev import qframe
+        from skimage import data
 
         def _on_btn():
             """Button action."""
@@ -367,7 +366,7 @@ if __name__ == "__main__":  # pragma: no cover
         def _accept(event):
             wrapper.viewer.cross_hair.position = event.position
 
-        app, frame, ha = qframe()
+        app, frame, ha = qframe(horz=False)
         frame.setMinimumSize(600, 600)
         wrapper = NapariImageView(frame)
 

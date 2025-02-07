@@ -16,8 +16,8 @@ from matplotlib.figure import Figure
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QApplication, QHBoxLayout, QSizePolicy, QWidget
 
-from qtextraplot._visuals.mpl.gids import PlotIds
-from qtextraplot._visuals.mpl.interaction import ImageMPLInteraction, MPLInteraction
+from qtextraplot.mpl.gids import PlotIds
+from qtextraplot.mpl.interaction import ImageMPLInteraction, MPLInteraction
 from qtextra.utils.utilities import connect
 
 try:

@@ -126,8 +126,6 @@ class QtViewer(QtViewerBase):
         self.viewer.layers.selection.events.active.connect(self._on_active_change)
         self.viewer.camera.events.mouse_pan.connect(self._on_mouse_pan)
         self.viewer.camera.events.mouse_zoom.connect(self._on_mouse_zoom)
-        self.viewer.cursor.events.style.connect(self._on_cursor)
-        self.viewer.cursor.events.size.connect(self._on_cursor)
         self.viewer.layers.events.reordered.connect(self._reorder_layers)
         self.viewer.layers.events.inserted.connect(self._on_add_layer_change)
         self.viewer.layers.events.removed.connect(self._remove_layer)
@@ -242,77 +240,3 @@ class QtViewer(QtViewerBase):
         CANVAS.evt_theme_changed.disconnect(self.toggle_theme)
         self.canvas.native.deleteLater()
         event.accept()
-
-    def _map_canvas2world(self, position):
-        """Map position from canvas pixels into world coordinates.
-
-        Parameters
-        ----------
-        position : 2-tuple
-            Position in canvas (x, y).
-
-        Returns
-        -------
-        coords : tuple
-            Position in world coordinates, matches the total dimensionality
-            of the viewer.
-        """
-        position = list(position)
-        position[0] -= self.view.pos[0]
-        position[1] -= self.view.pos[1]
-        transform = self.view.camera.transform.inverse
-        mapped_position = transform.map(position)[:2]
-        position_world_slice = mapped_position[::-1]
-
-        position_world = [0, 0]
-        for i, d in enumerate((0, 1)):
-            position_world[d] = position_world_slice[i]
-        return tuple(position_world)
-
-    def on_draw(self, _event):
-        """Called whenever the canvas is drawn.
-
-        This is triggered from vispy whenever new data is sent to the canvas or
-        the camera is moved and is connected in the `QtViewer`.
-        """
-        for layer in self.viewer.layers:
-            if layer.ndim <= 2:
-                layer._update_draw(
-                    scale_factor=1 / self.viewer.camera.zoom,
-                    corner_pixels_displayed=self._canvas_corners_in_world[:, -layer.ndim :],
-                    shape_threshold=self.canvas.size,
-                )
-
-    def _process_mouse_event(self, mouse_callbacks, event):
-        """Called whenever mouse pressed in canvas.
-
-        Parameters
-        ----------
-        mouse_callbacks : function
-            Mouse callbacks function.
-        event : vispy.event.Event
-            The vispy event that triggered this method.
-        """
-        if event.pos is None:
-            return
-
-        # Add the view ray to the event
-        event.view_direction = None  # always None because we will display 2d data
-        event.up_direction = None  # always None because we will display 2d data
-
-        # Update the cursor position
-        self.viewer.cursor.position = self._map_canvas2world(event.pos)
-
-        # Add the cursor position to the event
-        event.position = self.viewer.cursor.position
-
-        # Add the displayed dimensions to the event
-        event.dims_displayed = [0, 1]
-
-        # Put a read only wrapper on the event
-        event = ReadOnlyWrapper(event)
-        mouse_callbacks(self.viewer, event)
-
-        layer = self.viewer.layers.selection.active
-        if layer is not None:
-            mouse_callbacks(layer, event)

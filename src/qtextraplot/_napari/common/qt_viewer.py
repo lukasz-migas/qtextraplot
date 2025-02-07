@@ -3,24 +3,13 @@
 from typing import Tuple
 from weakref import WeakSet
 
-import numpy as np
-from napari._qt.utils import QImg2array, circle_pixmap, square_pixmap
+from napari._qt.utils import QImg2array
 from napari.components.overlays import CanvasOverlay, Overlay, SceneOverlay
-from napari.utils._proxies import ReadOnlyWrapper
-from napari.utils.interactions import (
-    mouse_double_click_callbacks,
-    mouse_move_callbacks,
-    mouse_press_callbacks,
-    mouse_release_callbacks,
-    mouse_wheel_callbacks,
-)
 from napari.utils.key_bindings import KeymapHandler
 from qtpy.QtCore import QCoreApplication, Qt
-from qtpy.QtGui import QCursor, QGuiApplication, QImage
+from qtpy.QtGui import QGuiApplication, QImage
 from qtpy.QtWidgets import QWidget
 
-from qtextraplot._napari.common._utilities import crosshair_pixmap
-from qtextraplot._napari.common._vispy.vispy_canvas import VispyCanvas
 from qtextraplot._napari.common._vispy.visual import create_vispy_overlay
 
 
@@ -68,15 +57,6 @@ class QtViewerBase(QWidget):
         # This dictionary holds the corresponding vispy visual for each layer
         self.layer_to_visual = {}
         self.overlay_to_visual = {}
-
-        self._cursors = {
-            "cross": Qt.CursorShape.CrossCursor,
-            "forbidden": Qt.CursorShape.ForbiddenCursor,
-            "pointing": Qt.CursorShape.PointingHandCursor,
-            "horizontal_move": Qt.CursorShape.SizeHorCursor,
-            "vertical_move": Qt.CursorShape.SizeVerCursor,
-            "standard": QCursor(),
-        }
 
         # create ui widgets
         self._create_widgets(**kwargs)
@@ -138,23 +118,7 @@ class QtViewerBase(QWidget):
 
     def _create_canvas(self) -> None:
         """Create the canvas and hook up events."""
-        self.canvas = VispyCanvas(
-            keys=None,
-            vsync=True,
-            parent=self,
-            size=self.viewer._canvas_size[::-1],
-            autoswap=True,
-        )
-        self.canvas.events.reset_view.connect(self.viewer.reset_view)
-        self.canvas.events.mouse_double_click.connect(self.on_mouse_double_click)
-        self.canvas.connect(self.on_mouse_move)
-        self.canvas.connect(self.on_mouse_press)
-        self.canvas.connect(self.on_mouse_release)
-        self.canvas.connect(self._key_map_handler.on_key_press)
-        self.canvas.connect(self._key_map_handler.on_key_release)
-        self.canvas.connect(self.on_mouse_wheel)
-        self.canvas.connect(self.on_draw)
-        self.canvas.connect(self.on_resize)
+        raise NotImplementedError("Must implement method")
 
     def enterEvent(self, event):
         """Emit our own event when mouse enters the canvas."""
@@ -178,7 +142,7 @@ class QtViewerBase(QWidget):
         raise NotImplementedError("Must implement method")
 
     def _set_camera(self):
-        raise NotImplementedError("Must implement method")
+        pass
 
     def _add_visuals(self) -> None:
         """Add visuals for axes, scale bar."""
@@ -368,60 +332,6 @@ class QtViewerBase(QWidget):
         cb = QGuiApplication.clipboard()
         cb.setImage(img)
 
-    def _on_interactive(self, _event):
-        """Link interactive attributes of view and viewer.
-
-        Parameters
-        ----------
-        _event : napari.utils.event.Event
-            The napari event that triggered this method.
-        """
-        self.view.interactive = self.viewer.camera.interactive
-
-    def _on_mouse_pan(self, _event):
-        """Link interactive attributes of view and viewer.
-
-        Parameters
-        ----------
-        _event : napari.utils.event.Event
-            The napari event that triggered this method.
-        """
-        self.view.interactive = self.viewer.camera.mouse_pan
-
-    def _on_mouse_zoom(self, _event):
-        """Link interactive attributes of view and viewer.
-
-        Parameters
-        ----------
-        _event : napari.utils.event.Event
-            The napari event that triggered this method.
-        """
-        self.view.interactive = self.viewer.camera.mouse_zoom
-
-    def _on_cursor(self, _event=None):
-        """Set the appearance of the mouse cursor."""
-        cursor = self.viewer.cursor.style
-        if cursor in {"square", "circle"}:
-            # Scale size by zoom if needed
-            size = self.viewer.cursor.size
-            if self.viewer.cursor.scaled:
-                size *= self.viewer.camera.zoom
-
-            size = int(size)
-            # make sure the square fits within the current canvas
-            if size < 8 or size > (min(*self.canvas.size) - 4):
-                q_cursor = self._cursors["cross"]
-            elif cursor == "circle":
-                q_cursor = QCursor(circle_pixmap(size))
-            else:
-                q_cursor = QCursor(square_pixmap(size))
-        elif cursor == "crosshair":
-            q_cursor = QCursor(crosshair_pixmap())
-        else:
-            q_cursor = self._cursors[cursor]
-
-        self.canvas.native.setCursor(q_cursor)
-
     def on_open_controls_dialog(self, event=None) -> None:
         """Open dialog responsible for layer settings."""
         raise NotImplementedError("Must implement method")
@@ -434,193 +344,6 @@ class QtViewerBase(QWidget):
             self.on_open_controls_dialog()
         else:
             self._layers_controls_dialog.setVisible(not self._layers_controls_dialog.isVisible())
-
-    @property
-    def _canvas_corners_in_world(self):
-        """Location of the corners of canvas in world coordinates.
-
-        Returns
-        -------
-        corners : 2-tuple
-            Coordinates of top left and bottom right canvas pixel in the world.
-        """
-        # Find corners of canvas in world coordinates
-        top_left = self._map_canvas2world([0, 0])
-        bottom_right = self._map_canvas2world(self.canvas.size)
-        return np.array([top_left, bottom_right])
-
-    def on_resize(self, event):
-        """Called whenever canvas is resized.
-
-        event : vispy.util.event.Event
-            The vispy event that triggered this method.
-        """
-        self.viewer._canvas_size = tuple(self.canvas.size[::-1])
-
-    def _process_mouse_event(self, mouse_callbacks, event):
-        """Add properties to the mouse event before passing the event to the
-        napari events system. Called whenever the mouse moves or is clicked.
-        As such, care should be taken to reduce the overhead in this function.
-        In future work, we should consider limiting the frequency at which
-        it is called.
-
-        This method adds following:
-            position: the position of the click in world coordinates.
-            view_direction: a unit vector giving the direction of the camera in
-                world coordinates.
-            dims_displayed: a list of the dimensions currently being displayed
-                in the viewer. This comes from viewer.dims.displayed.
-            dims_point: the indices for the data in view in world coordinates.
-                This comes from viewer.dims.point
-
-        Parameters
-        ----------
-        mouse_callbacks : function
-            Mouse callbacks function.
-        event : vispy.event.Event
-            The vispy event that triggered this method.
-        """
-        if event.pos is None:
-            return
-
-        # Add the view ray to the event
-        try:
-            event.view_direction = self.viewer.camera.calculate_nd_view_direction(
-                self.viewer.dims.ndim, self.viewer.dims.displayed
-            )
-        except AttributeError:
-            event.view_direction = None
-
-        # Update the cursor position
-        self.viewer.cursor._view_direction = event.view_direction
-        self.viewer.cursor.position = self._map_canvas2world(list(event.pos))
-
-        # Add the cursor position to the event
-        event.position = self.viewer.cursor.position
-
-        # Add the displayed dimensions to the event
-        event.dims_displayed = list(self.viewer.dims.displayed)
-
-        # Add the current dims indices
-        event.dims_point = list(self.viewer.dims.point)
-
-        # Put a read only wrapper on the event
-        event = ReadOnlyWrapper(event, exceptions=("handled",))
-        mouse_callbacks(self.viewer, event)
-
-        layer = self.viewer.layers.selection.active
-        if layer is not None:
-            mouse_callbacks(layer, event)
-
-    def _map_canvas2world(self, position):
-        """Map position from canvas pixels into world coordinates.
-
-        Parameters
-        ----------
-        position : 2-tuple
-            Position in canvas (x, y).
-
-        Returns
-        -------
-        coords : tuple
-            Position in world coordinates, matches the total dimensionality
-            of the viewer.
-        """
-        position = list(position)
-        nd = self.viewer.dims.ndisplay
-        transform = self.view.camera.transform.inverse
-        mapped_position = transform.map(position)[:nd]
-        position_world_slice = mapped_position[::-1]
-
-        position_world = list(self.viewer.dims.point)
-        for i, d in enumerate(self.viewer.dims.displayed):
-            position_world[d] = position_world_slice[i]
-        return tuple(position_world)
-
-    def on_mouse_wheel(self, event):
-        """Called whenever mouse wheel activated in canvas.
-
-        Parameters
-        ----------
-        event : vispy.event.Event
-            The vispy event that triggered this method.
-        """
-        self._process_mouse_event(mouse_wheel_callbacks, event)
-
-    def on_mouse_double_click(self, event):
-        """Called whenever a mouse double-click happen on the canvas.
-
-        Parameters
-        ----------
-        event : vispy.event.Event
-            The vispy event that triggered this method. The `event.type` will always be `mouse_double_click`
-
-        Notes
-        -----
-        Note that this triggers in addition to the usual mouse press and mouse release.
-        Therefore a double click from the user will likely triggers the following event in sequence:
-
-             - mouse_press
-             - mouse_release
-             - mouse_double_click
-             - mouse_release
-        """
-        self._process_mouse_event(mouse_double_click_callbacks, event)
-
-    def on_mouse_press(self, event):
-        """Called whenever mouse pressed in canvas.
-
-        Parameters
-        ----------
-        event : vispy.event.Event
-            The vispy event that triggered this method.
-        """
-        self._process_mouse_event(mouse_press_callbacks, event)
-
-    def on_mouse_move(self, event):
-        """Called whenever mouse moves over canvas.
-
-        Parameters
-        ----------
-        event : vispy.event.Event
-            The vispy event that triggered this method.
-        """
-        self._process_mouse_event(mouse_move_callbacks, event)
-
-    def on_mouse_release(self, event):
-        """Called whenever mouse released in canvas.
-
-        Parameters
-        ----------
-        event : vispy.event.Event
-            The vispy event that triggered this method.
-        """
-        self._process_mouse_event(mouse_release_callbacks, event)
-
-    def on_draw(self, event):
-        """Called whenever the canvas is drawn.
-
-        This is triggered from vispy whenever new data is sent to the canvas or
-        the camera is moved and is connected in the `QtViewer`.
-        """
-        # The canvas corners in full world coordinates (i.e. across all layers).
-        canvas_corners_world = self._canvas_corners_in_world
-        for layer in self.viewer.layers:
-            # The following condition should mostly be False. One case when it can
-            # be True is when a callback connected to self.viewer.dims.events.ndisplay
-            # is executed before layer._slice_input has been updated by another callback
-            # (e.g. when changing self.viewer.dims.ndisplay from 3 to 2).
-            displayed_sorted = sorted(layer._slice_input.displayed)
-            nd = len(displayed_sorted)
-            if nd > self.viewer.dims.ndisplay:
-                displayed_axes = displayed_sorted
-            else:
-                displayed_axes = self.viewer.dims.displayed[-nd:]
-            layer._update_draw(
-                scale_factor=1 / self.viewer.camera.zoom,
-                corner_pixels_displayed=canvas_corners_world[:, displayed_axes],
-                shape_threshold=self.canvas.size,
-            )
 
     def keyPressEvent(self, event):
         """Called whenever a key is pressed.

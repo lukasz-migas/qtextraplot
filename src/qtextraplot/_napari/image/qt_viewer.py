@@ -3,10 +3,10 @@
 from napari._qt.containers.qt_layer_list import QtLayerList
 from napari._qt.qt_main_window import _QtMainWindow
 from napari._qt.widgets.qt_dims import QtDims
-from napari._vispy import VispyCamera
 from napari._vispy.utils.visual import create_vispy_layer
 from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout
 
+from qtextraplot._napari.common._vispy.vispy_canvas import VispyCanvas
 from qtextraplot._napari.common.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
 from qtextraplot._napari.common.qt_viewer import QtViewerBase
 from qtextraplot._napari.image.component_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
@@ -47,8 +47,14 @@ class QtViewer(QtViewerBase):
 
     def _create_canvas(self):
         """Create canvas."""
-        super()._create_canvas()
-        self.canvas.events.draw.connect(self.dims.enable_play)
+        self.canvas = VispyCanvas(
+            viewer=self.viewer,
+            parent=self,
+            key_map_handler=self._key_map_handler,
+            size=self.viewer._canvas_size[::-1],
+            autoswap=True,
+        )
+        self.canvas.events.reset_view.connect(self.viewer.reset_view)
         self.viewer.events.theme.connect(self.canvas._on_theme_change)
 
     def _create_widgets(self, **kwargs):
@@ -98,9 +104,6 @@ class QtViewer(QtViewerBase):
         # bind events
         self.viewer.layers.selection.events.active.connect(self._on_active_change)
         self.viewer.camera.events.interactive.connect(self._on_interactive)
-        self.viewer.cursor.events.style.connect(self._on_cursor)
-        self.viewer.cursor.events.size.connect(self._on_cursor)
-        self.viewer.camera.events.zoom.connect(self._on_cursor)
         self.viewer.layers.events.reordered.connect(self._reorder_layers)
         self.viewer.layers.events.inserted.connect(self._on_add_layer_change)
         self.viewer.layers.events.removed.connect(self._remove_layer)
@@ -110,10 +113,6 @@ class QtViewer(QtViewerBase):
     def _set_view(self):
         """Set view."""
         self.view = self.canvas.central_widget.add_view()
-
-    def _set_camera(self):
-        self.camera = VispyCamera(self.view, self.viewer.camera, self.viewer.dims)
-        self.canvas.connect(self.camera.on_draw)
 
     def _post_init(self):
         """Complete initialization with post-init events."""

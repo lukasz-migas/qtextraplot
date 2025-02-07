@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QHBoxLayout, QWidget
 from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
 
 if ty.TYPE_CHECKING:
-    from qtextraplot._visuals.mpl import ViewMplLine
+    from qtextraplot.mpl import ViewMplLine
 
 
 class MplToolbar(QWidget):

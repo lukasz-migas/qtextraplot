@@ -9,8 +9,8 @@ from koyo.secret import get_short_hash
 from qtpy.QtCore import QMutexLocker
 from qtpy.QtWidgets import QWidget
 
-from qtextraplot._visuals.mpl.plot_base import PlotBase
-from qtextraplot._visuals.views_base import MUTEX, ViewBase
+from qtextraplot.mpl.plot_base import PlotBase
+from qtextraplot.utils.views_base import MUTEX, ViewBase
 
 if ty.TYPE_CHECKING:
     import pandas as pd
