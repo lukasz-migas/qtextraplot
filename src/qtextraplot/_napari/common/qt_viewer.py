@@ -155,6 +155,18 @@ class QtViewerBase(QWidget):
     def _post_init(self):
         """Complete initialization with post-init events."""
 
+    def enterEvent(self, event):
+        """Enable status on canvas enter"""
+        self.viewer.status = "Ready"
+        self.viewer.mouse_over_canvas = True
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        """Disable status on canvas leave"""
+        self.viewer.status = ""
+        self.viewer.mouse_over_canvas = False
+        super().leaveEvent(event)
+
     def _constrain_width(self, _event):
         """Allow the layer controls to be wider, only if floated.
 
@@ -196,40 +208,6 @@ class QtViewerBase(QWidget):
             Layer to be added.
         """
         raise NotImplementedError("Must implement method")
-
-    def _remove_layer(self, event):
-        """When a layer is removed, remove its parent.
-
-        Parameters
-        ----------
-        event : napari.utils.event.Event
-            The napari event that triggered this method.
-        """
-        layer = event.value
-        layer.events.visible.disconnect(self._reorder_layers)
-        vispy_layer = self.layer_to_visual[layer]
-        vispy_layer.close()
-        del vispy_layer
-        del self.layer_to_visual[layer]
-        self._reorder_layers()
-
-    def _reorder_layers(self) -> None:
-        """When the list is reordered, propagate changes to draw order."""
-        first_visible_found = False
-        for i, layer in enumerate(self.viewer.layers):
-            vispy_layer = self.layer_to_visual[layer]
-            vispy_layer.order = i
-
-            # the bottommost visible layer needs special treatment for blending
-            if layer.visible and not first_visible_found:
-                vispy_layer.first_visible = True
-                first_visible_found = True
-            else:
-                vispy_layer.first_visible = False
-            vispy_layer._on_blending_change()
-
-        self.canvas._draw_order.clear()
-        self.canvas.update()
 
     def on_save_figure(self, path=None):
         """Export figure."""
@@ -355,7 +333,7 @@ class QtViewerBase(QWidget):
         """
         if hasattr(event, "native"):
             event = event.native
-        self.canvas._backend._keyEvent(self.canvas.events.key_press, event)
+        self.canvas._scene_canvas._backend._keyEvent(self.canvas._scene_canvas.events.key_press, event)
         event.accept()
 
     def keyReleaseEvent(self, event):
@@ -368,7 +346,7 @@ class QtViewerBase(QWidget):
         """
         if hasattr(event, "native"):
             event = event.native
-        self.canvas._backend._keyEvent(self.canvas.events.key_release, event)
+        self.canvas._scene_canvas._backend._keyEvent(self.canvas._scene_canvas.events.key_release, event)
         event.accept()
 
     def closeEvent(self, event):

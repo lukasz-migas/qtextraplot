@@ -4,7 +4,7 @@ import typing as ty
 
 import numpy as np
 from psygnal._evented_model import EventedModel
-from pydantic import PrivateAttr
+from napari._pydantic_compat import PrivateAttr
 from pydantic.color import Color
 from qtextra.config import THEMES
 from qtextra.config.config import ConfigBase

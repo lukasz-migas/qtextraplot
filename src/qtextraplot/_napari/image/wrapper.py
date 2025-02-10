@@ -13,8 +13,10 @@ from qtpy.QtWidgets import QWidget
 
 from qtextraplot._napari.common.components.overlays.color_bar import ColorBarItem
 from qtextraplot._napari.common.wrapper import ViewerBase
-from qtextraplot._napari.image.components.viewer_model import ViewerModel as Viewer
-from qtextraplot._napari.image.qt_viewer import QtViewer
+
+# from qtextraplot._napari.image.components.viewer_model import ViewerModel as Viewer
+from qtextraplot._napari.image.components.viewer_model import NapariViewer as Viewer
+from qtextraplot._napari.image.qt_viewer import QtViewerNapari
 
 MUTEX = QMutex()
 IMAGE_NAME, PAINT_NAME, MASK_NAME, LABELS_NAME, SHAPES_NAME = (
@@ -39,16 +41,15 @@ class NapariImageView(ViewerBase):
         # create instance of viewer
         self.viewer: Viewer = Viewer(**kwargs)
         # create instance of qt widget
-        self.widget: QtViewer = QtViewer(
-            self,
-            self.viewer,
-            parent=parent,
-            disable_controls=kwargs.pop("disable_controls", False),
-            add_dims=kwargs.pop("add_dims", True),
-            add_toolbars=kwargs.pop("add_toolbars", True),
-            allow_extraction=kwargs.pop("allow_extraction", True),
-            disable_new_layers=kwargs.pop("disable_new_layers", False),
-            **kwargs,
+        self.widget: QtViewerNapari = QtViewerNapari(
+            viewer=self.viewer,
+            # parent=parent,
+            # disable_controls=kwargs.pop("disable_controls", False),
+            # add_dims=kwargs.pop("add_dims", True),
+            # add_toolbars=kwargs.pop("add_toolbars", True),
+            # allow_extraction=kwargs.pop("allow_extraction", True),
+            # disable_new_layers=kwargs.pop("disable_new_layers", False),
+            # **kwargs,
         )
         self.toolbar = self.widget.viewerToolbar
 
@@ -60,7 +61,7 @@ class NapariImageView(ViewerBase):
         self.mask_layer = None
 
         # connect events
-        self.viewer.events.clear_canvas.connect(self._clear)
+        # self.viewer.events.clear_canvas.connect(self._clear)
         self.viewer.layers.events.removed.connect(self._on_remove_layer)
 
     def _on_remove_layer(self, _evt=None):

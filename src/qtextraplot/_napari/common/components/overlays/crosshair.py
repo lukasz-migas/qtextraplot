@@ -5,7 +5,7 @@ from typing import Tuple
 from napari.components.overlays import SceneOverlay
 from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events.custom_types import Array
-from pydantic import validator
+from napari._pydantic_compat import validator
 
 
 class Shape(str, Enum):

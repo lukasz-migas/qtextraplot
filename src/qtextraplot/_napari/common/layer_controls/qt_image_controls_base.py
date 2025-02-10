@@ -1,5 +1,6 @@
 """Base image controls."""
 
+import qtextra.helpers as hp
 from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
 from napari._qt.layer_controls.qt_image_controls_base import AutoScaleButtons, QContrastLimitsPopup
 from napari.layers import Image
@@ -9,7 +10,6 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon, QImage, QPixmap
 from superqt.sliders import QDoubleRangeSlider
 
-import qtextra.helpers as hp
 from qtextraplot._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
 
 
@@ -83,7 +83,7 @@ class QtBaseImageControls(QtLayerControls):
 
     def on_make_colormap(self):
         """Make new colormap."""
-        from qtextra.utils.colormap import napari_colormap
+        from qtextraplot.utils.colormap import napari_colormap
 
         color = hp.get_color(self, as_hex=True)
         if color:

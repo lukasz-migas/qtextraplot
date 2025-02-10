@@ -5,7 +5,7 @@ import numpy as np
 from napari.components.overlays import CanvasOverlay
 from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events.custom_types import Array
-from pydantic import validator
+from napari._pydantic_compat import validator
 
 ColorBarItem = Tuple[np.ndarray, str, Tuple[float, float]]
 

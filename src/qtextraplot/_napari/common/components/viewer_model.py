@@ -5,6 +5,8 @@ import warnings
 
 import napari.layers as n_layers
 import numpy as np
+from napari._pydantic_compat import Extra, Field, PrivateAttr, validator
+from napari.components._layer_slicer import _LayerSlicer
 from napari.components.cursor import Cursor
 from napari.components.dims import Dims
 from napari.components.grid import GridCanvas
@@ -16,7 +18,6 @@ from napari.utils.events import Event, EventedDict, EventedModel, disconnect_eve
 from napari.utils.key_bindings import KeymapProvider
 from napari.utils.mouse_bindings import MousemapProvider
 from napari.utils.theme import available_themes, is_theme_available
-from pydantic import Extra, Field, PrivateAttr, validator
 
 from qtextraplot._napari.common.components.layerlist import LayerList
 
@@ -59,6 +60,10 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
     # To check if mouse is over canvas to avoid race conditions between
     # different events systems
     mouse_over_canvas: bool = False
+
+    # Need to use default factory because slicer is not copyable which
+    # is required for default values.
+    _layer_slicer: _LayerSlicer = PrivateAttr(default_factory=_LayerSlicer)
 
     def __init__(
         self,
@@ -210,19 +215,26 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
         translate[-2:] = translate_2d
         layer._translate_grid = translate
 
-    def _update_layers(self, event=None, layers=None):
+    def _update_layers(self, *, layers=None):
         """Updates the contained layers.
 
         Parameters
         ----------
-        event :
-            Event
         layers : list of napari.layers.Layer, optional
             List of layers to update. If none provided updates all.
         """
         layers = layers or self.layers
-        for layer in layers:
-            layer._slice_dims(self.dims.point, self.dims.ndisplay, self.dims.order)
+        self._layer_slicer.submit(layers=layers, dims=self.dims)
+        # If the currently selected layer is sliced asynchronously, then the value
+        # shown with this position may be incorrect. See the discussion for more details:
+        # https://github.com/napari/napari/pull/5377#discussion_r1036280855
+        position = list(self.cursor.position)
+        if len(position) < self.dims.ndim:
+            # cursor dimensionality is outdated — reset to correct dimension
+            position = [0.0] * self.dims.ndim
+        for ind in self.dims.order[: -self.dims.ndisplay]:
+            position[ind] = self.dims.point[ind]
+        self.cursor.position = tuple(position)
 
     def _on_add_layer(self, event):
         """Connect new layer events.
