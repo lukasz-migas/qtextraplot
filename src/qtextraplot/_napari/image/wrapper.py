@@ -13,10 +13,8 @@ from qtpy.QtWidgets import QWidget
 
 from qtextraplot._napari.common.components.overlays.color_bar import ColorBarItem
 from qtextraplot._napari.common.wrapper import ViewerBase
-
-# from qtextraplot._napari.image.components.viewer_model import ViewerModel as Viewer
-from qtextraplot._napari.image.components.viewer_model import NapariViewer as Viewer
-from qtextraplot._napari.image.qt_viewer import QtViewerNapari
+from qtextraplot._napari.image.components.viewer_model import ViewerModel as Viewer
+from qtextraplot._napari.image.qt_viewer import QtViewer
 
 MUTEX = QMutex()
 IMAGE_NAME, PAINT_NAME, MASK_NAME, LABELS_NAME, SHAPES_NAME = (
@@ -41,15 +39,15 @@ class NapariImageView(ViewerBase):
         # create instance of viewer
         self.viewer: Viewer = Viewer(**kwargs)
         # create instance of qt widget
-        self.widget: QtViewerNapari = QtViewerNapari(
+        self.widget: QtViewer = QtViewer(
             viewer=self.viewer,
-            # parent=parent,
-            # disable_controls=kwargs.pop("disable_controls", False),
-            # add_dims=kwargs.pop("add_dims", True),
-            # add_toolbars=kwargs.pop("add_toolbars", True),
-            # allow_extraction=kwargs.pop("allow_extraction", True),
-            # disable_new_layers=kwargs.pop("disable_new_layers", False),
-            # **kwargs,
+            parent=parent,
+            disable_controls=kwargs.pop("disable_controls", False),
+            add_dims=kwargs.pop("add_dims", True),
+            add_toolbars=kwargs.pop("add_toolbars", True),
+            allow_extraction=kwargs.pop("allow_extraction", True),
+            disable_new_layers=kwargs.pop("disable_new_layers", False),
+            **kwargs,
         )
         self.toolbar = self.widget.viewerToolbar
 
@@ -359,10 +357,6 @@ if __name__ == "__main__":  # pragma: no cover
 
         def _on_btn():
             """Button action."""
-            # layer.translate = np.random.randint(0, 100, (2,))
-            # viewer.viewer.text_overlay.text = viewer.viewer.text_overlay.text + "T"
-            # viewer.viewer.text_overlay.position = random.choice(list(Position))
-            # viewer.viewer.text_overlay.font_size += 1
 
         def _accept(event):
             wrapper.viewer.cross_hair.position = event.position
@@ -372,22 +366,19 @@ if __name__ == "__main__":  # pragma: no cover
         wrapper = NapariImageView(frame)
 
         wrapper.plot(data.astronaut(), clip=False)
-        # layer.mode = "transform"
-        #         layer.events.crosshair.connect(_accept)
-        #         viewer.viewer.cross_hair.visible = True
 
-        # points = viewer.viewer.add_points(
-        #     np.array([0, 0]),
-        #     size=0,
-        #     text={
-        #         "text": "IM: {label}",
-        #         "size": 12,
-        #         "color": "white",
-        #         "translation": np.array([0, 0]),
-        #         "anchor": "upper_left",
-        #     },
-        #     properties={"label": ["TEST"]},
-        # )
+        points = wrapper.viewer.add_points(
+            np.array([0, 0]),
+            size=0,
+            text={
+                "text": "IM: {label}",
+                "size": 12,
+                "color": "white",
+                "translation": np.array([0, 0]),
+                "anchor": "upper_left",
+            },
+            properties={"label": ["TEST"]},
+        )
 
         THEMES.set_theme_stylesheet(wrapper.widget)
 

@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import typing as ty
+from contextlib import suppress
 
 from napari.utils.events.event import EmitterGroup, Event
+from qtextra.helpers import make_radio_btn_group
+from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QWidget
 
 from qtextraplot._napari.image.components._viewer_key_bindings import toggle_grid
-from qtextra.helpers import make_radio_btn_group
-from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
 
 if ty.TYPE_CHECKING:
     pass
@@ -35,6 +36,7 @@ class QtViewToolbar(QWidget):
         self.view = view
         self.viewer = viewer
         self.qt_viewer = qt_viewer
+
         # user kwargs
         self.allow_extraction = kwargs.pop("allow_extraction", True)
         self.allow_shapes = kwargs.pop("allow_shapes", True)
@@ -76,14 +78,19 @@ class QtViewToolbar(QWidget):
         self.tools_clip_btn = toolbar_right.insert_qta_tool(
             "clipboard",
             tooltip="Copy figure to clipboard",
-            func=self.qt_viewer.clipboard,
+            func=self.on_copy_to_clipboard,
             func_menu=self.on_open_save_figure,
         )
         self.tools_save_btn = toolbar_right.insert_qta_tool(
-            "save", tooltip="Save figure", func=self.qt_viewer.on_save_figure, func_menu=self.on_open_save_figure
+            "save",
+            tooltip="Save figure",
+            func=self.on_save_figure,
+            func_menu=self.on_open_save_figure,
         )
         self.tools_colorbar_btn = toolbar_right.insert_qta_tool(
-            "colorbar", tooltip="Show/hide colorbar", checkable=True
+            "colorbar",
+            tooltip="Show/hide colorbar",
+            checkable=True,
         )
         self.tools_colorbar_btn.connect_to_right_click(self.on_open_colorbar_config)
         self.tools_scalebar_btn = toolbar_right.insert_qta_tool(
@@ -119,16 +126,6 @@ class QtViewToolbar(QWidget):
             func=lambda: toggle_grid(viewer),
             func_menu=self.open_grid_popup,
         )
-        # make_qta_btn(
-        #     self,
-        #     "grid_off",
-        #     "Toggle grid view. Right-click on the button to change grid settings.",
-        #     checkable=True,
-        #     checked=viewer.grid.enabled,
-        #     checked_icon_name="grid_on",
-        #     func=lambda: toggle_grid(viewer),
-        #     func_menu=self.open_grid_popup,
-        # )
         self.layers_btn = toolbar_right.insert_qta_tool(
             "layers",
             tooltip="Display layer controls",
@@ -186,6 +183,18 @@ class QtViewToolbar(QWidget):
         if toolbar_right.n_items <= 1:  # exclude spacer from the count
             toolbar_right.setVisible(False)
 
+    def on_save_figure(self, path=None):
+        """Export figure."""
+        from napari._qt.dialogs.screenshot_dialog import ScreenshotDialog
+
+        dialog = ScreenshotDialog(self.qt_viewer.screenshot, self, history=[])
+        if dialog.exec_():
+            pass
+
+    def on_copy_to_clipboard(self):
+        """Copy figure to clipboard."""
+        self.qt_viewer.clipboard()
+
     def open_grid_popup(self) -> None:
         """Open grid options pop up widget."""
         from qtextraplot._napari.image.component_controls.qt_layer_buttons import make_grid_popup
@@ -211,14 +220,12 @@ class QtViewToolbar(QWidget):
         # except KeyError:
         #     pass
 
-        try:
+        with suppress(KeyError):
             self.tools_colorbar_btn.setChecked(self.qt_viewer.viewer.color_bar.visible)
             self.tools_colorbar_btn.clicked.connect(self._toggle_color_bar_visible)
             self.qt_viewer.viewer.color_bar.events.visible.connect(
                 lambda x: self.tools_colorbar_btn.setChecked(self.qt_viewer.viewer.color_bar.visible)
             )
-        except KeyError:
-            pass
 
         self.qt_viewer.viewer.text_overlay.events.visible.connect(
             lambda x: self.tools_text_btn.setChecked(self.qt_viewer.viewer.text_overlay.visible)
@@ -276,5 +283,5 @@ class QtViewToolbar(QWidget):
         """Show scale bar controls for the viewer."""
         from qtextraplot._napari.common.widgets.screenshot_dialog import QtScreenshotDialog
 
-        dlg = QtScreenshotDialog(self.view, self)
+        dlg = QtScreenshotDialog(self, self)
         dlg.show_above_widget(self.tools_save_btn)
