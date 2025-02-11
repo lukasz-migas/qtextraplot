@@ -13,7 +13,7 @@ from qtpy.QtWidgets import QWidget
 
 from qtextraplot._napari.common.components.overlays.color_bar import ColorBarItem
 from qtextraplot._napari.common.wrapper import ViewerBase
-from qtextraplot._napari.image.components.viewer_model import ViewerModel as Viewer
+from qtextraplot._napari.image.components.viewer_model import Viewer
 from qtextraplot._napari.image.qt_viewer import QtViewer
 
 MUTEX = QMutex()
@@ -366,8 +366,7 @@ if __name__ == "__main__":  # pragma: no cover
         wrapper = NapariImageView(frame)
 
         wrapper.plot(data.astronaut(), clip=False)
-
-        points = wrapper.viewer.add_points(
+        wrapper.viewer.add_points(
             np.array([0, 0]),
             size=0,
             text={

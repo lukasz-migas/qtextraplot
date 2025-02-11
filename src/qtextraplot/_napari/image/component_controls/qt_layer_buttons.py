@@ -3,27 +3,45 @@
 from __future__ import annotations
 
 import typing as ty
+from functools import partial
 
+import qtextra.helpers as hp
 from napari._qt.dialogs.qt_modal import QtPopup
 from napari._qt.widgets.qt_dims_sorter import QtDimsSorter
 from napari._qt.widgets.qt_spinbox import QtSpinBox
 from napari._qt.widgets.qt_tooltip import QtToolTipLabel
-from qtpy.QtCore import QPoint, Qt
-from qtpy.QtWidgets import QFrame, QHBoxLayout, QLabel, QSlider, QVBoxLayout, QWidget
-
-import qtextra.helpers as hp
-from qtextraplot._napari.image.components._viewer_key_bindings import toggle_grid, toggle_ndisplay
+from napari.utils.action_manager import action_manager
 from qtextra.widgets.qt_button_icon import QtImagePushButton
+from qtpy.QtCore import QEvent, QPoint, Qt
+from qtpy.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel, QSlider, QVBoxLayout, QWidget
 
 if ty.TYPE_CHECKING:
     from qtextraplot._napari.image.components.viewer_model import ViewerModel
 
 
-def make_qta_btn(parent, icon_name: str, tooltip: str, **kwargs: ty.Any) -> QtImagePushButton:
+def add_new_points(viewer):
+    viewer.add_points(
+        ndim=max(viewer.dims.ndim, 2),
+        scale=viewer.layers.extent.step,
+    )
+
+
+def add_new_shapes(viewer):
+    viewer.add_shapes(
+        ndim=max(viewer.dims.ndim, 2),
+        scale=viewer.layers.extent.step,
+    )
+
+
+def make_qta_btn(
+    parent: QWidget, icon_name: str, tooltip: str = "", action: str = "", extra_tooltip_text: str = "", **kwargs: ty.Any
+) -> QtImagePushButton:
     """Make a button with an icon from QtAwesome."""
     btn = hp.make_qta_btn(parent=parent, icon_name=icon_name, tooltip=tooltip, **kwargs)
     btn.set_normal()
     btn.setProperty("layer_button", True)
+    if action:
+        action_manager.bind_button(action, btn, extra_tooltip_text=extra_tooltip_text)
     return btn
 
 
@@ -34,7 +52,9 @@ class QtLayerButtons(QFrame):
         super().__init__()
         self.viewer = viewer
         self.delete_btn = make_qta_btn(
-            self, "delete", tooltip="Delete selected layers", func=self.viewer.layers.remove_selected
+            self,
+            "delete",
+            action="napari:delete_selected_layers",
         )
         self.delete_btn.setParent(self)
 
@@ -42,25 +62,19 @@ class QtLayerButtons(QFrame):
             self,
             "new_points",
             "Add new points layer",
-            func=lambda: self.viewer.add_points(
-                ndim=max(self.viewer.dims.ndim, 2),
-                scale=self.viewer.layers.extent.step,
-            ),
+            func=partial(add_new_points, self.viewer),
         )
         self.new_shapes_btn = make_qta_btn(
             self,
             "new_shapes",
             "Add new shapes layer",
-            func=lambda: self.viewer.add_shapes(
-                ndim=max(self.viewer.dims.ndim, 2),
-                scale=self.viewer.layers.extent.step,
-            ),
+            func=partial(add_new_shapes, self.viewer),
         )
         self.new_labels_btn = make_qta_btn(
             self,
             "new_labels",
             "Add new free-hand draw shapes layer",
-            func=lambda: self.viewer._new_labels(name="Free-draw"),
+            func=self.viewer._new_labels,
         )
         if disable_new_layers:
             self.new_points_btn.hide()
@@ -92,7 +106,7 @@ class QtViewerButtons(QFrame):
             checkable=True,
             checked=self.viewer.dims.ndisplay == 3,
             checked_icon_name="ndisplay_on",
-            func=lambda: toggle_ndisplay(self.viewer),
+            action="napari:toggle_ndisplay",
             func_menu=self.open_perspective_popup,
         )
 
@@ -100,7 +114,7 @@ class QtViewerButtons(QFrame):
             self,
             "roll",
             "Roll dimensions order for display. Right-click on the button to manually order dimensions.",
-            func=lambda: viewer.dims._roll(),
+            action="napari:roll_axes",
             func_menu=self.open_roll_popup,
         )
 
@@ -108,8 +122,9 @@ class QtViewerButtons(QFrame):
             self,
             "transpose",
             "Transpose displayed dimensions.",
-            func=lambda: viewer.dims.transpose(),
+            action="napari:transpose_axes",
         )
+        self.transposeDimsButton.installEventFilter(self)
 
         self.gridViewButton = make_qta_btn(
             self,
@@ -118,7 +133,7 @@ class QtViewerButtons(QFrame):
             checkable=True,
             checked=viewer.grid.enabled,
             checked_icon_name="grid_on",
-            func=lambda: toggle_grid(viewer),
+            action="napari:toggle_grid",
             func_menu=self.open_grid_popup,
         )
 
@@ -130,7 +145,7 @@ class QtViewerButtons(QFrame):
             self,
             "home",
             "Reset view",
-            func=lambda: self.viewer.reset_view(),
+            action="napari:reset_view",
         )
 
         layout = QHBoxLayout()
@@ -143,6 +158,18 @@ class QtViewerButtons(QFrame):
         layout.addWidget(self.resetViewButton)
         layout.addStretch(0)
         self.setLayout(layout)
+
+    def eventFilter(self, qobject, event):
+        """Have Alt/Option key rotate layers with the transpose button."""
+        modifiers = QApplication.keyboardModifiers()
+        if (
+            modifiers == Qt.AltModifier
+            and qobject == self.transposeDimsButton
+            and event.type() == QEvent.MouseButtonPress
+        ):
+            action_manager.trigger("napari:rotate_layers")
+            return True
+        return False
 
     def open_roll_popup(self):
         """Open a grid popup to manually order the dimensions."""

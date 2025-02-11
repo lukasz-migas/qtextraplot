@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import typing as ty
+from weakref import WeakSet
 
 from napari.components.viewer_model import ViewerModel as _ViewerModel
 from napari.utils.events.event import Event
@@ -17,8 +18,10 @@ DEFAULT_OVERLAYS = {
 }
 
 
-class ViewerModel(_ViewerModel):
+class Viewer(_ViewerModel):
     """Viewer model."""
+
+    _instances: ty.ClassVar[WeakSet[Viewer]] = WeakSet()
 
     def __init__(self, title: str = "qtextraplot", **kwargs: ty.Any):
         super().__init__(title=title)
@@ -29,6 +32,8 @@ class ViewerModel(_ViewerModel):
         self._overlays.update({k: v() for k, v in DEFAULT_OVERLAYS.items()})
 
         self.events.add(crosshair=Event, clear_canvas=Event)
+
+        self._instances.add(self)
 
     @property
     def cross_hair(self) -> CrossHairOverlay:
