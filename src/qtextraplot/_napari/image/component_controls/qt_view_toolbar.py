@@ -11,7 +11,7 @@ from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QWidget
 
-from qtextraplot._napari.image.components._viewer_key_bindings import toggle_grid
+# from qtextraplot._napari.image.components._viewer_key_bindings import toggle_grid
 
 if ty.TYPE_CHECKING:
     pass
@@ -123,7 +123,7 @@ class QtViewToolbar(QWidget):
             tooltip="Toggle grid view. Right-click on the button to change grid settings.",
             checkable=True,
             checked_icon_name="grid_on",
-            func=lambda: toggle_grid(viewer),
+            # func=lambda: toggle_grid(viewer),
             func_menu=self.open_grid_popup,
         )
         self.layers_btn = toolbar_right.insert_qta_tool(

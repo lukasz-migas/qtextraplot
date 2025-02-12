@@ -32,7 +32,6 @@ class Viewer(_ViewerModel):
         self._overlays.update({k: v() for k, v in DEFAULT_OVERLAYS.items()})
 
         self.events.add(crosshair=Event, clear_canvas=Event)
-
         self._instances.add(self)
 
     @property

@@ -3,7 +3,9 @@
 import typing as ty
 from weakref import WeakSet
 
+from napari._qt._qapp_model.qactions import add_dummy_actions, init_qactions
 from napari._qt.containers import QtLayerList
+from napari._qt.qt_main_window import _QtMainWindow
 from napari._qt.qt_viewer import QtViewer as _QtViewer
 from napari._qt.qt_viewer import _create_qt_poll, _create_remote_manager
 from napari._qt.widgets.qt_dims import QtDims
@@ -41,13 +43,15 @@ class QtViewer(QWidget):
         self._disable_controls = disable_controls
 
         super().__init__(parent)
+        self.viewer = viewer
 
         self._instances.add(self)
+        _QtMainWindow._instances.append(self)
+        self._qt_viewer = self
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
         QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
 
-        self.viewer = viewer
         self.dims = QtDims(self.viewer.dims)
         self._controls = None
         self._layers = None
@@ -68,6 +72,18 @@ class QtViewer(QWidget):
         )
 
         self.viewer._layer_slicer.events.ready.connect(self._on_slice_ready)
+
+        # this is the line that initializes any Qt-based app-model Actions that
+        # were defined somewhere in the `_qt` module and imported in init_qactions
+        init_qactions()
+
+        # TODO: the dummy actions should **not** live on the layerlist context
+        # as they are unrelated. However, we do not currently have a suitable
+        # enclosing context where we could store these keys, such that they
+        # **and** the layerlist context key are available when we update
+        # menus. We need a single context to contain all keys required for
+        # menu update, so we add them to the layerlist context for now.
+        add_dummy_actions(self.viewer.layers._ctx)
 
         self._on_active_change()
         self.viewer.layers.events.inserted.connect(self._update_camera_depth)
