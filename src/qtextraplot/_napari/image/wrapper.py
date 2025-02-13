@@ -348,18 +348,14 @@ class NapariImageView(ViewerBase):
 if __name__ == "__main__":  # pragma: no cover
 
     def _main() -> None:
-        import sys
-
         from qtextra.config.theme import THEMES
         from qtextra.helpers import make_btn
-        from qtextra.utils.dev import qframe
+        from qtextra.utils.dev import exec_, qframe
         from skimage import data
 
         def _on_btn():
             """Button action."""
-
-        def _accept(event):
-            wrapper.viewer.cross_hair.position = event.position
+            raise ValueError("Test error")
 
         app, frame, ha = qframe(horz=False)
         frame.setMinimumSize(600, 600)
@@ -388,6 +384,6 @@ if __name__ == "__main__":  # pragma: no cover
         ha.addWidget(wrapper.widget, stretch=True)
         ha.addWidget(btn)
         frame.show()
-        sys.exit(app.exec_())
+        exec_(app)
 
     _main()

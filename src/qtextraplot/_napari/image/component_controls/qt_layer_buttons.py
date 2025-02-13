@@ -95,7 +95,7 @@ class QtLayerButtons(QFrame):
 class QtViewerButtons(QFrame):
     """Button controls for the napari viewer."""
 
-    def __init__(self, viewer, parent=None):
+    def __init__(self, viewer, **kwargs: ty.Any):
         super().__init__()
         self.viewer = viewer
 
@@ -176,7 +176,7 @@ class QtViewerButtons(QFrame):
         if self.viewer.dims.ndisplay != 2:
             return
 
-        dim_sorter = QtDimsSorter(self.viewer, self)
+        dim_sorter = QtDimsSorter(self.viewer.dims, self)
         dim_sorter.setObjectName("dim_sorter")
 
         # make layout

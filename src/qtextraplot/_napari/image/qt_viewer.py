@@ -3,7 +3,7 @@
 import typing as ty
 from weakref import WeakSet
 
-from napari._qt._qapp_model.qactions import add_dummy_actions, init_qactions
+from napari._qt._qapp_model.qactions import init_qactions
 from napari._qt.containers import QtLayerList
 from napari._qt.qt_main_window import _QtMainWindow
 from napari._qt.qt_viewer import QtViewer as _QtViewer
@@ -75,15 +75,8 @@ class QtViewer(QWidget):
 
         # this is the line that initializes any Qt-based app-model Actions that
         # were defined somewhere in the `_qt` module and imported in init_qactions
+        # TODO: customise this!
         init_qactions()
-
-        # TODO: the dummy actions should **not** live on the layerlist context
-        # as they are unrelated. However, we do not currently have a suitable
-        # enclosing context where we could store these keys, such that they
-        # **and** the layerlist context key are available when we update
-        # menus. We need a single context to contain all keys required for
-        # menu update, so we add them to the layerlist context for now.
-        add_dummy_actions(self.viewer.layers._ctx)
 
         self._on_active_change()
         self.viewer.layers.events.inserted.connect(self._update_camera_depth)
@@ -120,9 +113,7 @@ class QtViewer(QWidget):
         # widget showing layer buttons (e.g. add new shape)
         self.layerButtons = QtLayerButtons(self.viewer, **kwargs)
         # viewer buttons to control 2d/3d, grid, transpose, etc
-        self.viewerButtons = QtViewerButtons(self.viewer, self)
-        # toolbar
-        self.viewerToolbar = QtViewToolbar(self.view, self.viewer, self, **kwargs)
+        self.viewerButtons = QtViewerButtons(self.viewer, **kwargs)
 
         image_layout = QVBoxLayout()
         image_layout.addWidget(self.canvas.native, stretch=True)
