@@ -2,13 +2,12 @@
 
 import typing as ty
 
+from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QHBoxLayout, QWidget
 
-from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
-
 if ty.TYPE_CHECKING:
-    from qtextraplot.mpl import ViewMplLine
+    from qtextraplot._mpl import ViewMplLine
 
 
 class MplToolbar(QWidget):

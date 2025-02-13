@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import numpy as np
-
 import qtextra.helpers as hp
-from qtextraplot.mpl import ViewMplLine
-from qtpy.QtWidgets import QVBoxLayout, QWidget
 from qtextra.widgets.qt_dialog import QtFramelessTool
+from qtpy.QtWidgets import QVBoxLayout, QWidget
+
+from qtextraplot._mpl import ViewMplLine
 
 
 class QtMplPopup(QtFramelessTool):
