@@ -381,31 +381,6 @@ QtViewerPushButton[mode="grid_view_button"] {
   image: url("theme_{{ id }}://grid.svg");
 }
 
-/* ----------------- QtModePushButton ----------------- */
-QtModePushButton[mode="shuffle"] {
-   image: url("theme_{{ id }}://shuffle.svg");
-}
-
-QtModePushButton[mode="move_back"] {
-   image: url("theme_{{ id }}://move_back.svg");
-}
-
-QtModePushButton[mode="move_front"] {
-   image: url("theme_{{ id }}://move_front.svg");
-}
-
-QtModePushButton[mode="delete_shape"] {
-   image: url("theme_{{ id }}://cross.svg");
-}
-
-QWidget[emphasized="true"] QtModePushButton[mode="delete_shape"]:hover {
-  background-color: {{ lighten(warning, 50) }};
-}
-
-QWidget[emphasized="true"] QtModePushButton[mode="delete_shape"]:pressed {
-  background-color: {{ warning }};
-}
-
 /* ----------------- QtModeRadioButton ----------------- */
 QtModeRadioButton {
   min-height : 28px;
@@ -439,71 +414,6 @@ QtModeRadioButton::indicator:unchecked:hover {
 
 QtModeRadioButton[mode="zoom"]::indicator {
   image: url("theme_{{ id }}://zoom.svg");
-}
-
-QtModeRadioButton[mode="select"]::indicator {
-  image: url("theme_{{ id }}://select.svg");
-}
-
-QtModeRadioButton[mode="direct"]::indicator {
-  image: url("theme_{{ id }}://direct.svg");
-}
-
-QtModeRadioButton[mode="rectangle"]::indicator {
-  image: url("theme_{{ id }}://rectangle.svg");
-}
-
-QtModeRadioButton[mode="ellipse"]::indicator {
-  image: url("theme_{{ id }}://ellipse.svg");
-  color: red;
-}
-
-QtModeRadioButton[mode="line"]::indicator {
-  image: url("theme_{{ id }}://line.svg");
-}
-
-QtModeRadioButton[mode="path"]::indicator {
-  image: url("theme_{{ id }}://path.svg");
-}
-
-QtModeRadioButton[mode="polygon"]::indicator {
-  image: url("theme_{{ id }}://polygon.svg");
-}
-
-QtModeRadioButton[mode="vertex_insert"]::indicator {
-  image: url("theme_{{ id }}://vertex_insert.svg");
-}
-
-QtModeRadioButton[mode="vertex_remove"]::indicator {
-  image: url("theme_{{ id }}://vertex_remove.svg");
-}
-
-QtModeRadioButton[mode="paint"]::indicator {
-  image: url("theme_{{ id }}://paint.svg");
-}
-
-QtModeRadioButton[mode="fill"]::indicator {
-  image: url("theme_{{ id }}://fill.svg");
-}
-
-QtModeRadioButton[mode="picker"]::indicator {
-  image: url("theme_{{ id }}://picker.svg");
-}
-
-QtModeRadioButton[mode="erase"]::indicator {
-    image: url("theme_{{ id }}://erase.svg");
-}
-
-QtModeRadioButton[mode="pan_zoom"]::indicator {
-    image: url("theme_{{ id }}://zoom.svg");
-}
-
-QtModeRadioButton[mode="select_points"]::indicator {
-    image: url("theme_{{ id }}://select.svg");
-}
-
-QtModeRadioButton[mode="add_points"]::indicator {
-    image: url("theme_{{ id }}://add.svg");
 }
 
 QtModeRadioButton[mode="move_region"]::indicator {
