@@ -3,10 +3,9 @@
 import typing as ty
 from weakref import ref
 
+from qtextra.widgets.qt_dialog import QtFramelessTool
 from qtpy.QtCore import QEvent, Qt
 from qtpy.QtWidgets import QVBoxLayout
-
-from qtextra.widgets.qt_dialog import QtFramelessTool
 
 if ty.TYPE_CHECKING:
     from napari._qt.qt_viewer import QtViewer
@@ -16,7 +15,7 @@ class DialogNapariControls(QtFramelessTool):
     """Controls display."""
 
     def __init__(self, qt_viewer: "QtViewer"):
-        self.ref_qt_viewer: ty.Callable[[], "QtViewer"] = ref(qt_viewer)
+        self.ref_qt_viewer: ty.Callable[[], QtViewer] = ref(qt_viewer)
         super().__init__(parent=qt_viewer)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setMinimumHeight(600)
@@ -38,11 +37,11 @@ class DialogNapariControls(QtFramelessTool):
     def keyPressEvent(self, event: QEvent) -> None:  # type: ignore[override]
         """Called whenever a key is pressed."""
         qt_viewer = self.ref_qt_viewer()
-        qt_viewer.canvas._backend._keyEvent(qt_viewer.canvas.events.key_press, event)
+        qt_viewer.canvas._scene_canvas._backend._keyEvent(qt_viewer.canvas.events.key_press, event)
         event.accept()
 
     def keyReleaseEvent(self, event: QEvent) -> None:  # type: ignore[override]
         """Called whenever a key is released."""
         qt_viewer = self.ref_qt_viewer()
-        qt_viewer.canvas._backend._keyEvent(qt_viewer.canvas.events.key_release, event)
+        qt_viewer.canvas._scene_canvas._backend._keyEvent(qt_viewer.canvas.events.key_release, event)
         event.accept()

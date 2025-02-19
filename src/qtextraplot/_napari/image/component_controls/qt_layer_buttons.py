@@ -16,7 +16,7 @@ from qtpy.QtCore import QEvent, QPoint, Qt
 from qtpy.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel, QSlider, QVBoxLayout, QWidget
 
 if ty.TYPE_CHECKING:
-    from qtextraplot._napari.image.components.viewer_model import ViewerModel
+    from qtextraplot._napari.image.components.viewer_model import Viewer
 
 
 def add_new_points(viewer):
@@ -48,8 +48,9 @@ def make_qta_btn(
 class QtLayerButtons(QFrame):
     """Button controls for napari layers."""
 
-    def __init__(self, viewer: ViewerModel, disable_new_layers: bool = False, **_kwargs: ty.Any):
+    def __init__(self, qt_viewer, viewer: Viewer, disable_new_layers: bool = False, **_kwargs: ty.Any):
         super().__init__()
+        self.qt_viewer = qt_viewer
         self.viewer = viewer
         self.delete_btn = make_qta_btn(
             self,
@@ -91,12 +92,20 @@ class QtLayerButtons(QFrame):
         layout.addWidget(self.delete_btn)
         self.setLayout(layout)
 
+    def enterEvent(self, event):
+        """Emit our own event when mouse enters the canvas."""
+        from qtextraplot._napari.image.qt_viewer import QtViewer
+
+        QtViewer.set_current_index(self.qt_viewer.current_index)
+        super().enterEvent(event)
+
 
 class QtViewerButtons(QFrame):
     """Button controls for the napari viewer."""
 
-    def __init__(self, viewer, **kwargs: ty.Any):
+    def __init__(self, qt_viewer, viewer, **kwargs: ty.Any):
         super().__init__()
+        self.qt_viewer = qt_viewer
         self.viewer = viewer
 
         self.ndisplayButton = make_qta_btn(
@@ -159,11 +168,18 @@ class QtViewerButtons(QFrame):
         layout.addStretch(0)
         self.setLayout(layout)
 
+    def enterEvent(self, event):
+        """Emit our own event when mouse enters the canvas."""
+        from qtextraplot._napari.image.qt_viewer import QtViewer
+
+        QtViewer.set_current_index(self.qt_viewer.current_index)
+        super().enterEvent(event)
+
     def eventFilter(self, qobject, event):
         """Have Alt/Option key rotate layers with the transpose button."""
         modifiers = QApplication.keyboardModifiers()
         if (
-            modifiers == Qt.AltModifier
+            modifiers == Qt.KeyboardModifier.AltModifier
             and qobject == self.transposeDimsButton
             and event.type() == QEvent.MouseButtonPress
         ):
@@ -214,7 +230,7 @@ class QtViewerButtons(QFrame):
         make_grid_popup(self, self.viewer)
 
 
-def make_grid_popup(parent: QWidget, viewer: ViewerModel) -> None:
+def make_grid_popup(parent: QWidget, viewer: Viewer) -> None:
     """Make grid popup."""
 
     def _update_grid_width(value):

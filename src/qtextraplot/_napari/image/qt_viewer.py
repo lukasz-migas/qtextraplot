@@ -1,9 +1,8 @@
 """Qt widget that embeds the canvas."""
 
 import typing as ty
-from weakref import WeakSet
 
-from napari._qt._qapp_model.qactions import init_qactions
+import numpy as np
 from napari._qt.containers import QtLayerList
 from napari._qt.qt_main_window import _QtMainWindow
 from napari._qt.qt_viewer import QtViewer as _QtViewer
@@ -16,9 +15,10 @@ from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 from superqt import ensure_main_thread
 
 from qtextraplot._napari.common._vispy.overlays import register_vispy_overlays
-from qtextraplot._napari.common.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
+from qtextraplot._napari.image._qapp_model import init_qactions
 from qtextraplot._napari.image.component_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
 from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
+from qtextraplot._napari.image.component_controls.qt_layer_controls_container import QtLayerControlsContainer
 
 register_vispy_overlays()
 
@@ -26,7 +26,12 @@ register_vispy_overlays()
 class QtViewer(QWidget):
     """Widget view."""
 
-    _instances = WeakSet()
+    # To track window instances and facilitate getting the "active" viewer...
+    # We use this instead of QApplication.activeWindow for compatibility with
+    # IPython usage. When you activate IPython, it will appear that there are
+    # *no* active windows, so we want to track the most recently active windows
+    _instances: ty.ClassVar[list["QWidget"]] = []
+    _instance_index: ty.ClassVar[int] = -1
 
     _layers_controls_dialog = None
 
@@ -45,9 +50,10 @@ class QtViewer(QWidget):
         super().__init__(parent)
         self.viewer = viewer
 
-        self._instances.add(self)
+        self._instances.append(self)
         _QtMainWindow._instances.append(self)
         self._qt_viewer = self
+        self.current_index = len(self._instances) - 1
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
         QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
@@ -83,8 +89,8 @@ class QtViewer(QWidget):
         self.viewer.layers.events.removed.connect(self._update_camera_depth)
         self.viewer.dims.events.ndisplay.connect(self._update_camera_depth)
         self.viewer.layers.selection.events.active.connect(self._on_active_change)
-
         self.viewer.layers.events.inserted.connect(self._on_add_layer_change)
+        self.viewer.events.zoom.connect(self._on_update_zoom)
 
         self.setAcceptDrops(True)
 
@@ -102,6 +108,30 @@ class QtViewer(QWidget):
 
         self._set_layout(add_dims=add_dims, add_toolbars=add_toolbars, **kwargs)
 
+        self._welcome_widget = self.canvas.native  # we don't need welcome widget
+
+    # def enterEvent(self, event):
+    #     """Emit our own event when mouse enters the canvas."""
+    #     QtViewer._current_index = self._instances.index(self)
+    #     super().enterEvent(event)
+    #
+    # def leaveEvent(self, event):
+    #     """Emit our own event when mouse leaves the canvas."""
+    #     QtViewer._current_index = self._instances.index(self)
+    #     super().leaveEvent(event)
+
+    @classmethod
+    def set_current_index(cls, index_or_widget: ty.Union[int, "QtViewer"]):
+        """Set current index."""
+        if isinstance(index_or_widget, QtViewer):
+            index_or_widget = cls._instances.index(index_or_widget)
+        QtViewer._instance_index = index_or_widget
+
+    @classmethod
+    def current(cls) -> ty.Optional["QtViewer"]:
+        """Return current instance."""
+        return cls._instances[cls._instance_index] if cls._instances else None
+
     def _set_layout(self, add_dims: bool, add_toolbars: bool, **kwargs):
         # set in main canvas
         self.viewerToolbar = QtViewToolbar(view=self.view, viewer=self.viewer, qt_viewer=self, **kwargs)
@@ -109,11 +139,11 @@ class QtViewer(QWidget):
         # layers
         self.layers = QtLayerList(self.viewer.layers)
         # widget showing layer controls
-        self.controls = QtLayerControlsContainer(self.viewer)
+        self.controls = QtLayerControlsContainer(self, self.viewer)
         # widget showing layer buttons (e.g. add new shape)
-        self.layerButtons = QtLayerButtons(self.viewer, **kwargs)
+        self.layerButtons = QtLayerButtons(self, self.viewer, **kwargs)
         # viewer buttons to control 2d/3d, grid, transpose, etc
-        self.viewerButtons = QtViewerButtons(self.viewer, **kwargs)
+        self.viewerButtons = QtViewerButtons(self, self.viewer, **kwargs)
 
         image_layout = QVBoxLayout()
         image_layout.addWidget(self.canvas.native, stretch=True)
@@ -153,11 +183,33 @@ class QtViewer(QWidget):
     def _on_active_change(self):
         _QtViewer._on_active_change(self)
 
+    def screenshot(self, path=None, flash=True) -> np.ndarray:
+        """Capture a screenshot of the Vispy canvas."""
+        return _QtViewer.screenshot(self, path=path, flash=flash)
+
+    def _screenshot(self, flash=True):
+        """Capture a screenshot of the Vispy canvas."""
+        return _QtViewer._screenshot(self, flash=flash)
+
+    def clipboard(self, flash=True):
+        """Take a screenshot of the currently displayed screen and copy the image to the clipboard."""
+        _QtViewer.clipboard(self, flash=flash)
+
     def _on_add_layer_change(self, event):
         _QtViewer._on_add_layer_change(self, event)
 
     def _add_layer(self, layer):
         _QtViewer._add_layer(self, layer)
+
+    def _on_update_zoom(self, event):
+        """Update zoom level."""
+        from qtextraplot._napari.image.utilities import calculate_zoom
+
+        xmin, xmax, ymin, ymax = event.value
+        zoom, ycenter, xcenter = calculate_zoom(xmin, xmax, ymin, ymax, self.viewer)
+        self.viewer.camera.center = (1, ycenter, xcenter)
+        # calculate zoom by checking the current extents
+        self.viewer.camera.zoom = zoom
 
     def on_open_controls_dialog(self, event=None) -> None:
         """Open dialog responsible for layer settings."""

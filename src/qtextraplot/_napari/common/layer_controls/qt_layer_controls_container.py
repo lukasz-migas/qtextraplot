@@ -93,9 +93,10 @@ class QtLayerControlsContainer(QStackedWidget):
         widgets[layer] = controls
     """
 
-    def __init__(self, viewer):
+    def __init__(self, qt_viewer, viewer):
         super().__init__()
         self.setProperty("emphasized", True)
+        self.qt_viewer = qt_viewer
         self.viewer = viewer
 
         self.setMouseTracking(True)

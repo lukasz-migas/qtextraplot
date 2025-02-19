@@ -1,22 +1,22 @@
 """ScaleBar model controls."""
 
 import numpy as np
+import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
 from napari.utils.events import disconnect_events
+from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout
 
-import qtextra.helpers as hp
 from qtextraplot._napari.common.components._scalebar_constants import UNITS_TRANSLATIONS
 from qtextraplot._napari.common.components._viewer_constants import POSITION_TRANSLATIONS
-from qtextraplot._napari.image.components.viewer_model import ViewerModel
-from qtextra.widgets.qt_dialog import QtFramelessPopup
+from qtextraplot._napari.image.components.viewer_model import Viewer
 
 
 class QtScaleBarControls(QtFramelessPopup):
     """Popup to control scalebar values."""
 
-    def __init__(self, viewer: ViewerModel, parent=None):
+    def __init__(self, viewer: Viewer, parent=None):
         self.viewer = viewer
 
         super().__init__(parent=parent)
@@ -27,9 +27,9 @@ class QtScaleBarControls(QtFramelessPopup):
         self.viewer.scale_bar.events.visible.connect(self._on_visible_change)
         self.viewer.scale_bar.events.colored.connect(self._on_colored_changed)
         self.viewer.scale_bar.events.color.connect(self._on_color_changed)
+        self.viewer.scale_bar.events.ticks.connect(self._on_ticks_change)
         self.viewer.scale_bar.events.box.connect(self._on_box_changed)
         self.viewer.scale_bar.events.box_color.connect(self._on_box_color_changed)
-        self.viewer.scale_bar.events.ticks.connect(self._on_ticks_change)
         self.viewer.scale_bar.events.position.connect(self._on_position_change)
         self.viewer.scale_bar.events.unit.connect(self._on_unit_change)
         self.viewer.scale_bar.events.font_size.connect(self._on_font_size_change)

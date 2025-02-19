@@ -346,20 +346,21 @@ class NapariImageView(ViewerBase):
 
 
 if __name__ == "__main__":  # pragma: no cover
+    from qtextra.config.theme import THEMES
+    from qtextra.helpers import make_btn
+    from qtextra.utils.dev import exec_, qframe
+    from skimage import data
 
-    def _main() -> None:
-        from qtextra.config.theme import THEMES
-        from qtextra.helpers import make_btn
-        from qtextra.utils.dev import exec_, qframe
-        from skimage import data
-
+    def _main(frame, ha) -> tuple:
         def _on_btn():
             """Button action."""
+            nonlocal wrapper
+
             raise ValueError("Test error")
 
-        app, frame, ha = qframe(horz=False)
-        frame.setMinimumSize(600, 600)
         wrapper = NapariImageView(frame)
+        ha.addWidget(wrapper.widget, stretch=True)
+        THEMES.set_theme_stylesheet(wrapper.widget)
 
         wrapper.plot(data.astronaut(), clip=False)
         wrapper.viewer.add_points(
@@ -375,15 +376,29 @@ if __name__ == "__main__":  # pragma: no cover
             properties={"label": ["TEST"]},
         )
 
-        THEMES.set_theme_stylesheet(wrapper.widget)
+        ha.addWidget(make_btn(frame, "Click me", func=_on_btn))
 
-        btn = make_btn(frame, "Click me")
-        btn.clicked.connect(_on_btn)
+    def _main2(frame, ha) -> tuple:
+        def _on_btn():
+            """Button action."""
+            nonlocal wrapper1, wrapper2
 
-        # ha.addLayout(va)
-        ha.addWidget(wrapper.widget, stretch=True)
-        ha.addWidget(btn)
-        frame.show()
-        exec_(app)
+            raise ValueError("Test error")
 
-    _main()
+        wrapper1 = NapariImageView(frame, title="one")
+        THEMES.set_theme_stylesheet(wrapper1.widget)
+        ha.addWidget(wrapper1.widget, stretch=True)
+        wrapper1.plot(data.astronaut(), clip=False)
+
+        wrapper2 = NapariImageView(frame, title="two")
+        THEMES.set_theme_stylesheet(wrapper2.widget)
+        ha.addWidget(wrapper2.widget, stretch=True)
+        wrapper2.plot(data.binary_blobs(), clip=False)
+
+        ha.addWidget(make_btn(frame, "Click me", func=_on_btn))
+
+    app, frame, ha = qframe(horz=False)
+    frame.setMinimumSize(600, 600)
+    _main2(frame, ha)
+    frame.show()
+    exec_(app)

@@ -1,4 +1,5 @@
 """Cross-hair visual."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -40,7 +41,7 @@ def position_to_box(position: tuple[float, float], size: float = 1.0) -> np.ndar
     return np.asarray(data)
 
 
-class VispyCrosshairVisual(ViewerOverlayMixin, VispySceneOverlay):
+class VispyCrosshairOverlay(ViewerOverlayMixin, VispySceneOverlay):
     """Cross-hair."""
 
     def __init__(self, viewer, overlay, parent=None):
@@ -51,12 +52,11 @@ class VispyCrosshairVisual(ViewerOverlayMixin, VispySceneOverlay):
             parent=parent,
         )
 
-        self.viewer.cross_hair.events.visible.connect(self._on_visible_change)
-        self.viewer.cross_hair.events.width.connect(self._on_data_change)
-        self.viewer.cross_hair.events.color.connect(self._on_data_change)
-        self.viewer.cross_hair.events.position.connect(self._on_data_change)
-        self.viewer.cross_hair.events.shape.connect(self._on_data_change)
-        self.viewer.cross_hair.events.window.connect(self._on_data_change)
+        self.overlay.events.width.connect(self._on_data_change)
+        self.overlay.events.color.connect(self._on_data_change)
+        self.overlay.events.position.connect(self._on_data_change)
+        self.overlay.events.shape.connect(self._on_data_change)
+        self.overlay.events.window.connect(self._on_data_change)
 
         self._on_visible_change()
         self._on_data_change(None)
@@ -68,3 +68,7 @@ class VispyCrosshairVisual(ViewerOverlayMixin, VispySceneOverlay):
         else:
             data = position_to_cross(self.viewer.cross_hair.position, self.viewer.cross_hair.window)
         self.node.set_data(data, color=self.viewer.cross_hair.color, width=self.viewer.cross_hair.width)
+
+    def reset(self):
+        super().reset()
+        self._on_data_change()

@@ -10,12 +10,10 @@ from napari.utils.events.event import Event
 
 from qtextraplot._napari.common.components.overlays.color_bar import ColorBarOverlay
 from qtextraplot._napari.common.components.overlays.crosshair import CrossHairOverlay
-from qtextraplot._napari.image.components._viewer_mouse_bindings import crosshair
+from qtextraplot._napari.image.components._viewer_mouse_bindings import crosshair, zoom
+from qtextraplot._napari.image.components.zoom import ZoomOverlay
 
-DEFAULT_OVERLAYS = {
-    "cross_hair": CrossHairOverlay,
-    "color_bar": ColorBarOverlay,
-}
+DEFAULT_OVERLAYS = {"cross_hair": CrossHairOverlay, "color_bar": ColorBarOverlay, "zoom_box": ZoomOverlay}
 
 
 class Viewer(_ViewerModel):
@@ -28,10 +26,12 @@ class Viewer(_ViewerModel):
 
         if kwargs.get("allow_crosshair", True):
             self.mouse_drag_callbacks.append(crosshair)
+        if kwargs.get("allow_zoom", True):
+            self.mouse_drag_callbacks.append(zoom)
 
         self._overlays.update({k: v() for k, v in DEFAULT_OVERLAYS.items()})
 
-        self.events.add(crosshair=Event, clear_canvas=Event)
+        self.events.add(crosshair=Event, zoom=Event, clear_canvas=Event)
         self._instances.add(self)
 
     @property
@@ -43,6 +43,11 @@ class Viewer(_ViewerModel):
     def color_bar(self) -> ColorBarOverlay:
         """Colorbar overlay."""
         return self._overlays["color_bar"]
+
+    @property
+    def zoom_box(self) -> ColorBarOverlay:
+        """Colorbar overlay."""
+        return self._overlays["zoom_box"]
 
     def clear_canvas(self) -> None:
         """Remove all layers from the canvas."""

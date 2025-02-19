@@ -6,14 +6,14 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout
 
 import qtextra.helpers as hp
-from qtextraplot._napari.image.components.viewer_model import ViewerModel
+from qtextraplot._napari.image.components.viewer_model import Viewer
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 
 
 class QtCrosshairControls(QtFramelessPopup):
     """Popup to control crosshair values."""
 
-    def __init__(self, viewer: ViewerModel, parent=None):
+    def __init__(self, viewer: Viewer, parent=None):
         self.viewer = viewer
 
         super().__init__(parent=parent)
