@@ -1,13 +1,13 @@
 """ColorBar model controls."""
 
+import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
+from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout
 
-import qtextra.helpers as hp
 from qtextraplot._napari.common.components._viewer_constants import POSITION_TRANSLATIONS
 from qtextraplot._napari.image.components.viewer_model import Viewer
-from qtextra.widgets.qt_dialog import QtFramelessPopup
 
 
 class QtColorBarControls(QtFramelessPopup):

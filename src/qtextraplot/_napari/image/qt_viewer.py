@@ -17,8 +17,8 @@ from superqt import ensure_main_thread
 from qtextraplot._napari.common._vispy.overlays import register_vispy_overlays
 from qtextraplot._napari.image._qapp_model import init_qactions
 from qtextraplot._napari.image.component_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
-from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
 from qtextraplot._napari.image.component_controls.qt_layer_controls_container import QtLayerControlsContainer
+from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
 
 register_vispy_overlays()
 

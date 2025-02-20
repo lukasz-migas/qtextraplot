@@ -14,7 +14,7 @@ from qtextraplot._napari.image._qapp_model._qproviders import QPROVIDERS
 
 @lru_cache  # only call once
 def init_qactions() -> None:
-    """Initialize all Qt-based Actions with app-model
+    """Initialize all Qt-based Actions with app-model.
 
     This function will be called in _QtMainWindow.__init__().  It should only
     be called once (hence the lru_cache decorator).
