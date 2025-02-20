@@ -6,7 +6,6 @@ import numpy as np
 from napari._qt.containers import QtLayerList
 from napari._qt.qt_main_window import _QtMainWindow
 from napari._qt.qt_viewer import QtViewer as _QtViewer
-from napari._qt.qt_viewer import _create_qt_poll, _create_remote_manager
 from napari._qt.widgets.qt_dims import QtDims
 from napari._vispy.canvas import VispyCanvas
 from napari.utils.key_bindings import KeymapHandler
@@ -15,11 +14,12 @@ from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 from superqt import ensure_main_thread
 
 from qtextraplot._napari.common._vispy.overlays import register_vispy_overlays
-from qtextraplot._napari.image._qapp_model import init_qactions
+from qtextraplot._napari.image._qapp_model import init_qactions, reset_default_keymap
 from qtextraplot._napari.image.component_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
 from qtextraplot._napari.image.component_controls.qt_layer_controls_container import QtLayerControlsContainer
 from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
 
+reset_default_keymap()
 register_vispy_overlays()
 
 
@@ -48,6 +48,11 @@ class QtViewer(QWidget):
         self._disable_controls = disable_controls
 
         super().__init__(parent)
+        # Create the experimental QtPool for the monitor.
+        self._qt_poll = None
+        # Create the experimental RemoteManager for the monitor.
+        self._remote_manager = None
+
         self.viewer = viewer
 
         self._instances.append(self)
@@ -55,6 +60,7 @@ class QtViewer(QWidget):
         self._qt_viewer = self
         self.current_index = len(self._instances) - 1
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.setAcceptDrops(True)
 
         QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
 
@@ -76,12 +82,12 @@ class QtViewer(QWidget):
             size=self.viewer._canvas_size,
             autoswap=True,
         )
+        self._welcome_widget = self.canvas.native  # we don't need welcome widget
 
         self.viewer._layer_slicer.events.ready.connect(self._on_slice_ready)
 
         # this is the line that initializes any Qt-based app-model Actions that
         # were defined somewhere in the `_qt` module and imported in init_qactions
-        # TODO: customise this!
         init_qactions()
 
         self._on_active_change()
@@ -92,14 +98,6 @@ class QtViewer(QWidget):
         self.viewer.layers.events.inserted.connect(self._on_add_layer_change)
         self.viewer.events.zoom.connect(self._on_update_zoom)
 
-        self.setAcceptDrops(True)
-
-        # Create the experimental QtPool for the monitor.
-        self._qt_poll = _create_qt_poll(self, self.viewer.camera)
-
-        # Create the experimental RemoteManager for the monitor.
-        self._remote_manager = _create_remote_manager(self.viewer.layers, self._qt_poll)
-
         # bind shortcuts stored in settings last.
         _QtViewer._bind_shortcuts(self)
 
@@ -107,18 +105,6 @@ class QtViewer(QWidget):
             self._add_layer(layer)
 
         self._set_layout(add_dims=add_dims, add_toolbars=add_toolbars, **kwargs)
-
-        self._welcome_widget = self.canvas.native  # we don't need welcome widget
-
-    # def enterEvent(self, event):
-    #     """Emit our own event when mouse enters the canvas."""
-    #     QtViewer._current_index = self._instances.index(self)
-    #     super().enterEvent(event)
-    #
-    # def leaveEvent(self, event):
-    #     """Emit our own event when mouse leaves the canvas."""
-    #     QtViewer._current_index = self._instances.index(self)
-    #     super().leaveEvent(event)
 
     @classmethod
     def set_current_index(cls, index_or_widget: ty.Union[int, "QtViewer"]):

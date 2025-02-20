@@ -10,10 +10,14 @@ from napari.utils.events.event import Event
 
 from qtextraplot._napari.common.components.overlays.color_bar import ColorBarOverlay
 from qtextraplot._napari.common.components.overlays.crosshair import CrossHairOverlay
-from qtextraplot._napari.image.components._viewer_mouse_bindings import crosshair, zoom
+from qtextraplot._napari.image.components._viewer_mouse_bindings import crosshair, double_click_to_zoom_reset, zoom
 from qtextraplot._napari.image.components.zoom import ZoomOverlay
 
-DEFAULT_OVERLAYS = {"cross_hair": CrossHairOverlay, "color_bar": ColorBarOverlay, "zoom_box": ZoomOverlay}
+DEFAULT_OVERLAYS = {
+    "cross_hair": CrossHairOverlay,
+    "color_bar": ColorBarOverlay,
+    "zoom_box": ZoomOverlay,
+}
 
 
 class Viewer(_ViewerModel):
@@ -28,6 +32,9 @@ class Viewer(_ViewerModel):
             self.mouse_drag_callbacks.append(crosshair)
         if kwargs.get("allow_zoom", True):
             self.mouse_drag_callbacks.append(zoom)
+        if kwargs.get("allow_double_click_reset", True):
+            self.mouse_double_click_callbacks.clear()
+            self.mouse_double_click_callbacks.append(double_click_to_zoom_reset)
 
         self._overlays.update({k: v() for k, v in DEFAULT_OVERLAYS.items()})
 

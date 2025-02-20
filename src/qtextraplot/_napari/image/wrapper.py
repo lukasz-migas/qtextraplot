@@ -399,6 +399,6 @@ if __name__ == "__main__":  # pragma: no cover
 
     app, frame, ha = qframe(horz=False)
     frame.setMinimumSize(600, 600)
-    _main2(frame, ha)
+    _main(frame, ha)
     frame.show()
     exec_(app)

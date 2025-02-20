@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import typing as ty
 from contextlib import suppress
 
 from napari.utils.events.event import EmitterGroup, Event
@@ -11,10 +10,7 @@ from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QWidget
 
-# from qtextraplot._napari.image.components._viewer_key_bindings import toggle_grid
-
-if ty.TYPE_CHECKING:
-    pass
+from qtextraplot._napari.image.component_controls.qt_layer_buttons import make_grid_popup, make_qta_btn
 
 
 class QtViewToolbar(QWidget):
@@ -73,7 +69,9 @@ class QtViewToolbar(QWidget):
         # view reset/clear
         self.tools_erase_btn = toolbar_right.insert_qta_tool("erase", tooltip="Clear image", func=viewer.clear_canvas)
         self.tools_erase_btn.hide()
-        self.tools_zoomout_btn = toolbar_right.insert_qta_tool("zoom_out", tooltip="Zoom-out", func=viewer.reset_view)
+        self.tools_zoomout_btn = toolbar_right.insert_qta_tool(
+            "zoom_out", tooltip="Reset view. Hold 'Control' and double-click to reset view.", func=viewer.reset_view
+        )
         # view modifiers
         self.tools_clip_btn = toolbar_right.insert_qta_tool(
             "clipboard",
@@ -118,14 +116,19 @@ class QtViewToolbar(QWidget):
                 func=self._toggle_crosshair_visible,
                 func_menu=self.on_open_crosshair_config,
             )
-        self.tools_grid_btn = toolbar_right.insert_qta_tool(
+
+        self.tools_grid_btn = make_qta_btn(
+            self,
             "grid_off",
-            tooltip="Toggle grid view. Right-click on the button to change grid settings.",
+            "Toggle grid view. Right-click on the button to change grid settings.",
             checkable=True,
+            checked=viewer.grid.enabled,
             checked_icon_name="grid_on",
-            # func=lambda: toggle_grid(viewer),
+            action="napari:toggle_grid",
             func_menu=self.open_grid_popup,
         )
+        toolbar_right.insert_button(self.tools_grid_btn)
+
         self.layers_btn = toolbar_right.insert_qta_tool(
             "layers",
             tooltip="Display layer controls",
@@ -197,8 +200,6 @@ class QtViewToolbar(QWidget):
 
     def open_grid_popup(self) -> None:
         """Open grid options pop up widget."""
-        from qtextraplot._napari.image.component_controls.qt_layer_buttons import make_grid_popup
-
         make_grid_popup(self, self.viewer)
 
     def connect_toolbar(self) -> None:
