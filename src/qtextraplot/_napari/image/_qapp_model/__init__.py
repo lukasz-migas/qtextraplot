@@ -27,9 +27,7 @@ def init_qactions() -> None:
     - registering Qt-dependent actions with app-model (i.e. Q_*_ACTIONS actions).
     """
     from napari._app_model import get_app_model
-    from napari._qt._qapp_model.qactions._layerlist_context import Q_LAYERLIST_CONTEXT_ACTIONS
     from napari._qt._qapp_model.qactions._layers_actions import LAYERS_ACTIONS
-    from napari._qt._qapp_model.qactions._view import Q_VIEW_ACTIONS
     from napari._qt.qt_main_window import Window
 
     from qtextraplot._napari.image.components.viewer_model import Viewer
@@ -54,8 +52,17 @@ def init_qactions() -> None:
     # register menubar actions
     app.register_actions(
         chain(
-            Q_VIEW_ACTIONS,
             LAYERS_ACTIONS,
-            Q_LAYERLIST_CONTEXT_ACTIONS,
         )
     )
+
+
+def reset_default_keymap():
+    """Reset default keymap."""
+    from napari.settings import get_settings
+    from napari.utils.shortcuts import default_shortcuts
+
+    default_shortcuts.clear()
+
+    settings = get_settings()
+    settings.shortcuts.shortcuts = default_shortcuts

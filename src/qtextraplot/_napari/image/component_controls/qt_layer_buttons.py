@@ -249,6 +249,7 @@ def make_grid_popup(parent: QWidget, viewer: Viewer) -> None:
     shape_help_symbol = QtToolTipLabel(parent)
     stride_help_symbol = QtToolTipLabel(parent)
     blank = QLabel(parent)  # helps with placing help symbols.
+    blank.setMinimumWidth(22)
 
     shape_help_msg = (
         "Number of rows and columns in the grid. A value of -1 for either or both of width and height will trigger"
@@ -299,29 +300,9 @@ def make_grid_popup(parent: QWidget, viewer: Viewer) -> None:
 
     # layout
     form_layout = hp.make_form_layout()
-    form_layout.insertRow(0, QLabel("Grid stride:"), grid_stride)
-    form_layout.insertRow(1, QLabel("Grid width:"), grid_width)
-    form_layout.insertRow(2, QLabel("Grid height:"), grid_height)
+    form_layout.addRow(QLabel("Grid stride:"), hp.make_h_layout(grid_stride, stride_help_symbol, stretch_id=(0,)))
+    form_layout.addRow(QLabel("Grid width:"), hp.make_h_layout(grid_width, blank, stretch_id=(0,)))
+    form_layout.addRow(QLabel("Grid height:"), hp.make_h_layout(grid_height, shape_help_symbol, stretch_id=(0,)))
 
-    help_layout = QVBoxLayout()
-    help_layout.addWidget(stride_help_symbol)
-    help_layout.addWidget(blank)
-    help_layout.addWidget(shape_help_symbol)
-
-    layout = QHBoxLayout()
-    layout.addLayout(form_layout)
-    layout.addLayout(help_layout)
-
-    popup.frame.setLayout(layout)
-
+    popup.frame.setLayout(form_layout)
     popup.show_above_mouse()
-
-    # adjust placement of shape help symbol.  Must be done last
-    # in order for this movement to happen.
-    delta_x = 0
-    delta_y = -15
-    shape_pos = (
-        shape_help_symbol.x() + delta_x,
-        shape_help_symbol.y() + delta_y,
-    )
-    shape_help_symbol.move(QPoint(*shape_pos))

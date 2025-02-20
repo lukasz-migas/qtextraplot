@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 
 
@@ -56,8 +58,12 @@ def calculate_zoom(
         multiplier = get_multiplier(x_max_, y_max_)
 
     # calculate zoom as fraction of the extent
-    if y_max_ > x_max_:
-        zoom = ((y_max_ - y_min_) / (y_max - y_min)) * multiplier
-    else:
-        zoom = ((x_max_ - x_min_) / (x_max - x_min)) * multiplier
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        if y_max_ > x_max_:
+            zoom = ((y_max_ - y_min_) / (y_max - y_min)) * multiplier
+        else:
+            zoom = ((x_max_ - x_min_) / (x_max - x_min)) * multiplier
+    if np.isinf(zoom) or np.isnan(zoom) or zoom == 0:
+        zoom = 1
     return zoom, y_center, x_center

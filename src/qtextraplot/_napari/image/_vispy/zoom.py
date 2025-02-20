@@ -1,9 +1,25 @@
+from contextlib import suppress
+
 from napari._vispy.overlays.base import ViewerOverlayMixin, VispySceneOverlay
-from napari._vispy.visuals.interaction_box import InteractionBox
+from napari._vispy.visuals.interaction_box import InteractionBox as _InteractionBox
+
+
+class InteractionBox(_InteractionBox):
+    def _compute_bounds(self, axis, view):
+        bounds = None
+        with suppress(ValueError):
+            for v in view._subvisuals:
+                if v.visible:
+                    vb = v.bounds(axis)
+                    if bounds is None:
+                        bounds = vb
+                    elif vb is not None:
+                        bounds = [min(bounds[0], vb[0]), max(bounds[1], vb[1])]
+        return bounds
 
 
 class VispyZoomOverlay(ViewerOverlayMixin, VispySceneOverlay):
-    """Cross-hair."""
+    """Zoom box overlay.."""
 
     def __init__(self, viewer, overlay, parent=None):
         super().__init__(
@@ -16,6 +32,9 @@ class VispyZoomOverlay(ViewerOverlayMixin, VispySceneOverlay):
         self.overlay.events.bounds.connect(self._on_bounds_change)
         self.overlay.events.handles.connect(self._on_bounds_change)
         self.overlay.events.selected_handle.connect(self._on_bounds_change)
+
+        self.node._marker_color = (1, 0, 1, 1)
+        self.node._highlight_width = 4
 
         self._on_visible_change()
         self._on_bounds_change(None)
