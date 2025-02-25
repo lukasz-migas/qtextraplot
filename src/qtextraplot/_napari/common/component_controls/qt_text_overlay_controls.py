@@ -51,7 +51,7 @@ class QtTextOverlayControls(QtFramelessPopup):
             self, 4, 32, step_size=1, value=self.viewer.text_overlay.font_size, func=self.on_change_font_size
         )
 
-        layout = hp.make_form_layout(self)
+        layout = hp.make_form_layout(parent=self)
         layout.setContentsMargins(6, 6, 6, 6)
         layout.addRow(self._make_move_handle("Text overlay controls"))
         layout.addRow(hp.make_label(self, "Visible"), self.visible_checkbox)

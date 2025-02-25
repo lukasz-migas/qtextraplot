@@ -88,7 +88,7 @@ class QtScaleBarControls(QtFramelessPopup):
         )
         self.pixel_size.valueChanged.connect(self.on_change_unit)
 
-        layout = hp.make_form_layout(self)
+        layout = hp.make_form_layout(parent=self)
         layout.setContentsMargins(6, 6, 6, 6)
         layout.addRow(self._make_move_handle("Scalebar controls"))
         layout.addRow(hp.make_label(self, "Visible"), self.visible_checkbox)

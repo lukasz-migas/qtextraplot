@@ -5,10 +5,9 @@ from __future__ import annotations
 import typing as ty
 from functools import partial
 
-from qtpy.QtWidgets import QLayout
-
 import qtextra.helpers as hp
 from qtextra.widgets.qt_dialog import QtFramelessPopup
+from qtpy.QtWidgets import QLayout
 
 if ty.TYPE_CHECKING:
     from qtextraplot._napari.image.wrapper import NapariImageView
@@ -59,9 +58,7 @@ class QtScreenshotDialog(QtFramelessPopup):
             func=self.on_save_figure,
         )
 
-        layout = hp.make_form_layout()
-        hp.style_form_layout(layout)
-        layout.setContentsMargins(6, 6, 6, 6)
+        layout = hp.make_form_layout(margin=0)
         layout.addRow(self._make_move_handle("Screenshot controls"))
         layout.addRow("Width", self.size_x)
         layout.addRow("Height", self.size_y)
