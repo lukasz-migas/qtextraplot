@@ -8,7 +8,7 @@ from napari_plot.components.dragtool import DragMode
 from qtpy.QtCore import Qt
 
 from qtextraplot.helpers import make_radio_btn_group
-from qtextraplot.widgets.qt_mini_toolbar import QtMiniToolbar
+from qtextraplot.widgets.qt_toolbar_mini import QtMiniToolbar
 
 if ty.TYPE_CHECKING:
     from napari_plot.viewer import Viewer
