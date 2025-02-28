@@ -6,7 +6,7 @@ from contextlib import suppress
 
 from napari.utils.events.event import EmitterGroup, Event
 from qtextra.helpers import make_radio_btn_group
-from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
+from qtextra.widgets.qt_toolbar_mini import QtMiniToolbar
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QWidget
 

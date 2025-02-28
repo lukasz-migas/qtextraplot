@@ -2,7 +2,7 @@
 
 import typing as ty
 
-from qtextra.widgets.qt_mini_toolbar import QtMiniToolbar
+from qtextra.widgets.qt_toolbar_mini import QtMiniToolbar
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QHBoxLayout, QWidget
 
