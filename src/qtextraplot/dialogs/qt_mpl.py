@@ -7,7 +7,7 @@ import qtextra.helpers as hp
 from qtextra.widgets.qt_dialog import QtFramelessTool
 from qtpy.QtWidgets import QVBoxLayout, QWidget
 
-from qtextraplot._mpl import ViewMplLine
+from qtextraplot._mpl.views import ViewMplLine
 
 
 class QtMplPopup(QtFramelessTool):
@@ -16,8 +16,8 @@ class QtMplPopup(QtFramelessTool):
     def __init__(
         self,
         parent: QWidget,
-        x_label: str = "x-axis",
-        y_label: str = "y-axis",
+        x_label: str = "",
+        y_label: str = "",
         title: str = "",
     ):
         self._x_label = x_label
@@ -77,7 +77,6 @@ if __name__ == "__main__":  # pragma: no cover
     from qtextra.utils.dev import apply_style, qapplication
 
     _ = qapplication()  # analysis:ignore
-    # dlg = SpectrumPlotPopup(None, title="Spectrum viewer")
     dlg = QtMplPopup(None, title="Spectrum viewer")
     apply_style(dlg)
     dlg.plot(np.arange(100), np.arange(100))
