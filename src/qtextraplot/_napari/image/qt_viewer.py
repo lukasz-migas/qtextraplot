@@ -1,16 +1,18 @@
 """Qt widget that embeds the canvas."""
 
+from __future__ import annotations
+
 import typing as ty
 
 import numpy as np
 from napari._qt.containers import QtLayerList
-from napari._qt.qt_main_window import _QtMainWindow
+from napari._qt.qt_main_window import Window, _QtMainWindow
 from napari._qt.qt_viewer import QtViewer as _QtViewer
 from napari._qt.widgets.qt_dims import QtDims
 from napari._vispy.canvas import VispyCanvas
 from napari.utils.key_bindings import KeymapHandler
 from qtpy.QtCore import QCoreApplication, Qt
-from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QWidget
 from superqt import ensure_main_thread
 
 from qtextraplot._napari.common._vispy.overlays import register_vispy_overlays
@@ -30,7 +32,7 @@ class QtViewer(QWidget):
     # We use this instead of QApplication.activeWindow for compatibility with
     # IPython usage. When you activate IPython, it will appear that there are
     # *no* active windows, so we want to track the most recently active windows
-    _instances: ty.ClassVar[list["QWidget"]] = []
+    _instances: ty.ClassVar[list[QWidget]] = []
     _instance_index: ty.ClassVar[int] = -1
 
     _layers_controls_dialog = None
@@ -57,7 +59,7 @@ class QtViewer(QWidget):
 
         self._instances.append(self)
         _QtMainWindow._instances.append(self)
-        self._qt_viewer = self
+        self._qt_viewer = self._qt_window = self
         self.current_index = len(self._instances) - 1
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setAcceptDrops(True)
@@ -107,14 +109,14 @@ class QtViewer(QWidget):
         self._set_layout(add_dims=add_dims, add_toolbars=add_toolbars, **kwargs)
 
     @classmethod
-    def set_current_index(cls, index_or_widget: ty.Union[int, "QtViewer"]):
+    def set_current_index(cls, index_or_widget: ty.Union[int, QtViewer]):
         """Set current index."""
         if isinstance(index_or_widget, QtViewer):
             index_or_widget = cls._instances.index(index_or_widget)
         QtViewer._instance_index = index_or_widget
 
     @classmethod
-    def current(cls) -> ty.Optional["QtViewer"]:
+    def current(cls) -> ty.Optional[QtViewer]:
         """Return current instance."""
         return cls._instances[cls._instance_index] if cls._instances else None
 
@@ -169,17 +171,56 @@ class QtViewer(QWidget):
     def _on_active_change(self):
         _QtViewer._on_active_change(self)
 
-    def screenshot(self, path=None, flash=True) -> np.ndarray:
+    def screenshot(self, path=None, size=None, scale=None, flash=True, canvas_only=False) -> np.ndarray:
         """Capture a screenshot of the Vispy canvas."""
-        return _QtViewer.screenshot(self, path=path, flash=flash)
+        return Window.screenshot(self, path=path, flash=flash, size=size, scale=scale, canvas_only=canvas_only)
 
-    def _screenshot(self, flash=True):
+    def _screenshot(
+        self,
+        size: tuple[int, int] | None = None,
+        scale: float | None = None,
+        flash: bool = True,
+        canvas_only: bool = False,
+        fit_to_data_extent: bool = False,
+    ):
         """Capture a screenshot of the Vispy canvas."""
-        return _QtViewer._screenshot(self, flash=flash)
+        return Window._screenshot(
+            self, size=size, scale=scale, flash=flash, canvas_only=canvas_only, fit_to_data_extent=fit_to_data_extent
+        )
 
-    def clipboard(self, flash=True):
+    def clipboard(
+        self,
+        size: tuple[int, int] | None = None,
+        scale: float | None = None,
+        flash: bool = True,
+        canvas_only: bool = False,
+        fit_to_data_extent: bool = False,
+    ):
         """Take a screenshot of the currently displayed screen and copy the image to the clipboard."""
-        _QtViewer.clipboard(self, flash=flash)
+        img = self._screenshot(
+            flash=flash, canvas_only=canvas_only, size=size, scale=scale, fit_to_data_extent=fit_to_data_extent
+        )
+        QApplication.clipboard().setImage(img)
+
+    def on_save_figure(
+        self,
+        size: tuple[int, int] | None = None,
+        scale: float | None = None,
+        flash: bool = True,
+        canvas_only: bool = False,
+    ) -> None:
+        """Save figure."""
+        from qtextra.helpers import get_save_filename
+
+        path = get_save_filename(self, file_filter="Images (*.png *.jpg *.jpeg *.bmp *.tif *.tiff)")
+        if path:
+            self.screenshot(
+                path=path,
+                size=size,
+                scale=scale,
+                canvas_only=canvas_only,
+                flash=flash,
+            )
 
     def _on_add_layer_change(self, event):
         _QtViewer._on_add_layer_change(self, event)

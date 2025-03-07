@@ -10,21 +10,21 @@ from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtWidgets import QLayout
 
 if ty.TYPE_CHECKING:
-    from qtextraplot._napari.image.wrapper import NapariImageView
+    from qtextraplot._napari.image.qt_viewer import QtViewer as ImageQtViewer
     from qtextraplot._napari.line.wrapper import NapariLineView
 
 
 class QtScreenshotDialog(QtFramelessPopup):
     """Popup to control screenshot/clipboard."""
 
-    def __init__(self, wrapper: NapariImageView | NapariLineView, parent=None):
-        self.wrapper = wrapper
+    def __init__(self, wrapper: ImageQtViewer | NapariLineView, parent=None):
+        self.qt_viewer = wrapper
         super().__init__(parent=parent)
 
     # noinspection PyAttributeOutsideInit
     def make_panel(self) -> QLayout:
         """Make layout."""
-        size = self.wrapper.widget.canvas.size
+        size = self.qt_viewer.canvas._scene_canvas.size
         self.size_x = hp.make_int_spin_box(self, 50, 8000, 50, default=size[0], tooltip="Width of the screenshot.")
         self.size_y = hp.make_int_spin_box(self, 50, 8000, 50, default=size[1], tooltip="Height of the screenshot.")
 
@@ -58,7 +58,7 @@ class QtScreenshotDialog(QtFramelessPopup):
             func=self.on_save_figure,
         )
 
-        layout = hp.make_form_layout(margin=0)
+        layout = hp.make_form_layout(margin=(6, 6, 6, 6))
         layout.addRow(self._make_move_handle("Screenshot controls"))
         layout.addRow("Width", self.size_x)
         layout.addRow("Height", self.size_y)
@@ -68,12 +68,12 @@ class QtScreenshotDialog(QtFramelessPopup):
         layout.addRow(self.save_btn)
         return layout
 
-    def on_save_figure(self):
+    def on_save_figure(self) -> None:
         """Save figure."""
         from napari._qt.dialogs.screenshot_dialog import HOME_DIRECTORY, ScreenshotDialog
 
         save_func = partial(
-            self.wrapper.widget.screenshot,
+            self.qt_viewer.screenshot,
             size=(self.size_y.value(), self.size_x.value()),
             scale=self.scale.value(),
             canvas_only=self.canvas_only.isChecked(),
@@ -83,9 +83,9 @@ class QtScreenshotDialog(QtFramelessPopup):
         if dialog.exec_():
             pass
 
-    def on_copy_to_clipboard(self):
+    def on_copy_to_clipboard(self) -> None:
         """Copy canvas to clipboard."""
-        self.wrapper.widget.clipboard(
+        self.qt_viewer.clipboard(
             size=(self.size_y.value(), self.size_x.value()),
             scale=self.scale.value(),
             canvas_only=self.canvas_only.isChecked(),

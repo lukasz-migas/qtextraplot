@@ -74,7 +74,7 @@ class QtViewToolbar(QWidget):
         )
         # view modifiers
         self.tools_clip_btn = toolbar_right.insert_qta_tool(
-            "clipboard",
+            "screenshot",
             tooltip="Copy figure to clipboard",
             func=self.on_copy_to_clipboard,
             func_menu=self.on_open_save_figure,
@@ -284,5 +284,5 @@ class QtViewToolbar(QWidget):
         """Show scale bar controls for the viewer."""
         from qtextraplot._napari.common.widgets.screenshot_dialog import QtScreenshotDialog
 
-        dlg = QtScreenshotDialog(self, self)
+        dlg = QtScreenshotDialog(self.qt_viewer, self)
         dlg.show_above_widget(self.tools_save_btn)
