@@ -146,7 +146,7 @@ class QtViewer(QWidget):
         # view widget
         main_layout = QHBoxLayout(self)
         main_layout.setSpacing(1)
-        main_layout.addLayout(image_layout)
+        main_layout.addLayout(image_layout, stretch=True)
         main_layout.setContentsMargins(2, 2, 2, 2)
         if add_toolbars:
             main_layout.insertWidget(0, self.viewerToolbar.toolbar_left)
