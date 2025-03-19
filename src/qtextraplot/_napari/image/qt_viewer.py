@@ -8,6 +8,7 @@ import numpy as np
 from napari._qt.containers import QtLayerList
 from napari._qt.qt_main_window import Window, _QtMainWindow
 from napari._qt.qt_viewer import QtViewer as _QtViewer
+from napari._qt.threads.status_checker import StatusChecker
 from napari._qt.widgets.qt_dims import QtDims
 from napari._vispy.canvas import VispyCanvas
 from napari.utils.key_bindings import KeymapHandler
@@ -92,6 +93,10 @@ class QtViewer(QWidget):
         # were defined somewhere in the `_qt` module and imported in init_qactions
         init_qactions()
 
+        self.status_thread = StatusChecker(viewer, parent=self)
+        self.status_thread.status_and_tooltip_changed.connect(self.set_status_and_tooltip)
+        viewer.cursor.events.position.connect(self.status_thread.trigger_status_update)
+
         self._on_active_change()
         self.viewer.layers.events.inserted.connect(self._update_camera_depth)
         self.viewer.layers.events.removed.connect(self._update_camera_depth)
@@ -164,6 +169,9 @@ class QtViewer(QWidget):
     @ensure_main_thread
     def _on_slice_ready(self, event):
         _QtViewer._on_slice_ready(self, event)
+
+    def set_status_and_tooltip(self, status_and_tooltip: tuple[str | dict, str] | None):
+        _QtMainWindow.set_status_and_tooltip(self, status_and_tooltip)
 
     def _update_camera_depth(self):
         _QtViewer._update_camera_depth(self)
