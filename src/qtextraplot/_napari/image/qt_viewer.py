@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 import typing as ty
+from contextlib import suppress
 
 import numpy as np
 from napari._qt.containers import QtLayerList
 from napari._qt.qt_main_window import Window, _QtMainWindow
 from napari._qt.qt_viewer import QtViewer as _QtViewer
-from napari._qt.threads.status_checker import StatusChecker
 from napari._qt.widgets.qt_dims import QtDims
 from napari._vispy.canvas import VispyCanvas
 from napari.utils.key_bindings import KeymapHandler
-from qtpy.QtCore import QCoreApplication, Qt
+from qtpy.QtCore import QCoreApplication, QEvent, Qt
 from qtpy.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QWidget
 from superqt import ensure_main_thread
 
@@ -22,8 +22,36 @@ from qtextraplot._napari.image.component_controls.qt_layer_buttons import QtLaye
 from qtextraplot._napari.image.component_controls.qt_layer_controls_container import QtLayerControlsContainer
 from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
 
+if ty.TYPE_CHECKING:
+    from napari.viewer import Viewer
+
 reset_default_keymap()
 register_vispy_overlays()
+
+
+def _calc_status_from_cursor(viewer: Viewer) -> tuple[str | dict, str]:
+    if not viewer.mouse_over_canvas:
+        return None
+    active = viewer.layers.selection.active
+    if active is not None and active._loaded:
+        status = active.get_status(
+            viewer.cursor.position,
+            view_direction=viewer.cursor._view_direction,
+            dims_displayed=list(viewer.dims.displayed),
+            world=True,
+        )
+        tooltip_text = ""
+        if viewer.tooltip.visible:
+            tooltip_text = active._get_tooltip_text(
+                np.asarray(viewer.cursor.position),
+                view_direction=np.asarray(viewer.cursor._view_direction),
+                dims_displayed=list(viewer.dims.displayed),
+                world=True,
+            )
+        return status, tooltip_text
+    x, y = viewer.cursor.position
+    status = f"[{round(x)} {round(y)}]"
+    return status, status
 
 
 class QtViewer(QWidget):
@@ -93,9 +121,9 @@ class QtViewer(QWidget):
         # were defined somewhere in the `_qt` module and imported in init_qactions
         init_qactions()
 
-        self.status_thread = StatusChecker(viewer, parent=self)
-        self.status_thread.status_and_tooltip_changed.connect(self.set_status_and_tooltip)
-        viewer.cursor.events.position.connect(self.status_thread.trigger_status_update)
+        with suppress(IndexError):
+            viewer.cursor.events.position.disconnect(viewer.update_status_from_cursor)
+        viewer.cursor.events.position.connect(self.update_status_and_tooltip)
 
         self._on_active_change()
         self.viewer.layers.events.inserted.connect(self._update_camera_depth)
@@ -170,8 +198,11 @@ class QtViewer(QWidget):
     def _on_slice_ready(self, event):
         _QtViewer._on_slice_ready(self, event)
 
-    def set_status_and_tooltip(self, status_and_tooltip: tuple[str | dict, str] | None):
-        _QtMainWindow.set_status_and_tooltip(self, status_and_tooltip)
+    def update_status_and_tooltip(self) -> None:
+        """Set statusbar."""
+        with suppress(Exception):
+            status_and_tooltip = _calc_status_from_cursor(self.viewer)
+            _QtMainWindow.set_status_and_tooltip(self, status_and_tooltip)
 
     def _update_camera_depth(self):
         _QtViewer._update_camera_depth(self)
@@ -285,3 +316,15 @@ class QtViewer(QWidget):
         self.dims.stop()
         self.canvas.native.deleteLater()
         event.accept()
+
+    def enterEvent(self, event: QEvent) -> None:
+        """Emit our own event when mouse enters the canvas."""
+        self.viewer.status = "Ready"
+        self.viewer.mouse_over_canvas = True
+        super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent) -> None:
+        """Emit our own event when mouse leaves the canvas."""
+        self.viewer.status = ""
+        self.viewer.mouse_over_canvas = False
+        super().leaveEvent(event)
