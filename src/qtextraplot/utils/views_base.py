@@ -7,9 +7,8 @@ import typing as ty
 
 from koyo.timer import report_time
 from loguru import logger
-from qtpy.QtCore import QMutex, QMutexLocker
-
 from qtextra.helpers import get_save_filename
+from qtpy.QtCore import QMutex, QMutexLocker
 
 MUTEX = QMutex()
 
@@ -79,6 +78,10 @@ class ViewBase:
     def has_figure(self) -> bool:
         """Returns boolean to indicate whether figure has been plotted."""
         return self.figure is not None and hasattr(self.figure, "_ax") and self.figure._ax is not None
+
+    def setup_interactivity(self):
+        """Setup interactivity."""
+        self.figure.setup_interactivity()
 
     def repaint(self, repaint: bool = True):
         """Repaint plot."""

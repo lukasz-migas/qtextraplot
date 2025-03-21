@@ -908,6 +908,10 @@ class PlotBase(QWidget):
         self.store_plot_limits([extent], [self.ax])
         self.PLOT_TYPE = "line"
 
+    def setup_interactivity(self) -> None:
+        """Setup zoom."""
+        self.setup_new_zoom([self.ax])
+
     def plot_1d(
         self,
         x,
