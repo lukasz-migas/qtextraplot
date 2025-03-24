@@ -126,10 +126,8 @@ class MPLInteraction(QWidget):
         for key in callbacks:
             if not isinstance(callbacks[key], (list, tuple)):
                 callbacks[key] = [callbacks[key]]
-
-        if not all(isinstance(elem, (list, tuple)) for elem in data_limits):
+        if data_limits and not all(isinstance(elem, (list, tuple)) for elem in data_limits):
             data_limits = [data_limits]
-
         return axes, callbacks, data_limits
 
     def reset_polygon(self):
@@ -883,15 +881,18 @@ class ImageMPLInteraction(MPLInteraction):
         )
         self.arrays = arrays
         self._is_1d = False
-        shape = arrays[0].shape
-        self._aspect_ratio = shape[0] / shape[1]
+        if arrays is not None:
+            shape = arrays[0].shape
+            self._aspect_ratio = shape[0] / shape[1]
+        else:
+            self._aspect_ratio = 1.0
 
     def get_motion_msg(self, evt) -> str:
         """Parse motion event."""
         x, y = int(evt.xdata), int(evt.ydata)
         try:
             z = self.arrays[0][y, x]
-        except IndexError:
+        except (IndexError, AttributeError):
             z = np.nan
         if not isinstance(z, np.ndarray):
             z = "" if np.isnan(z) else z

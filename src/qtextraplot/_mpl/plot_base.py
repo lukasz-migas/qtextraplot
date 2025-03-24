@@ -733,6 +733,9 @@ class PlotBase(QWidget):
         is_joint: bool = False,
         obj=None,
         arrays=None,
+        zoom_color: ty.Optional[Qt.GlobalColor] = None,
+        as_image: bool = False,
+        **kwargs,
     ):
         """Setup the new-style matplotlib zoom."""
         if callbacks is None:
@@ -748,20 +751,7 @@ class PlotBase(QWidget):
             connect(self.zoom.evt_move, self.evt_move.emit, state=False, silent=True)
             connect(self.zoom.evt_ctrl_double_click, self.evt_ctrl_double_click.emit, state=False, silent=True)
 
-        if arrays is None:
-            self.zoom = MPLInteraction(
-                figure,
-                data_limits=data_limits,
-                allow_extraction=allow_extraction,
-                callbacks=callbacks,
-                is_heatmap=is_heatmap,
-                is_joint=is_joint,
-                obj=obj,
-                plot_id=self.plot_id,
-                zoom_color=self.zoom_color,
-            )
-
-        else:
+        if arrays is not None or as_image:
             self.zoom = ImageMPLInteraction(
                 figure,
                 arrays,
@@ -772,7 +762,19 @@ class PlotBase(QWidget):
                 is_joint=is_joint,
                 obj=obj,
                 plot_id=self.plot_id,
-                zoom_color=self.zoom_color,
+                zoom_color=zoom_color or self.zoom_color,
+            )
+        else:
+            self.zoom = MPLInteraction(
+                figure,
+                data_limits=data_limits,
+                allow_extraction=allow_extraction,
+                callbacks=callbacks,
+                is_heatmap=is_heatmap,
+                is_joint=is_joint,
+                obj=obj,
+                plot_id=self.plot_id,
+                zoom_color=zoom_color or self.zoom_color,
             )
         connect(self.zoom.evt_pick, self.evt_pressed.emit)
         connect(self.zoom.evt_move, self.evt_move.emit)
@@ -908,9 +910,9 @@ class PlotBase(QWidget):
         self.store_plot_limits([extent], [self.ax])
         self.PLOT_TYPE = "line"
 
-    def setup_interactivity(self) -> None:
+    def setup_interactivity(self, **kwargs: ty.Any) -> None:
         """Setup zoom."""
-        self.setup_new_zoom([self.ax])
+        self.setup_new_zoom([self.ax], data_limits=[get_extent(self.ax)], **kwargs)
 
     def plot_1d(
         self,

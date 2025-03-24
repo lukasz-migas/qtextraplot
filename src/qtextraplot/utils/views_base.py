@@ -79,9 +79,9 @@ class ViewBase:
         """Returns boolean to indicate whether figure has been plotted."""
         return self.figure is not None and hasattr(self.figure, "_ax") and self.figure._ax is not None
 
-    def setup_interactivity(self):
+    def setup_interactivity(self, **kwargs: ty.Any) -> None:
         """Setup interactivity."""
-        self.figure.setup_interactivity()
+        self.figure.setup_interactivity(**kwargs)
 
     def repaint(self, repaint: bool = True):
         """Repaint plot."""
