@@ -181,7 +181,7 @@ class QtViewerButtons(QFrame):
         if (
             modifiers == Qt.KeyboardModifier.AltModifier
             and qobject == self.transposeDimsButton
-            and event.type() == QEvent.MouseButtonPress
+            and event.type() == QEvent.Type.MouseButtonPress
         ):
             action_manager.trigger("napari:rotate_layers")
             return True
