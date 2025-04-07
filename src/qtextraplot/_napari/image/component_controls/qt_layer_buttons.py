@@ -12,8 +12,8 @@ from napari._qt.widgets.qt_spinbox import QtSpinBox
 from napari._qt.widgets.qt_tooltip import QtToolTipLabel
 from napari.utils.action_manager import action_manager
 from qtextra.widgets.qt_button_icon import QtImagePushButton
-from qtpy.QtCore import QEvent, QPoint, Qt
-from qtpy.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel, QSlider, QVBoxLayout, QWidget
+from qtpy.QtCore import QEvent, Qt
+from qtpy.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel, QSlider, QWidget
 
 if ty.TYPE_CHECKING:
     from qtextraplot._napari.image.components.viewer_model import Viewer
