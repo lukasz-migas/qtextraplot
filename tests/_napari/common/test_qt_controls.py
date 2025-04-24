@@ -1,13 +1,14 @@
 """Test controls"""
+
 import numpy as np
 import pytest
+from napari.layers import Points, Shapes
 from napari.layers.points._points_constants import Mode as PointsMode
 from napari.layers.shapes._shapes_constants import Mode as ShapesMode
 from napari.utils.colormaps.standardize_color import transform_color
 
 from qtextraplot._napari.common.layer_controls.qt_points_controls import QtPointsControls
-from qtextraplot._napari.common.layer_controls.qt_shapes_controls import QtShapesControls\
-from napari.layers import Points, Shapes
+from qtextraplot._napari.common.layer_controls.qt_shapes_controls import QtShapesControls
 
 _SHAPES = np.random.random((10, 4, 2))
 _POINTS = np.random.random((10, 10))
