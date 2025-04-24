@@ -33,6 +33,7 @@ jobs:
       qt: ${{ matrix.backend }}
       pip-install-pre-release: ${{ github.event_name == 'schedule' }}
       extras: 'test,2d'
+      coverage-upload: artifact
     strategy:
       fail-fast: false
       matrix:
