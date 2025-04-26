@@ -152,7 +152,7 @@ class QtViewerButtons(QFrame):
 
         self.resetViewButton = make_qta_btn(
             self,
-            "home",
+            "zoom_out",
             "Reset view",
             action="napari:reset_view",
         )
