@@ -604,17 +604,11 @@ class MPLInteraction(QWidget):
                 pen = QPen(self.color, 2 / dpi, Qt.PenStyle.DashLine)
                 painter.setPen(pen)
                 pts = (int(pt / dpi) for pt in rect)
-                # whenever zooming, always draw rectangle
-                if not self.is_extracting:
-                    painter.drawRect(*pts)
                 # when extracting, we can draw rectangle, circle or polygon (not yet)
+                if self.is_extracting and self.roi_shape == "circle":
+                    painter.drawEllipse(*pts)
                 else:
-                    if self.roi_shape == "rect":
-                        painter.drawRect(*pts)
-                    elif self.roi_shape == "circle":
-                        painter.drawEllipse(*pts)
-                    else:
-                        painter.drawRect(*pts)
+                    painter.drawRect(*pts)
 
         else:
 
