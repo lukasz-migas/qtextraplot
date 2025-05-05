@@ -17,10 +17,10 @@ ICONS_PATH = HERE / "icons"
 ICONS_PATH.mkdir(exist_ok=True)
 ICONS = {x.stem: str(x) for x in ICONS_PATH.iterdir() if x.suffix == ".svg"}
 ICONS.update(NAPARI_ICONS)
-update_icons(ICONS, append=True)
+update_icons(ICONS)
 
 STYLES_PATH = HERE / "stylesheets"
 STYLES_PATH.mkdir(exist_ok=True)
 STYLES = {x.stem: str(x) for x in STYLES_PATH.iterdir() if x.suffix == ".qss"}
 # STYLES.update(NAPARI_STYLES)
-update_styles(STYLES, append=True)
+update_styles(STYLES)
