@@ -603,17 +603,18 @@ class MPLInteraction(QWidget):
             def _draw_rect_callback(painter):
                 pen = QPen(self.color, 2 / dpi, Qt.PenStyle.DashLine)
                 painter.setPen(pen)
+                pts = (int(pt / dpi) for pt in rect)
                 # whenever zooming, always draw rectangle
                 if not self.is_extracting:
-                    painter.drawRect(*(pt / dpi for pt in rect))
+                    painter.drawRect(*pts)
                 # when extracting, we can draw rectangle, circle or polygon (not yet)
                 else:
                     if self.roi_shape == "rect":
-                        painter.drawRect(*(pt / dpi for pt in rect))
+                        painter.drawRect(*pts)
                     elif self.roi_shape == "circle":
-                        painter.drawEllipse(*(pt / dpi for pt in rect))
+                        painter.drawEllipse(*pts)
                     else:
-                        painter.drawRect(*(pt / dpi for pt in rect))
+                        painter.drawRect(*pts)
 
         else:
 
