@@ -142,9 +142,10 @@ class NapariImageView(ViewerBase):
             if colormap is not None:
                 layer.colormap = colormap
             layer.visible = True
-            layer.affine = kwargs.pop("affine", layer.affine)
             layer.translate = kwargs.pop("translate", (0.0, 0.0))
             layer.metadata = kwargs.pop("metadata", layer.metadata)
+            layer.affine = kwargs.pop("affine", layer.affine)
+            layer.scale = kwargs.pop("scale", layer.scale)
         else:
             layer = self.viewer.add_image(  # type: ignore[no-untyped-call]
                 data=array,
