@@ -30,8 +30,6 @@ class VispyZoomOverlay(ViewerOverlayMixin, VispySceneOverlay):
         )
 
         self.overlay.events.bounds.connect(self._on_bounds_change)
-        self.overlay.events.handles.connect(self._on_bounds_change)
-        self.overlay.events.selected_handle.connect(self._on_bounds_change)
 
         self.node._marker_color = (1, 0, 1, 1)
         self.node._highlight_width = 4
@@ -47,8 +45,8 @@ class VispyZoomOverlay(ViewerOverlayMixin, VispySceneOverlay):
                 # invert axes for vispy
                 top_left[::-1],
                 bot_right[::-1],
-                handles=self.overlay.handles,
-                selected=self.overlay.selected_handle,
+                handles=None,
+                selected=None,
             )
 
     def reset(self):

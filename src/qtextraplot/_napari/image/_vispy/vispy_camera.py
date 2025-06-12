@@ -1,6 +1,7 @@
 """Camera model."""
+
 import numpy as np
-from napari._vispy import quaternion2euler
+
 from vispy.scene import ArcballCamera, PanZoomCamera
 
 
@@ -63,6 +64,8 @@ class VispyCamera:
     def angles(self):
         """3-tuple: Euler angles of camera in 3D viewing, in degrees."""
         if self._view.camera == self._3D_camera:
+            from napari._vispy import quaternion2euler
+
             # Do conversion from quaternion representation to euler angles
             angles = quaternion2euler(self._view.camera._quaternion, degrees=True)
         else:

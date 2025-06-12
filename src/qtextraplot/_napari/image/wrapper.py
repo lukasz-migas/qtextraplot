@@ -200,12 +200,12 @@ class NapariImageView(ViewerBase):
             layer = self.viewer.add_labels(
                 array,
                 name=name,
-                color=colors,
+                colormap=colors,
                 opacity=opacity,
             )
         else:
             layer.data = array
-            layer.color = colors
+            layer.colormap = colors
         layer.visible = True
         layer.editable = editable
         return layer

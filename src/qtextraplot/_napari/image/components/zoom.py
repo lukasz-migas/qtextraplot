@@ -3,11 +3,10 @@
 import typing as ty
 
 from napari.components.overlays.base import SceneOverlay
-from napari.layers.utils.interaction_box import InteractionBoxHandle
 
 
 class ZoomOverlay(SceneOverlay):
-    """A box that can be used to select and transform objects.
+    """A box that can be used to select a region of interest in the canvas.
 
     Attributes
     ----------
@@ -26,8 +25,6 @@ class ZoomOverlay(SceneOverlay):
     """
 
     bounds: tuple[tuple[float, float], tuple[float, float]] = ((0, 0), (0, 0))
-    handles: bool = False
-    selected_handle: ty.Optional[InteractionBoxHandle] = None
 
     def extents(self) -> tuple[float, float, float, float]:
         """Return the extents of the overlay in the scene coordinates.

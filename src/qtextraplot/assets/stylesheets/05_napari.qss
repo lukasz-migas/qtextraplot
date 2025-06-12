@@ -1,5 +1,39 @@
-/* --------------- QtLayerWidget -------------------- */
+/* the first one is the "partially checked" state */
+QtLayerList::indicator {
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  left: 0px;
+  image: url("theme_{{ id }}://visibility_off.svg");
+}
 
+QtLayerList::indicator:unchecked {
+  image: url("theme_{{ id }}://visibility_off.svg");
+}
+
+QtLayerList::indicator:checked {
+  image: url("theme_{{ id }}://visibility.svg");
+}
+
+QtLayerWidget > QCheckBox#editable {
+  spacing: 0px;
+  margin: 0px 0px 0px 4px;
+}
+
+QtLayerWidget > QCheckBox#editable::indicator{
+  width: 18px;
+  height: 18px;
+}
+
+QtLayerWidget > QCheckBox#editable::indicator:unchecked {
+  image: url("theme_{{ id }}://locked_50.svg");
+}
+
+QtLayerWidget > QCheckBox#editable::indicator:checked {
+  image: url("theme_{{ id }}://unlocked.svg");
+}
+
+/* --------------- QtLayerWidget -------------------- */
 QtLayerWidget {
   padding: 0px;
   background-color: {{ foreground }};
@@ -236,6 +270,21 @@ QtLayerControlsContainer > QFrame {
   border-radius: 2px;
 }
 
+/* ----------------- QtLayerControls -------------------- */
+QtLayerControls > QLabel {
+  font-size: {{ font_size }};
+  color: {{ text }};
+}
+
+/* ------------------------------------------------------ */
+QtLayerControlsContainer QWidget {
+    background-color: none;
+}
+
+QtLayerControlsContainer > QCheckBox {
+   background-color: {{ secondary }};
+}
+
 /* the box that shows the current Label color */
 QtColorBox {
   padding: 0px;
@@ -249,7 +298,6 @@ QtColorBox {
 }
 
 /* ----------------- QtLayerControls -------------------- */
-
 QtLayerControls > QLabel, QtLayerControls, QtPlaneControls > QLabeledSlider > QAbstractSpinBox {
   font-size: 11pt;
   color: {{ text }};
@@ -473,4 +521,27 @@ QtPlayButton[playing=True] {
 #QtPopupFrame > QLabel, #QtPopupFrame > QDoubleSpinBox {
   color: {{ text }};
   font-size: 12px;
+}
+
+/* ----------------- #playDirectionCheckBox ----------------- */
+#playDirectionCheckBox::indicator {
+   image: url("theme_{{ id }}://long_right_arrow.svg");
+   width: 22px;
+   height: 22px;
+   padding: 0 6px;
+   border: 0px;
+}
+
+#playDirectionCheckBox::indicator:checked {
+   image: url("theme_{{ id }}://long_left_arrow.svg");
+}
+
+#playDirectionCheckBox::indicator:pressed {
+   background-color: {{ highlight }};
+}
+
+/* ------------ QtAboutKeybindings ------------ */
+QtAboutKeybindings {
+  min-width: 600px;
+  min-height: 605px;
 }
