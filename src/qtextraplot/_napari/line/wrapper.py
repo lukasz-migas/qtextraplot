@@ -12,7 +12,7 @@ from napari_plot.viewer import ViewerModel as Viewer
 from qtpy.QtCore import QMutex
 from qtpy.QtWidgets import QWidget
 
-from qtextraplot._napari.wrapper import ViewerBase
+from qtextraplot._napari._wrapper import ViewerBase
 from qtextraplot._napari.line._vispy.overrides.axis import tick_formatter
 from qtextraplot._napari.line.qt_viewer import QtViewer
 from qtextraplot.config import CANVAS
@@ -25,9 +25,8 @@ EXTRACT_NAME = "Extract mask"
 
 def get_font_for_os() -> str:
     """Get font that supports unicode characters."""
-    from vispy.util.fonts import list_fonts
-
     from koyo.system import IS_LINUX, IS_MAC, IS_WIN
+    from vispy.util.fonts import list_fonts
 
     fonts = list_fonts()
     if IS_WIN:
@@ -81,7 +80,6 @@ class NapariLineView(ViewerBase):
 
         # create instance of qt widget
         self.widget = QtViewer(
-            self,
             self.viewer,
             parent=parent,
             disable_controls=kwargs.pop("disable_controls", False),
@@ -298,26 +296,19 @@ class NapariLineView(ViewerBase):
 
 
 if __name__ == "__main__":  # pragma: no cover
+    from qtextra.config.theme import THEMES
+    from qtextra.helpers import make_btn
+    from qtextra.utils.dev import exec_, qframe
 
-    def _main():  # type: ignore[no-untyped-def]
-        import sys
-
-        from qtextra.config import THEMES
-        from qtextra.helpers import make_btn
-        from qtextra.utils.dev import qframe
-
+    def _main(frame, ha) -> tuple:
         def _on_btn() -> None:
             n_bins = np.random.randint(5, 100, 1)[0]
             rel_width = np.random.rand(1)
             viewer.add_histogram(a, n_bins, rel_width=rel_width)
 
-        app, frame, ha = qframe()
-        frame.setMinimumSize(600, 600)
         viewer = NapariLineView(frame)
         THEMES.set_theme_stylesheet(viewer.widget)
 
-        # rng = np.random.RandomState(10)  # deterministic random data
-        # a = np.hstack((rng.normal(size=1000), rng.normal(loc=5, scale=2, size=1000)))
         a = np.arange(10)
         viewer.add_histogram(a, 9)
 
@@ -326,13 +317,11 @@ if __name__ == "__main__":  # pragma: no cover
 
         # viewer.add_centroids(np.arange(100), np.random.randint(0, 1000, 100))
 
-        btn = make_btn(frame, "Click me")
-        btn.clicked.connect(_on_btn)
-
         ha.addWidget(viewer.widget, stretch=True)
-        ha.addWidget(btn)
-        frame.show()
+        ha.addWidget(make_btn(frame, "Click me", func=_on_btn))
 
-        sys.exit(app.exec_())
-
-    _main()  # type: ignore[no-untyped-call]
+    app, frame, ha = qframe(horz=False)
+    frame.setMinimumSize(600, 600)
+    _main(frame, ha)  # type: ignore[no-untyped-call]
+    frame.show()
+    exec_(app)

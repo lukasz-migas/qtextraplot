@@ -6,7 +6,7 @@ import numpy as np
 from napari._vispy.overlays.base import ViewerOverlayMixin, VispySceneOverlay
 from vispy.scene.visuals import Line
 
-from qtextraplot._napari.components.overlays.crosshair import Shape
+from qtextraplot._napari.components.overlays.crosshair import CrossHairOverlay, Shape
 
 MAX = np.finfo(np.float16).max
 
@@ -44,7 +44,7 @@ def position_to_box(position: tuple[float, float], size: float = 1.0) -> np.ndar
 class VispyCrosshairOverlay(ViewerOverlayMixin, VispySceneOverlay):
     """Cross-hair."""
 
-    def __init__(self, viewer, overlay, parent=None):
+    def __init__(self, viewer, overlay: CrossHairOverlay, parent=None):
         super().__init__(
             node=Line(connect="segments", method="gl", parent=parent, width=3),
             viewer=viewer,

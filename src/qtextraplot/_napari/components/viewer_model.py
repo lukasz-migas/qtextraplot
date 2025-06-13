@@ -22,9 +22,9 @@ from napari.utils.theme import available_themes, is_theme_available
 from qtextraplot._napari.components.layerlist import LayerList
 
 try:
-    from napari_plot.components.gridlines import GridLines
+    from napari_plot.components.grid_lines import GridLinesOverlay
 except (ImportError, TypeError):
-    GridLines = None
+    GridLinesOverlay = None
 
 
 def _current_theme():
@@ -32,8 +32,8 @@ def _current_theme():
 
 
 DEFAULT_OVERLAYS = {}
-if GridLines:
-    DEFAULT_OVERLAYS["grid_lines"] = GridLines
+if GridLinesOverlay:
+    DEFAULT_OVERLAYS["grid_lines"] = GridLinesOverlay
 
 
 class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
@@ -110,7 +110,7 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
         self.tooltip.visible = event.value
 
     @property
-    def grid_lines(self) -> "GridLines":
+    def grid_lines(self) -> "GridLinesOverlay":
         return self._overlays["grid_lines"]
 
     def __hash__(self):

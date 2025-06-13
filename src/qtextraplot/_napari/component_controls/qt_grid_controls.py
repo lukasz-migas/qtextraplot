@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
+import qtextra.helpers as hp
 from napari._qt.widgets.qt_spinbox import QtSpinBox
+from qtextra.widgets.qt_dialog import QtFramelessPopup
+from qtextra.widgets.qt_label_icon import QtQtaTooltipLabel
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout, QLabel, QWidget
 
-import qtextra.helpers as hp
-from qtextraplot._napari.image.components.viewer_model import ViewerModel
-from qtextra.widgets.qt_dialog import QtFramelessPopup
-from qtextra.widgets.qt_label_icon import QtQtaTooltipLabel
+from qtextraplot._napari._enums import ViewerType
 
 
 class QtGridControls(QtFramelessPopup):
-    def __init__(self, viewer: ViewerModel, parent: QWidget | None = None):
+    def __init__(self, viewer: ViewerType, parent: QWidget | None = None):
         self.viewer = viewer
 
         super().__init__(parent=parent)

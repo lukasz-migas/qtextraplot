@@ -12,7 +12,7 @@ from qtpy.QtCore import QMutex, QMutexLocker, Slot  # type: ignore[attr-defined]
 from qtpy.QtWidgets import QWidget
 
 from qtextraplot._napari.components.overlays.color_bar import ColorBarItem
-from qtextraplot._napari.wrapper import ViewerBase
+from qtextraplot._napari._wrapper import ViewerBase
 from qtextraplot._napari.image.components.viewer_model import Viewer
 from qtextraplot._napari.image.qt_viewer import QtViewer
 

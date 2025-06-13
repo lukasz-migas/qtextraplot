@@ -26,11 +26,6 @@ from napari._qt.layer_controls.qt_vectors_controls import QtVectorsControls
 from napari.layers import Image, Labels, Points, Shapes, Surface, Vectors
 from qtpy.QtWidgets import QFrame, QStackedWidget
 
-# from qtextraplot._napari.common.layer_controls.qt_image_controls import QtImageControls
-# from qtextraplot._napari.common.layer_controls.qt_labels_controls import QtLabelsControls
-# from qtextraplot._napari.common.layer_controls.qt_points_controls import QtPointsControls
-# from qtextraplot._napari.common.layer_controls.qt_shapes_controls import QtShapesControls
-
 layer_to_controls = {
     Labels: QtLabelsControls,
     Image: QtImageControls,  # must be after Labels layer

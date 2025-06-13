@@ -18,6 +18,7 @@ from superqt import ensure_main_thread
 
 from qtextraplot._napari._vispy import register_vispy_overlays
 from qtextraplot._napari.image._qapp_model import init_qactions, reset_default_keymap
+from qtextraplot._napari.image._vispy import register_vispy_overlays as register_image_vispy_overlays
 from qtextraplot._napari.image.component_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
 from qtextraplot._napari.image.component_controls.qt_layer_controls_container import QtLayerControlsContainer
 from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
@@ -27,6 +28,7 @@ if ty.TYPE_CHECKING:
 
 reset_default_keymap()
 register_vispy_overlays()
+register_image_vispy_overlays()
 
 
 def _calc_status_from_cursor(viewer: Viewer) -> tuple[str | dict, str]:
@@ -79,21 +81,19 @@ class QtViewer(QWidget):
         self._disable_controls = disable_controls
 
         super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.setAcceptDrops(True)
+        QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
         # Create the experimental QtPool for the monitor.
         self._qt_poll = None
         # Create the experimental RemoteManager for the monitor.
         self._remote_manager = None
 
         self.viewer = viewer
-
         self._instances.append(self)
         _QtMainWindow._instances.append(self)
         self._qt_viewer = self._qt_window = self
         self.current_index = len(self._instances) - 1
-        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.setAcceptDrops(True)
-
-        QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
 
         self.dims = QtDims(self.viewer.dims)
         self._controls = None

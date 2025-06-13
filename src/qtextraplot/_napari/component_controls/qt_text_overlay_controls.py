@@ -8,14 +8,14 @@ from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt, Slot  # type: ignore[attr-defined]
 from qtpy.QtWidgets import QFormLayout
 
-from qtextraplot._napari.components import TEXT_POSITION_TRANSLATIONS
-from qtextraplot._napari.image.components.viewer_model import Viewer
+from qtextraplot._napari._constants import TEXT_POSITION_TRANSLATIONS
+from qtextraplot._napari._enums import ViewerType
 
 
 class QtTextOverlayControls(QtFramelessPopup):
     """Popup to control scalebar values."""
 
-    def __init__(self, viewer: Viewer, parent=None):
+    def __init__(self, viewer: ViewerType, parent=None):
         self.viewer = viewer
 
         super().__init__(parent=parent)

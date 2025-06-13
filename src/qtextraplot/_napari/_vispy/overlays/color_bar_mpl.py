@@ -1,7 +1,9 @@
 """Grid lines visual."""
+
 from napari._vispy.overlays.base import ViewerOverlayMixin, VispyCanvasOverlay
 
 from qtextraplot._napari._vispy.overlays.color_bar import ColorBar as ColorBarNode
+from qtextraplot._napari.components.overlays.color_bar import ColorBarOverlay
 
 HORIZONTAL_SIZE = (30, 200)
 
@@ -9,7 +11,7 @@ HORIZONTAL_SIZE = (30, 200)
 class VispyColorbarOverlay(ViewerOverlayMixin, VispyCanvasOverlay):
     """Colorbar visual."""
 
-    def __init__(self, viewer, overlay, parent=None):
+    def __init__(self, viewer, overlay: ColorBarOverlay, parent=None):
         super().__init__(
             node=ColorBarNode(
                 cmap="viridis",

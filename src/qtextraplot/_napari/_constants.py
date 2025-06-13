@@ -3,11 +3,41 @@
 import sys
 from collections import OrderedDict
 
+from napari.components._viewer_constants import CanvasPosition
 from napari.layers.base._base_constants import Blending
 from napari.layers.labels._labels_constants import LabelColorMode, LabelsRendering
 from napari.utils.compat import StrEnum
 
 BACKSPACE = "delete" if sys.platform == "darwin" else "backspace"
+POSITION_TRANSLATIONS = OrderedDict(
+    [
+        (CanvasPosition.TOP_LEFT, "Top left"),
+        (CanvasPosition.TOP_RIGHT, "Top right"),
+        (CanvasPosition.BOTTOM_RIGHT, "Bottom right"),
+        (CanvasPosition.BOTTOM_LEFT, "Bottom left"),
+    ]
+)
+
+
+TEXT_POSITION_TRANSLATIONS = OrderedDict(
+    [
+        (CanvasPosition.TOP_LEFT, "Top left"),
+        (CanvasPosition.TOP_CENTER, "Top center"),
+        (CanvasPosition.TOP_RIGHT, "Top right"),
+        (CanvasPosition.BOTTOM_RIGHT, "Bottom right"),
+        (CanvasPosition.BOTTOM_CENTER, "Bottom center"),
+        (CanvasPosition.BOTTOM_LEFT, "Bottom left"),
+    ]
+)
+
+UNITS_TRANSLATIONS = OrderedDict(
+    [
+        ("", "No units"),
+        ("um", "Micrometers"),
+        ("px", "Pixel units"),
+    ]
+)
+
 BLENDING_TRANSLATIONS = OrderedDict(
     [
         (Blending.TRANSLUCENT, "Translucent"),
