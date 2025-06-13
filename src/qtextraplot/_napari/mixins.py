@@ -5,10 +5,9 @@ from __future__ import annotations
 import typing as ty
 
 import numpy as np
+import qtextra.helpers as hp
 from napari.utils.events import Event
 from qtpy.QtWidgets import QWidget
-
-import qtextra.helpers as hp
 
 if ty.TYPE_CHECKING:
     from napari.layers import Image
@@ -50,21 +49,22 @@ class ImageViewMixin:
         """Plot outline."""
 
     def _plot_image(
-        self, image: np.ndarray | dict[str, np.ndarray], *, view_image: NapariImageView | None = None
+        self,
+        image: np.ndarray | dict[str, np.ndarray],
+        *,
+        view_image: NapariImageView | None = None,
+        transformation_map: dict[str, ty.Any] | None = None,
     ) -> bool:
         """Update image or images."""
-        from ionglow.config import ENV
-
         if view_image is None:
             view_image = self.view_image
 
         # update image
         if image is None:
-            return
+            return False
+
         # single-dataset mode
         if isinstance(image, np.ndarray):
-            if image.ndim == 1:
-                image = ENV.reshape(image)
             if image.ndim == 3:
                 self.image_layer = view_image.plot_rgb(image)
             else:
@@ -73,10 +73,8 @@ class ImageViewMixin:
         else:
             layers = {}
             for name, array in image.items():
-                if array.ndim == 1:
-                    array = ENV.reshape(array)
-                tr = ENV.get_image_transformation(name)
-                layers[name] = view_image.add_image(array, name=name, **tr, metadata={"dataset": name})
+                transformation = transformation_map[name] if transformation_map and name in transformation_map else {}
+                layers[name] = view_image.add_image(array, name=name, **transformation, metadata={"dataset": name})
             self.image_layer = layers
         return True
 

@@ -1,6 +1,7 @@
 """Points controls."""
 
 import numpy as np
+import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
 from napari.layers import Points
 from napari.layers.points._points_constants import Mode
@@ -8,10 +9,9 @@ from napari.utils.events import disconnect_events
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QButtonGroup, QHBoxLayout
 
-import qtextra.helpers as hp
-from qtextraplot._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
-from qtextraplot._napari.common.layers._points_constants import SYMBOL_TRANSLATION
-from qtextraplot._napari.common.widgets.qt_mode_button import QtModePushButton, QtModeRadioButton
+from qtextraplot._napari._constants import SYMBOL_TRANSLATION
+from qtextraplot._napari.layer_controls.qt_layer_controls_base import QtLayerControls
+from qtextraplot._napari.widgets import QtModePushButton, QtModeRadioButton
 
 
 class QtPointsControls(QtLayerControls):

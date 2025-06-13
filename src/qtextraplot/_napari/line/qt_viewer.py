@@ -4,14 +4,13 @@ from typing import TYPE_CHECKING
 
 from napari._qt.containers.qt_layer_list import QtLayerList
 from napari._vispy.utils.visual import create_vispy_layer
-from napari.utils._proxies import ReadOnlyWrapper
 from napari_plot._vispy.camera import VispyCamera
 from napari_plot._vispy.overlays.axis import VispyXAxisVisual, VispyYAxisVisual
 from napari_plot._vispy.tools.drag import VispyDragTool
 from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout
 
-from qtextraplot._napari.common.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
-from qtextraplot._napari.common.qt_viewer import QtViewerBase
+from qtextraplot._napari.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
+from qtextraplot._napari.qt_viewer import QtViewerBase
 from qtextraplot._napari.line._vispy.canvas import VispyCanvas
 from qtextraplot._napari.line.component_controls.qt_view_toolbar import QtViewLeftToolbar, QtViewRightToolbar
 from qtextraplot._napari.line.layer_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons

@@ -10,7 +10,7 @@ from qtpy.QtCore import QCoreApplication, Qt
 from qtpy.QtGui import QGuiApplication, QImage
 from qtpy.QtWidgets import QWidget
 
-from qtextraplot._napari.common._vispy.visual import create_vispy_overlay
+from qtextraplot._napari._vispy.visual import create_vispy_overlay
 
 
 class QtViewerBase(QWidget):

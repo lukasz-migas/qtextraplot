@@ -1,6 +1,6 @@
 """Overrides for controls."""
 
-from qtextraplot._napari.common.layer_controls.qt_layer_controls_container import (
+from qtextraplot._napari.layer_controls.qt_layer_controls_container import (
     QtLayerControlsContainer as _QtLayerControlsContainer,
 )
 

@@ -15,6 +15,7 @@ except (ImportError, TypeError):
 # Monkey patch icons
 import napari.resources._icons
 
+import qtextraplot._napari._register
 from qtextraplot.assets import ICONS
 
 # overwrite napari list of icons

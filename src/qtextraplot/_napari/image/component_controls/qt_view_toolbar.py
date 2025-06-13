@@ -254,35 +254,35 @@ class QtViewToolbar(QWidget):
 
     def on_open_crosshair_config(self) -> None:
         """Open text config."""
-        from qtextraplot._napari.common.component_controls.qt_crosshair_controls import QtCrosshairControls
+        from qtextraplot._napari.component_controls.qt_crosshair_controls import QtCrosshairControls
 
         dlg = QtCrosshairControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_text_config(self) -> None:
         """Open text config."""
-        from qtextraplot._napari.common.component_controls.qt_text_overlay_controls import QtTextOverlayControls
+        from qtextraplot._napari.component_controls.qt_text_overlay_controls import QtTextOverlayControls
 
         dlg = QtTextOverlayControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_scalebar_config(self) -> None:
         """Open scalebar config."""
-        from qtextraplot._napari.common.component_controls.qt_scalebar_controls import QtScaleBarControls
+        from qtextraplot._napari.component_controls.qt_scalebar_controls import QtScaleBarControls
 
         dlg = QtScaleBarControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_colorbar_config(self) -> None:
         """Open colorbar config."""
-        from qtextraplot._napari.common.component_controls.qt_colorbar_controls import QtColorBarControls
+        from qtextraplot._napari.component_controls.qt_colorbar_controls import QtColorBarControls
 
         dlg = QtColorBarControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_save_figure(self) -> None:
         """Show scale bar controls for the viewer."""
-        from qtextraplot._napari.common.widgets.screenshot_dialog import QtScreenshotDialog
+        from qtextraplot._napari.widgets import QtScreenshotDialog
 
         dlg = QtScreenshotDialog(self.qt_viewer, self)
         dlg.show_above_widget(self.tools_save_btn)

@@ -19,7 +19,7 @@ from napari.utils.key_bindings import KeymapProvider
 from napari.utils.mouse_bindings import MousemapProvider
 from napari.utils.theme import available_themes, is_theme_available
 
-from qtextraplot._napari.common.components.layerlist import LayerList
+from qtextraplot._napari.components.layerlist import LayerList
 
 try:
     from napari_plot.components.gridlines import GridLines

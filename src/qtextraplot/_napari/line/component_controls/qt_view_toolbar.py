@@ -91,7 +91,7 @@ class QtViewLeftToolbar(QtMiniToolbar):
 
     def on_open_zoom(self) -> None:
         """Open zoom dialog."""
-        from qtextraplot._napari.common.widgets.zoom_widget import XZoomPopup
+        from qtextraplot._napari.widgets.zoom_widget import XZoomPopup
 
         dlg = XZoomPopup(
             self.ref_viewer(),
@@ -184,7 +184,7 @@ class QtViewRightToolbar(QtMiniToolbar):
 
     def on_open_text_config(self) -> None:
         """Open text config."""
-        from qtextraplot._napari.common.component_controls.qt_text_overlay_controls import QtTextOverlayControls
+        from qtextraplot._napari.component_controls.qt_text_overlay_controls import QtTextOverlayControls
 
         dlg = QtTextOverlayControls(self.ref_viewer(), self.ref_qt_viewer())
         dlg.show_left_of_mouse()
@@ -208,7 +208,7 @@ class QtViewRightToolbar(QtMiniToolbar):
 
     def on_open_save_figure(self) -> None:
         """Show scale bar controls for the viewer."""
-        from qtextraplot._napari.common.widgets.screenshot_dialog import QtScreenshotDialog
+        from qtextraplot._napari.widgets import QtScreenshotDialog
 
         dlg = QtScreenshotDialog(self.ref_view(), self)
         dlg.show_above_widget(self.tools_save_btn)

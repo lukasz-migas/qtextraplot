@@ -1,8 +1,40 @@
+"""Base constants."""
+
+import sys
 from collections import OrderedDict
-from enum import Enum
+
+from napari.layers.base._base_constants import Blending
+from napari.layers.labels._labels_constants import LabelColorMode, LabelsRendering
+from napari.utils.compat import StrEnum
+
+BACKSPACE = "delete" if sys.platform == "darwin" else "backspace"
+BLENDING_TRANSLATIONS = OrderedDict(
+    [
+        (Blending.TRANSLUCENT, "Translucent"),
+        (Blending.TRANSLUCENT_NO_DEPTH, "Translucent (no depth)"),
+        (Blending.ADDITIVE, "Additive"),
+        (Blending.OPAQUE, "Opaque"),
+        (Blending.MINIMUM, "Minimum"),
+    ]
+)
 
 
-class Symbol(str, Enum):
+RENDER_MODE_TRANSLATIONS = OrderedDict(
+    [
+        (LabelsRendering.TRANSLUCENT, "Translucent"),
+        (LabelsRendering.ISO_CATEGORICAL, "Iso-categorical"),
+    ]
+)
+
+LABEL_COLOR_MODE_TRANSLATIONS = OrderedDict(
+    [
+        (LabelColorMode.AUTO, "auto"),
+        (LabelColorMode.DIRECT, "direct"),
+    ]
+)
+
+
+class Symbol(StrEnum):
     """Symbol: Valid symbol/marker types for the Points layer.
     The string method returns the valid vispy string.
 
@@ -43,7 +75,6 @@ SYMBOL_ALIAS = {
     "s": Symbol.SQUARE,
     "|": Symbol.VBAR,
 }
-
 
 SYMBOL_TRANSLATION = OrderedDict(
     [

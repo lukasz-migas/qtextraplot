@@ -8,8 +8,8 @@ from weakref import WeakSet
 from napari.components.viewer_model import ViewerModel as _ViewerModel
 from napari.utils.events.event import Event
 
-from qtextraplot._napari.common.components.overlays.color_bar import ColorBarOverlay
-from qtextraplot._napari.common.components.overlays.crosshair import CrossHairOverlay
+from qtextraplot._napari.components.overlays.color_bar import ColorBarOverlay
+from qtextraplot._napari.components.overlays.crosshair import CrossHairOverlay
 from qtextraplot._napari.image.components._viewer_mouse_bindings import crosshair, double_click_to_zoom_reset, zoom
 from qtextraplot._napari.image.components.zoom import ZoomOverlay
 

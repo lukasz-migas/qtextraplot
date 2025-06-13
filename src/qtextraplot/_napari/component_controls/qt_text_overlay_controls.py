@@ -8,7 +8,7 @@ from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt, Slot  # type: ignore[attr-defined]
 from qtpy.QtWidgets import QFormLayout
 
-from qtextraplot._napari.common.components._viewer_constants import TEXT_POSITION_TRANSLATIONS
+from qtextraplot._napari.components import TEXT_POSITION_TRANSLATIONS
 from qtextraplot._napari.image.components.viewer_model import Viewer
 
 

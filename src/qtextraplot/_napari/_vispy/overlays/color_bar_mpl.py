@@ -1,7 +1,7 @@
 """Grid lines visual."""
 from napari._vispy.overlays.base import ViewerOverlayMixin, VispyCanvasOverlay
 
-from qtextraplot._napari.common._vispy.overlays.color_bar import ColorBar as ColorBarNode
+from qtextraplot._napari._vispy.overlays.color_bar import ColorBar as ColorBarNode
 
 HORIZONTAL_SIZE = (30, 200)
 

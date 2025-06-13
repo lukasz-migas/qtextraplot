@@ -6,7 +6,7 @@ import numpy as np
 from napari._vispy.overlays.base import ViewerOverlayMixin, VispySceneOverlay
 from vispy.scene.visuals import Line
 
-from qtextraplot._napari.common.components.overlays.crosshair import Shape
+from qtextraplot._napari.components.overlays.crosshair import Shape
 
 MAX = np.finfo(np.float16).max
 

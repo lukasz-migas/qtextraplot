@@ -12,7 +12,7 @@ from napari_plot.viewer import ViewerModel as Viewer
 from qtpy.QtCore import QMutex
 from qtpy.QtWidgets import QWidget
 
-from qtextraplot._napari.common.wrapper import ViewerBase
+from qtextraplot._napari.wrapper import ViewerBase
 from qtextraplot._napari.line._vispy.overrides.axis import tick_formatter
 from qtextraplot._napari.line.qt_viewer import QtViewer
 from qtextraplot.config import CANVAS

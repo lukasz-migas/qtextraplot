@@ -1,7 +1,9 @@
 """Label controls."""
+
 import typing as ty
 
 import numpy as np
+import qtextra.helpers as hp
 from napari.layers import Labels
 from napari.layers.labels._labels_constants import Mode
 from napari.utils.events import disconnect_events
@@ -9,13 +11,12 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor, QPainter
 from qtpy.QtWidgets import QButtonGroup, QHBoxLayout, QSpinBox, QWidget
 
-import qtextra.helpers as hp
-from qtextraplot._napari.common.layer_controls.qt_layer_controls_base import QtLayerControls
-from qtextraplot._napari.common.layers._labels_constants import (
+from qtextraplot._napari._constants import (
     LABEL_COLOR_MODE_TRANSLATIONS,
     RENDER_MODE_TRANSLATIONS,
 )
-from qtextraplot._napari.common.widgets.qt_mode_button import QtModePushButton, QtModeRadioButton
+from qtextraplot._napari.layer_controls.qt_layer_controls_base import QtLayerControls
+from qtextraplot._napari.widgets import QtModePushButton, QtModeRadioButton
 
 
 # noinspection PyMissingOrEmptyDocstring

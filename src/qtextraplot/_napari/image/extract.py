@@ -14,8 +14,8 @@ from qtpy.QtWidgets import (
 )
 
 import qtextra.helpers as hp
-from qtextraplot._napari.common.layer_controls.qt_labels_controls import QtLabelsControls
-from qtextraplot._napari.common.layer_controls.qt_shapes_controls import QtShapesControls
+from qtextraplot._napari.layer_controls.qt_labels_controls import QtLabelsControls
+from qtextraplot._napari.layer_controls.qt_shapes_controls import QtShapesControls
 from qtextra.widgets.qt_dialog import QtFramelessTool
 
 if ty.TYPE_CHECKING:
