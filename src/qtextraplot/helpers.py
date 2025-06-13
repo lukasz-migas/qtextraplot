@@ -20,7 +20,7 @@ def make_colormap_combobox(
     func: Callback | None = None,
     default: str = "magma",
     label_min_width: int = 0,
-) -> QtColormapComboBox:
+) -> tuple[QtColormapComboBox, Qw.QHBoxLayout]:
     """Make colormap combobox."""
     from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
     from napari.utils.colormaps import AVAILABLE_COLORMAPS
