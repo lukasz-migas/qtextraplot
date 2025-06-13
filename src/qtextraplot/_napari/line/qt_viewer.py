@@ -94,7 +94,9 @@ class QtViewer(QWidget):
 
         self.viewer = viewer
         self._instances.append(self)
+        # essential that these are set because we need to use the providers for in_and_out
         _QtMainWindow._instances.append(self)
+        _QtViewer._instances.append(self)
         self._qt_viewer = self._qt_window = self
         self.current_index = len(self._instances) - 1
 
@@ -216,6 +218,11 @@ class QtViewer(QWidget):
     def text_overlay(self):
         """Return text overlay."""
         return self.canvas._overlay_to_visual[self.viewer.text_overlay]
+
+    @property
+    def layer_to_visual(self):
+        """Mapping of Napari layer to Vispy layer. Added for backward compatibility"""
+        return self.canvas.layer_to_visual
 
     def on_resize(self, event):
         """Update cached x-axis offset."""
