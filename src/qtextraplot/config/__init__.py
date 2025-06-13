@@ -1,6 +1,6 @@
 """Init."""
 
-from qtextra.config.theme import CANVAS, CanvasThemes
+from qtextraplot.config.theme import CANVAS, CanvasThemes
 
 
 def get_settings():
@@ -8,4 +8,4 @@ def get_settings():
     pass
 
 
-__all__ = ["CanvasThemes", "CANVAS","get_settings"]
+__all__ = ["CANVAS", "CanvasThemes", "get_settings"]

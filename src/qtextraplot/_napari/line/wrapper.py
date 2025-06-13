@@ -14,7 +14,7 @@ from qtpy.QtWidgets import QWidget
 
 from qtextraplot._napari._wrapper import ViewerBase
 from qtextraplot._napari.line._vispy.overrides.axis import tick_formatter
-from qtextraplot._napari.line.qt_viewer import QtViewer
+from qtextraplot._napari.line.qt_viewer import QtViewer, as_array
 from qtextraplot.config import CANVAS
 
 MUTEX = QMutex()
@@ -136,7 +136,7 @@ class NapariLineView(ViewerBase):
     ) -> Line:
         """Update data."""
         layer = self.try_reuse(name, Line)
-        color = kwargs.pop("color", CANVAS.as_array("line"))
+        color = kwargs.pop("color", as_array("line", CANVAS))
         if layer:
             layer.update_attributes(False, data=np.c_[x, y], color=color, **kwargs)
         else:
@@ -177,7 +177,7 @@ class NapariLineView(ViewerBase):
     ) -> Scatter:
         """Add scatter points."""
         layer = self.try_reuse(name, Scatter)
-        color = kwargs.pop("color", CANVAS.as_array("scatter"))
+        color = kwargs.pop("color", as_array("scatter", CANVAS))
         if xy is None:
             if x is not None and y is not None:
                 xy = np.c_[y, x]
@@ -216,7 +216,7 @@ class NapariLineView(ViewerBase):
     def add_centroids(self, x: np.ndarray, y: np.ndarray, name: str = CENTROID_NAME, **kwargs: ty.Any) -> Centroids:
         """Add centroids."""
         layer = self.try_reuse(name, Centroids)
-        color = kwargs.pop("color", CANVAS.as_array("line"))
+        color = kwargs.pop("color", as_array("line", CANVAS))
         if layer:
             layer.data = np.c_[x, y]
             layer.visible = kwargs.get("visible", True)
@@ -227,7 +227,7 @@ class NapariLineView(ViewerBase):
     def add_inf_centroids(self, x: np.ndarray, name: str = CENTROID_NAME, **kwargs: ty.Any) -> InfLine:
         """Add centroids."""
         layer = self.try_reuse(name, InfLine)
-        color = kwargs.pop("color", CANVAS.as_array("line"))
+        color = kwargs.pop("color", as_array("line", CANVAS))
         if layer:
             layer.data = x
             layer.visible = kwargs.get("visible", True)
@@ -242,7 +242,7 @@ class NapariLineView(ViewerBase):
         # get currently selected layers
         try:
             layer = self.try_reuse(name, Region)
-            color = kwargs.pop("color", CANVAS.as_array("highlight"))
+            color = kwargs.pop("color", as_array("highlight", CANVAS))
             if layer:
                 layer.update_attributes(False, data=(window, "vertical"), color=color, **kwargs)
             else:
@@ -259,7 +259,7 @@ class NapariLineView(ViewerBase):
         """Add region of interest."""
         # get currently selected layers
         layer = self.try_reuse(name, Region)
-        color = kwargs.pop("color", CANVAS.as_array("highlight"))
+        color = kwargs.pop("color", as_array("highlight", CANVAS))
         if layer:
             layer.update_attributes(False, data=window, **kwargs)
         else:
@@ -272,7 +272,7 @@ class NapariLineView(ViewerBase):
         """Add region of interest layer."""
         if self.region_layer is None:
             self.region_layer = self.viewer.add_region(
-                ((0, 0.1), "vertical"), name=EXTRACT_NAME, color=CANVAS.as_array("scatter"), opacity=0.5
+                ((0, 0.1), "vertical"), name=EXTRACT_NAME, color=as_array("scatter", CANVAS), opacity=0.5
             )
         self.select_one_layer(self.region_layer)
         return self.region_layer
@@ -304,20 +304,20 @@ if __name__ == "__main__":  # pragma: no cover
         def _on_btn() -> None:
             n_bins = np.random.randint(5, 100, 1)[0]
             rel_width = np.random.rand(1)
-            viewer.add_histogram(a, n_bins, rel_width=rel_width)
+            wrapper.add_histogram(a, n_bins, rel_width=rel_width)
 
-        viewer = NapariLineView(frame)
-        THEMES.set_theme_stylesheet(viewer.widget)
+        wrapper = NapariLineView(frame)
+        THEMES.set_theme_stylesheet(wrapper.widget)
 
         a = np.arange(10)
-        viewer.add_histogram(a, 9)
+        # viewer.add_histogram(a, 9)
 
-        # viewer.plot(np.arange(100), np.random.random(100))
-        # viewer.add_extract_region_layer()
+        wrapper.plot(np.arange(100), np.random.random(100))
+        wrapper.add_extract_region_layer()
 
         # viewer.add_centroids(np.arange(100), np.random.randint(0, 1000, 100))
 
-        ha.addWidget(viewer.widget, stretch=True)
+        ha.addWidget(wrapper.widget, stretch=True)
         ha.addWidget(make_btn(frame, "Click me", func=_on_btn))
 
     app, frame, ha = qframe(horz=False)
