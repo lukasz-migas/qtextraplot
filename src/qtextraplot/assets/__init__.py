@@ -5,10 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from koyo.system import get_module_path
-
-# from napari._qt.qt_resources import STYLES as NAPARI_STYLES
+from napari._qt.qt_resources import STYLES as NAPARI_STYLES
 from napari.resources import ICONS as NAPARI_ICONS
-from qtextra.assets import update_icons, update_styles, update_icon_mapping
+from qtextra.assets import update_icon_mapping, update_icons, update_styles
 
 HERE = Path(get_module_path("qtextraplot.assets", "__init__.py")).parent.resolve()
 
@@ -21,8 +20,8 @@ update_icons(ICONS)
 
 STYLES_PATH = HERE / "stylesheets"
 STYLES_PATH.mkdir(exist_ok=True)
-STYLES = {x.stem: str(x) for x in STYLES_PATH.iterdir() if x.suffix == ".qss"}
-# STYLES.update(NAPARI_STYLES)
+update_styles({f"{k}-napari": v for (k, v) in NAPARI_STYLES.items()})
+STYLES = {f"{x.stem}-qtextraplot": str(x) for x in STYLES_PATH.iterdir() if x.suffix == ".qss"}
 update_styles(STYLES)
 
 
