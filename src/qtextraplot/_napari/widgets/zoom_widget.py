@@ -5,10 +5,9 @@ from __future__ import annotations
 import typing as ty
 from weakref import ref
 
-from qtpy.QtWidgets import QFormLayout, QWidget
-
 import qtextra.helpers as hp
 from qtextra.widgets.qt_dialog import QtFramelessPopup
+from qtpy.QtWidgets import QFormLayout, QWidget
 
 if ty.TYPE_CHECKING:
     from napari_plot.viewer import Viewer
@@ -99,6 +98,7 @@ class XZoomPopup(ZoomPopup):
         with hp.qt_signals_blocked(self.position):
             xmin, xmax, _, _ = self.ref_viewer()._get_rect_extent()
             self.position.setRange(xmin, xmax)
+            self.window_spin.setRange(xmin, xmax / 2)
 
     def on_zoom(self) -> None:
         """Zoom-in on the range."""

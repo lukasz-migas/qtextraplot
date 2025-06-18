@@ -5,10 +5,9 @@ from weakref import ref
 
 from napari.utils.events import Event
 from napari_plot.components.dragtool import DragMode
-from qtpy.QtCore import Qt
-
 from qtextra.helpers import make_radio_btn_group
 from qtextra.widgets.qt_toolbar_mini import QtMiniToolbar
+from qtpy.QtCore import Qt
 
 if ty.TYPE_CHECKING:
     from napari_plot.viewer import Viewer
@@ -194,14 +193,14 @@ class QtViewRightToolbar(QtMiniToolbar):
 
     def on_open_axes_config(self) -> None:
         """Open scalebar config."""
-        from qtextraplot._napari.line.component_controls.qt_axis_controls import QtAxisControls
+        from napari_plot._qt.component_controls.qt_axis_controls import QtAxisControls
 
         dlg = QtAxisControls(self.ref_viewer(), self.ref_qt_viewer())
         dlg.show_left_of_mouse()
 
     def on_open_camera_config(self) -> None:
         """Open scalebar config."""
-        from qtextraplot._napari.line.component_controls.qt_camera_controls import QtCameraControls
+        from napari_plot._qt.component_controls.qt_camera_controls import QtCameraControls
 
         dlg = QtCameraControls(self.ref_viewer(), self.ref_qt_viewer())
         dlg.show_left_of_mouse()

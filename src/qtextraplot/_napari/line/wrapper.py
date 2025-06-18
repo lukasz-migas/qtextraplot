@@ -141,6 +141,7 @@ class NapariLineView(ViewerBase):
             layer.update_attributes(False, data=np.c_[x, y], color=color, **kwargs)
         else:
             layer = self.viewer.add_line(np.c_[x, y], name=name, color=color, **kwargs)
+        self.viewer.update_extents()
         if reset_y:
             self.viewer.reset_y_view()
         if reset_x:
