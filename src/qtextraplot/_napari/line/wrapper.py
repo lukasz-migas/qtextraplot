@@ -58,6 +58,8 @@ class NapariLineView(ViewerBase):
         x_label: str = "",
         y_label: str = "",
         lock_to_bottom: bool = False,
+        tool: str = "auto",
+        extent_mode: str = "restricted",
         **kwargs: ty.Any,
     ):
         self.parent = parent
@@ -67,8 +69,8 @@ class NapariLineView(ViewerBase):
         # create instance of viewer
         self.viewer: Viewer = Viewer()
         self.viewer.axis.y_tick_formatter = tick_formatter
-        self.viewer.drag_tool.active = "box"
-        self.viewer.camera.extent_mode = "restricted"
+        self.viewer.drag_tool.active = tool
+        self.viewer.camera.extent_mode = extent_mode
         self.viewer.axis.x_label = x_label
         self.viewer.axis.y_label = y_label
         self.viewer.axis.label_size = 8
@@ -141,7 +143,6 @@ class NapariLineView(ViewerBase):
             layer.update_attributes(False, data=np.c_[x, y], color=color, **kwargs)
         else:
             layer = self.viewer.add_line(np.c_[x, y], name=name, color=color, **kwargs)
-        self.viewer.update_extents()
         if reset_y:
             self.viewer.reset_y_view()
         if reset_x:

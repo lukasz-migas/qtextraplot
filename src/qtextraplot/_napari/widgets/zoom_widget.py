@@ -29,6 +29,7 @@ class ZoomPopup(QtFramelessPopup):
         self._default_window = default_window
         self._default_auto_scale = default_auto_scale
         super().__init__(parent=parent)
+        self.setMinimumWidth(350)
         self.position.setFocus()
 
     def on_zoom(self) -> None:
@@ -98,7 +99,7 @@ class XZoomPopup(ZoomPopup):
         with hp.qt_signals_blocked(self.position):
             xmin, xmax, _, _ = self.ref_viewer()._get_rect_extent()
             self.position.setRange(xmin, xmax)
-            self.window_spin.setRange(xmin, xmax / 2)
+            self.window_spin.setRange(0.0, xmax / 2)
 
     def on_zoom(self) -> None:
         """Zoom-in on the range."""

@@ -45,6 +45,7 @@ update_icon_mapping(
         "rectangle": "ph.rectangle-bold",
         "ellipse": "mdi6.ellipse-outline",
         "polygon": "mdi.pentagon-outline",
+        "zoom": "ri.zoom-in-line",
     },
     key="qtextraplot",
 )

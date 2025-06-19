@@ -4,8 +4,9 @@ import typing as ty
 from weakref import ref
 
 from napari.utils.events import Event
+from napari_plot._qt.qt_toolbar import create_tools_menu
 from napari_plot.components.dragtool import DragMode
-from qtextra.helpers import make_radio_btn_group
+from qtextra.helpers import make_radio_btn_group, show_menu
 from qtextra.widgets.qt_toolbar_mini import QtMiniToolbar
 from qtpy.QtCore import Qt
 
@@ -153,6 +154,12 @@ class QtViewRightToolbar(QtMiniToolbar):
             check=viewer.grid_lines.visible,
             func=self._toggle_grid_lines_visible,
         )
+        self.tools_tool_btn = self.insert_qta_tool(
+            "zoom",
+            tooltip="Select current tool.",
+            checkable=False,
+            func=self._open_tools_menu,
+        )
         self.layers_btn = self.insert_qta_tool(
             "layers",
             tooltip="Display layer controls",
@@ -190,6 +197,10 @@ class QtViewRightToolbar(QtMiniToolbar):
 
     def _toggle_axes_visible(self, state: bool) -> None:
         self.ref_qt_viewer().viewer.axis.visible = state
+
+    def _open_tools_menu(self):
+        """Open menu of available tools."""
+        show_menu(menu=create_tools_menu(self))
 
     def on_open_axes_config(self) -> None:
         """Open scalebar config."""
