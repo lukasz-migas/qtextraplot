@@ -58,65 +58,62 @@ class QtViewToolbar(QWidget):
         )
 
         # create instance
-        toolbar_left, toolbar_right = (
-            QtMiniToolbar(qt_viewer, Qt.Orientation.Vertical),
-            QtMiniToolbar(qt_viewer, Qt.Orientation.Vertical),
-        )
-        self.toolbar_left = toolbar_left
-        self.toolbar_right = toolbar_right
+        self.toolbar_left = toolbar_left = QtMiniToolbar(qt_viewer, Qt.Orientation.Vertical, add_spacer=False)
+        self.toolbar_right = toolbar_right = QtMiniToolbar(qt_viewer, Qt.Orientation.Vertical, add_spacer=False)
+
+        # left-side toolbar
+        # this branch provides additional tools in the toolbar to allow extraction
+        if self.allow_extraction:
+            self.tools_off_btn = toolbar_left.add_qta_tool(
+                "none",
+                tooltip="Disable data extraction (default)",
+                checkable=True,
+                check=True,
+            )
+            buttons = [self.tools_off_btn]
+            if self.allow_shapes:
+                self.tools_rectangle_btn = toolbar_left.add_qta_tool(
+                    "rectangle",
+                    tooltip="Use rectangular region of interest",
+                    checkable=True,
+                )
+                self.tools_ellipse_btn = toolbar_left.add_qta_tool(
+                    "ellipse",
+                    tooltip="Use circular region of interest",
+                    checkable=True,
+                )
+                self.tools_poly_btn = toolbar_left.add_qta_tool(
+                    "polygon",
+                    tooltip="Use polygon region of interest",
+                    checkable=True,
+                )
+                self.tools_lasso_btn = toolbar_left.add_qta_tool(
+                    "lasso",
+                    tooltip="Use lasso region of interest",
+                    checkable=True,
+                )
+                buttons.extend(
+                    [self.tools_lasso_btn, self.tools_poly_btn, self.tools_ellipse_btn, self.tools_rectangle_btn]
+                )
+            if self.allow_labels:
+                self.tools_new_labels_btn = toolbar_left.add_qta_tool(
+                    "new_labels",
+                    tooltip="Paint region of interest using paint brush",
+                    checkable=True,
+                )
+                buttons.append(self.tools_new_labels_btn)
+            _radio_group = make_radio_btn_group(qt_viewer, buttons)
+            toolbar_left.add_spacer()
+        if toolbar_left.n_items <= 1:  # exclude spacer from the count
+            toolbar_left.setVisible(False)
 
         # right-hand toolbar
-        # view reset/clear
-        self.tools_erase_btn = toolbar_right.insert_qta_tool("erase", tooltip="Clear image", func=viewer.clear_canvas)
-        self.tools_erase_btn.hide()
-        self.tools_zoomout_btn = toolbar_right.insert_qta_tool(
-            "zoom_out", tooltip="Reset view. Hold 'Control' and double-click to reset view.", func=viewer.reset_view
+        self.layers_btn = toolbar_right.add_qta_tool(
+            "layers",
+            tooltip="Display layer controls",
+            checkable=False,
+            func=qt_viewer.on_toggle_controls_dialog,
         )
-        # view modifiers
-        self.tools_clip_btn = toolbar_right.insert_qta_tool(
-            "screenshot",
-            tooltip="Copy figure to clipboard",
-            func=self.on_copy_to_clipboard,
-            func_menu=self.on_open_save_figure,
-        )
-        self.tools_save_btn = toolbar_right.insert_qta_tool(
-            "save",
-            tooltip="Save figure",
-            func=self.on_save_figure,
-            func_menu=self.on_open_save_figure,
-        )
-        self.tools_colorbar_btn = toolbar_right.insert_qta_tool(
-            "colorbar",
-            tooltip="Show/hide colorbar",
-            checkable=True,
-        )
-        self.tools_colorbar_btn.connect_to_right_click(self.on_open_colorbar_config)
-        self.tools_scalebar_btn = toolbar_right.insert_qta_tool(
-            "ruler",
-            tooltip="Show/hide scalebar",
-            checkable=True,
-            check=self.viewer.scale_bar.visible,
-            func=self._toggle_scale_bar_visible,
-        )
-        self.tools_scalebar_btn.connect_to_right_click(self.on_open_scalebar_config)
-        self.tools_text_btn = toolbar_right.insert_qta_tool(
-            "text",
-            tooltip="Show/hide text label",
-            check=self.viewer.text_overlay.visible,
-            func=self._toggle_text_visible,
-            func_menu=self.on_open_text_config,
-        )
-        self.tools_text_btn.connect_to_right_click(self.on_open_text_config)
-        if self.allow_crosshair:
-            self.tools_cross_btn = toolbar_right.insert_qta_tool(
-                "crosshair",
-                tooltip="Show/hide crosshair",
-                checkable=True,
-                check=self.viewer.cross_hair.visible,
-                func=self._toggle_crosshair_visible,
-                func_menu=self.on_open_crosshair_config,
-            )
-
         self.tools_grid_btn = make_qta_btn(
             self,
             "grid_off",
@@ -127,62 +124,59 @@ class QtViewToolbar(QWidget):
             action="napari:toggle_grid",
             func_menu=self.open_grid_popup,
         )
-        toolbar_right.insert_button(self.tools_grid_btn)
-
-        self.layers_btn = toolbar_right.insert_qta_tool(
-            "layers",
-            tooltip="Display layer controls",
-            checkable=False,
-            func=qt_viewer.on_toggle_controls_dialog,
-        )
-
-        # left-side toolbar
-        # this branch provides additional tools in the toolbar to allow extraction
-        if self.allow_extraction:
-            buttons = []
-            if self.allow_labels:
-                self.tools_new_labels_btn = toolbar_left.insert_qta_tool(
-                    "new_labels",
-                    tooltip="Paint region of interest using paint brush",
-                    checkable=True,
-                )
-                buttons.append(self.tools_new_labels_btn)
-            if self.allow_shapes:
-                self.tools_lasso_btn = toolbar_left.insert_qta_tool(
-                    "lasso",
-                    tooltip="Use lasso region of interest",
-                    checkable=True,
-                )
-                self.tools_poly_btn = toolbar_left.insert_qta_tool(
-                    "polygon",
-                    tooltip="Use polygon region of interest",
-                    checkable=True,
-                )
-                self.tools_ellipse_btn = toolbar_left.insert_qta_tool(
-                    "ellipse",
-                    tooltip="Use circular region of interest",
-                    checkable=True,
-                )
-                self.tools_rectangle_btn = toolbar_left.insert_qta_tool(
-                    "rectangle",
-                    tooltip="Use rectangular region of interest",
-                    checkable=True,
-                )
-                buttons.extend(
-                    [self.tools_lasso_btn, self.tools_poly_btn, self.tools_ellipse_btn, self.tools_rectangle_btn]
-                )
-            self.tools_off_btn = toolbar_left.insert_qta_tool(
-                "none",
-                tooltip="Disable data extraction (default)",
+        toolbar_right.add_button(self.tools_grid_btn)
+        if self.allow_crosshair:
+            self.tools_cross_btn = toolbar_right.add_qta_tool(
+                "crosshair",
+                tooltip="Show/hide crosshair",
                 checkable=True,
-                # func=self._on_close_extract_layer,
+                check=self.viewer.cross_hair.visible,
+                func=self._toggle_crosshair_visible,
+                func_menu=self.on_open_crosshair_config,
             )
-            self.tools_off_btn.setChecked(True)
-            buttons.append(self.tools_off_btn)
-            _radio_group = make_radio_btn_group(qt_viewer, buttons)
-
-        if toolbar_left.n_items <= 1:  # exclude spacer from the count
-            toolbar_left.setVisible(False)
+        self.tools_text_btn = toolbar_right.add_qta_tool(
+            "text",
+            tooltip="Show/hide text label",
+            check=self.viewer.text_overlay.visible,
+            func=self._toggle_text_visible,
+            func_menu=self.on_open_text_config,
+        )
+        self.tools_scalebar_btn = toolbar_right.add_qta_tool(
+            "ruler",
+            tooltip="Show/hide scalebar",
+            checkable=True,
+            check=self.viewer.scale_bar.visible,
+            func=self._toggle_scale_bar_visible,
+            func_menu=self.on_open_scalebar_config,
+        )
+        self.tools_colorbar_btn = toolbar_right.add_qta_tool(
+            "colorbar",
+            tooltip="Show/hide colorbar",
+            checkable=True,
+            func=self._toggle_color_bar_visible,
+            func_menu=self.on_open_colorbar_config,
+        )
+        self.tools_clip_btn = toolbar_right.add_qta_tool(
+            "screenshot",
+            tooltip="Copy figure to clipboard",
+            func=self.on_copy_to_clipboard,
+            func_menu=self.on_open_save_figure,
+        )
+        self.tools_save_btn = toolbar_right.add_qta_tool(
+            "save",
+            tooltip="Save figure",
+            func=self.on_save_figure,
+            func_menu=self.on_open_save_figure,
+        )
+        self.tools_zoomout_btn = toolbar_right.add_qta_tool(
+            "zoom_out",
+            tooltip="Reset view. Hold 'Control' and double-click to reset view.",
+            func=viewer.reset_view,
+        )
+        self.tools_erase_btn = toolbar_right.add_qta_tool(
+            "erase", tooltip="Clear image", func=viewer.clear_canvas, hide=True
+        )
+        toolbar_right.add_spacer()
         if toolbar_right.n_items <= 1:  # exclude spacer from the count
             toolbar_right.setVisible(False)
 

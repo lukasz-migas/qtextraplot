@@ -5,18 +5,14 @@ from __future__ import annotations
 import typing as ty
 from weakref import ref
 
-from loguru import logger
-from napari.utils.events import Event, EventEmitter, disconnect_events
-from qtpy.QtCore import Qt, Signal  # type: ignore[attr-defined]
-from qtpy.QtWidgets import (
-    QVBoxLayout,
-    QWidget,
-)
-
 import qtextra.helpers as hp
-from qtextraplot._napari.layer_controls.qt_labels_controls import QtLabelsControls
-from qtextraplot._napari.layer_controls.qt_shapes_controls import QtShapesControls
+from loguru import logger
+from napari._qt.layer_controls.qt_labels_controls import QtLabelsControls
+from napari._qt.layer_controls.qt_shapes_controls import QtShapesControls
+from napari.utils.events import Event, EventEmitter, disconnect_events
 from qtextra.widgets.qt_dialog import QtFramelessTool
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import QVBoxLayout, QWidget
 
 if ty.TYPE_CHECKING:
     from napari.layers import Labels, Shapes

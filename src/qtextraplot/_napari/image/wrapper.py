@@ -8,11 +8,13 @@ import numpy as np
 from koyo.image import clip_hotspots
 from koyo.secret import get_short_hash
 from napari.layers import Image, Labels, Points, Shapes
+from napari.layers.utils.layer_utils import Extent
+from napari.utils import DirectLabelColormap
 from qtpy.QtCore import QMutex, QMutexLocker, Slot  # type: ignore[attr-defined]
 from qtpy.QtWidgets import QWidget
 
-from qtextraplot._napari.components.overlays.color_bar import ColorBarItem
 from qtextraplot._napari._wrapper import ViewerBase
+from qtextraplot._napari.components.overlays.color_bar import ColorBarItem
 from qtextraplot._napari.image.components.viewer_model import Viewer
 from qtextraplot._napari.image.qt_viewer import QtViewer
 
@@ -24,6 +26,16 @@ IMAGE_NAME, PAINT_NAME, MASK_NAME, LABELS_NAME, SHAPES_NAME = (
     "Extract mask",
     "Shape mask",
 )
+
+
+def extent_for(layer_list, layers) -> Extent:
+    """Extent of layers in data and world coordinates."""
+    extent_list = [layer.extent for layer in layers]
+    return Extent(
+        data=None,
+        world=layer_list._get_extent_world(extent_list),
+        step=layer_list._get_step_size(extent_list),
+    )
 
 
 class NapariImageView(ViewerBase):
@@ -191,7 +203,7 @@ class NapariImageView(ViewerBase):
         self,
         array: np.ndarray,
         name: str = "Masks",
-        colors: np.ndarray | None = None,
+        colors: np.ndarray | DirectLabelColormap | None = None,
         opacity: float = 0.75,
         editable: bool = False,
     ) -> Labels:
@@ -253,7 +265,7 @@ class NapariImageView(ViewerBase):
         if self.shape_layer is None:
             self.viewer.add_shapes(
                 ndim=max(self.viewer.dims.ndim, 2),
-                scale=self.viewer.layers.extent_for([self.image_layer]).step,
+                scale=extent_for(self.viewer.layers, [self.image_layer]).step,
                 name=SHAPES_NAME,
             )
             self.shape_layer = self.viewer.layers[SHAPES_NAME]
