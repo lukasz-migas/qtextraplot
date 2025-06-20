@@ -111,9 +111,9 @@ class QtViewRightToolbar(QtMiniToolbar):
 
     def __init__(self, view: "Grid", viewer: "Viewer", qt_viewer: "QtViewer", **_kwargs: ty.Any):
         super().__init__(parent=qt_viewer, orientation=Qt.Orientation.Vertical)
-        self.ref_view: ty.Callable[[], Grid] = ref(view)
-        self.ref_viewer: ty.Callable[[], Viewer] = ref(viewer)
         self.ref_qt_viewer: ty.Callable[[], QtViewer] = ref(qt_viewer)  # type: ignore[assignment]
+        self.ref_viewer: ty.Callable[[], Viewer] = ref(viewer)
+        self.ref_view: ty.Callable[[], Grid] = ref(view)
 
         # view reset/clear
         self.tools_erase_btn = self.insert_qta_tool("erase", tooltip="Clear image", func=viewer.clear_canvas)
@@ -123,13 +123,16 @@ class QtViewRightToolbar(QtMiniToolbar):
         # view modifiers
         self.insert_separator()
         self.tools_clip_btn = self.insert_qta_tool(
-            "clipboard",
+            "screenshot",
             tooltip="Copy figure to clipboard",
-            func=qt_viewer.clipboard,
+            func=self.on_clipboard,
             func_menu=self.on_open_save_figure,
         )
         self.tools_save_btn = self.insert_qta_tool(
-            "save", tooltip="Save figure", func=qt_viewer.on_save_figure, func_menu=self.on_open_save_figure
+            "save",
+            tooltip="Save figure",
+            func=qt_viewer.on_save_figure,
+            func_menu=self.on_open_save_figure,
         )
         self.tools_axes_btn = self.insert_qta_tool(
             "axes_label",
@@ -210,15 +213,19 @@ class QtViewRightToolbar(QtMiniToolbar):
         dlg.show_left_of_mouse()
 
     def on_open_camera_config(self) -> None:
-        """Open scalebar config."""
+        """Open camera config."""
         from napari_plot._qt.component_controls.qt_camera_controls import QtCameraControls
 
         dlg = QtCameraControls(self.ref_viewer(), self.ref_qt_viewer())
         dlg.show_left_of_mouse()
 
+    def on_clipboard(self) -> None:
+        """Copy figure to clipboard."""
+        self.ref_qt_viewer().clipboard()
+
     def on_open_save_figure(self) -> None:
-        """Show scale bar controls for the viewer."""
+        """Show save config."""
         from qtextraplot._napari.widgets import QtScreenshotDialog
 
-        dlg = QtScreenshotDialog(self.ref_view(), self)
+        dlg = QtScreenshotDialog(self.ref_qt_viewer(), self)
         dlg.show_above_widget(self.tools_save_btn)

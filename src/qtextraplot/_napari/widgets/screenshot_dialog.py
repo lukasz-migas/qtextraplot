@@ -25,8 +25,22 @@ class QtScreenshotDialog(QtFramelessPopup):
     def make_panel(self) -> QLayout:
         """Make layout."""
         size = self.qt_viewer.canvas._scene_canvas.size
-        self.size_x = hp.make_int_spin_box(self, 50, 8000, 50, default=size[0], tooltip="Width of the screenshot.")
-        self.size_y = hp.make_int_spin_box(self, 50, 8000, 50, default=size[1], tooltip="Height of the screenshot.")
+        self.size_x = hp.make_int_spin_box(
+            self,
+            50,
+            8000,
+            50,
+            default=size[0],
+            tooltip="Width of the screenshot.",
+        )
+        self.size_y = hp.make_int_spin_box(
+            self,
+            50,
+            8000,
+            50,
+            default=size[1],
+            tooltip="Height of the screenshot.",
+        )
 
         self.scale = hp.make_double_spin_box(
             self,
@@ -45,18 +59,6 @@ class QtScreenshotDialog(QtFramelessPopup):
             "Only screenshot the canvas",
             value=True,
         )
-        self.clipboard_btn = hp.make_btn(
-            self,
-            "Copy to clipboard",
-            tooltip="Copy screenshot to clipboard",
-            func=self.on_copy_to_clipboard,
-        )
-        self.save_btn = hp.make_btn(
-            self,
-            "Save to file",
-            tooltip="Save screenshot to file",
-            func=self.on_save_figure,
-        )
 
         layout = hp.make_form_layout(margin=(6, 6, 6, 6))
         layout.addRow(self._make_move_handle("Screenshot controls"))
@@ -64,8 +66,22 @@ class QtScreenshotDialog(QtFramelessPopup):
         layout.addRow("Height", self.size_y)
         layout.addRow("Up-sample", self.scale)
         layout.addRow("Canvas only", self.canvas_only)
-        layout.addRow(self.clipboard_btn)
-        layout.addRow(self.save_btn)
+        layout.addRow(
+            hp.make_btn(
+                self,
+                "Copy to clipboard",
+                tooltip="Copy screenshot to clipboard",
+                func=self.on_copy_to_clipboard,
+            )
+        )
+        layout.addRow(
+            hp.make_btn(
+                self,
+                "Save to file",
+                tooltip="Save screenshot to file",
+                func=self.on_save_figure,
+            )
+        )
         return layout
 
     def on_save_figure(self) -> None:

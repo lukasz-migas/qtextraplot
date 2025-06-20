@@ -25,7 +25,7 @@ class MplToolbar(QWidget):
         # view modifiers
         toolbar.insert_separator()
         self.tools_clip_btn = toolbar.insert_qta_tool(
-            "clipboard",
+            "screenshot",
             tooltip="Copy figure to clipboard",
             func=view.copy_to_clipboard,
         )
