@@ -6,6 +6,7 @@ import typing as ty
 from contextlib import suppress
 
 import numpy as np
+import qtextra.helpers as hp
 from napari._qt.containers.qt_layer_list import QtLayerList
 from napari._qt.widgets.qt_dims import QtDims
 from napari.utils.key_bindings import KeymapHandler
@@ -14,7 +15,7 @@ from napari_plot._qt.qt_main_window import Window, _QtMainWindow
 from napari_plot._qt.qt_viewer import QtViewer as _QtViewer
 from napari_plot._vispy.overlays import register_vispy_overlays
 from qtpy.QtCore import QCoreApplication, QEvent, Qt
-from qtpy.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from qtextraplot._napari.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
 from qtextraplot._napari.line._vispy.canvas import VispyCanvas
@@ -164,23 +165,18 @@ class QtViewer(QWidget):
         self.viewer_left_toolbar = QtViewLeftToolbar(self.canvas.view, self.viewer, self, **kwargs)
         self.viewer_right_toolbar = QtViewRightToolbar(self.canvas.view, self.viewer, self, **kwargs)
 
-        image_layout = QVBoxLayout()
+        image_layout = hp.make_v_layout(margin=(0, 2, 0, 2))
         image_layout.addWidget(self.canvas.native, stretch=True)
-        image_layout.setContentsMargins(0, 2, 0, 2)
 
         # view widget
-        main_layout = QHBoxLayout()
-        main_layout.setSpacing(1)
-        main_layout.addLayout(image_layout)
-        main_layout.setContentsMargins(2, 2, 2, 2)
+        main_layout = hp.make_h_layout(spacing=1 if add_toolbars else 0, margin=2, parent=self)
+        main_layout.addLayout(image_layout, stretch=True)
         if add_toolbars:
             main_layout.insertWidget(0, self.viewer_left_toolbar)
             main_layout.addWidget(self.viewer_right_toolbar)
         else:
             self.viewer_left_toolbar.setVisible(False)
             self.viewer_right_toolbar.setVisible(False)
-            main_layout.setSpacing(0)
-        self.setLayout(main_layout)
 
     def _on_active_change(self):
         _QtViewer._on_active_change(self)

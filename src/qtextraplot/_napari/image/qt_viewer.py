@@ -6,6 +6,7 @@ import typing as ty
 from contextlib import suppress
 
 import numpy as np
+import qtextra.helpers as hp
 from napari._qt.containers import QtLayerList
 from napari._qt.qt_main_window import Window, _QtMainWindow
 from napari._qt.qt_viewer import QtViewer as _QtViewer
@@ -166,21 +167,14 @@ class QtViewer(QWidget):
         # viewer buttons to control 2d/3d, grid, transpose, etc
         self.viewerButtons = QtViewerButtons(self, self.viewer, **kwargs)
 
-        image_layout = QVBoxLayout()
+        image_layout = hp.make_v_layout(margin=(0, 2, 0, 2) if add_dims else (0, 0, 0, 0), spacing=0)
         image_layout.addWidget(self.canvas.native, stretch=True)
-        image_layout.setContentsMargins(0, 2, 0, 2)
         if add_dims:
             image_layout.addWidget(self.dims)
-            image_layout.setSpacing(0)
-        else:
-            image_layout.setSpacing(0)
-            image_layout.setContentsMargins(0, 0, 0, 0)
 
         # view widget
-        main_layout = QHBoxLayout(self)
-        main_layout.setSpacing(1)
+        main_layout = hp.make_h_layout(spacing=1 if add_toolbars else 0, margin=2, parent=self)
         main_layout.addLayout(image_layout, stretch=True)
-        main_layout.setContentsMargins(2, 2, 2, 2)
         if add_toolbars:
             main_layout.insertWidget(0, self.viewerToolbar.toolbar_left)
             main_layout.addWidget(self.viewerToolbar.toolbar_right)
@@ -188,7 +182,6 @@ class QtViewer(QWidget):
             self.viewerToolbar.setVisible(False)
             self.viewerToolbar.toolbar_left.setVisible(False)
             self.viewerToolbar.toolbar_right.setVisible(False)
-            main_layout.setSpacing(0)
 
     @property
     def view(self):
