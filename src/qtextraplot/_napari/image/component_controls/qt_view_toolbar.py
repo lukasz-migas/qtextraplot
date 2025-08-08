@@ -10,7 +10,7 @@ from qtextra.widgets.qt_toolbar_mini import QtMiniToolbar
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QWidget
 
-from qtextraplot._napari.image.component_controls.qt_layer_buttons import make_grid_popup, make_qta_btn
+from qtextraplot._napari.image.component_controls.qt_layer_buttons import make_qta_btn
 
 
 class QtViewToolbar(QWidget):
@@ -194,7 +194,10 @@ class QtViewToolbar(QWidget):
 
     def open_grid_popup(self) -> None:
         """Open grid options pop up widget."""
-        make_grid_popup(self, self.viewer)
+        from qtextraplot._napari.component_controls.qt_grid_controls import QtGridControls
+
+        dlg = QtGridControls(self.viewer, self)
+        dlg.show_left_of_widget(self.tools_grid_btn)
 
     def connect_toolbar(self) -> None:
         """Connect events."""

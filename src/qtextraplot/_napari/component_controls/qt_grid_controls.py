@@ -5,9 +5,8 @@ from __future__ import annotations
 import qtextra.helpers as hp
 from napari._qt.widgets.qt_spinbox import QtSpinBox
 from qtextra.widgets.qt_dialog import QtFramelessPopup
-from qtextra.widgets.qt_label_icon import QtQtaTooltipLabel
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QFormLayout, QLabel, QWidget
+from qtpy.QtWidgets import QDoubleSpinBox, QFormLayout, QLabel, QWidget
 
 from qtextraplot._napari._enums import ViewerType
 
@@ -18,14 +17,12 @@ class QtGridControls(QtFramelessPopup):
 
         super().__init__(parent=parent)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.setObjectName("scalebar")
+        self.setObjectName("gridControls")
         self.setMouseTracking(True)
 
     # noinspection PyAttributeOutsideInit
     def make_panel(self) -> QFormLayout:
         """Make panel."""
-        # widgets
-
         shape_help_msg = (
             "Number of rows and columns in the grid. A value of -1 for either or both of width and height will\n"
             " trigger an auto calculation of the necessary grid shape to appropriately fill all the layers at the\n"
@@ -36,6 +33,12 @@ class QtGridControls(QtFramelessPopup):
             "Number of layers to place in each grid square before moving on to the next square. The default ordering\n"
             " is to place the most visible layer in the top left corner of the grid. A negative stride will cause the\n"
             " order in which the layers are placed in the grid to be reversed. 0 is not a valid entry."
+        )
+
+        spacing_help_msg = (
+            "The amount of spacing between grid viewboxes.\n"
+            "If between 0 and 1, it is interpreted as a proportion of the size of the viewboxes.\n"
+            "If equal or greater than 1, it is interpreted as screen pixels."
         )
 
         # set up
@@ -70,22 +73,43 @@ class QtGridControls(QtFramelessPopup):
         grid_height.setValue(self.viewer.grid.shape[0])
         grid_height.valueChanged.connect(self._update_grid_height)
 
-        shape_help_symbol_width = QtQtaTooltipLabel(parent=self)
-        shape_help_symbol_width.setToolTip(shape_help_msg)
-
-        shape_help_symbol_height = QtQtaTooltipLabel(parent=self)
-        shape_help_symbol_height.setToolTip(shape_help_msg)
-
-        stride_help_symbol = QtQtaTooltipLabel(parent=self)
-        stride_help_symbol.setToolTip(stride_help_msg)
+        # set up spacing
+        spacing_min = self.viewer.grid.__fields__["spacing"].type_.ge
+        spacing_max = self.viewer.grid.__fields__["spacing"].type_.le
+        spacing_step = self.viewer.grid.__fields__["spacing"].type_.step
+        grid_spacing = QDoubleSpinBox(self)
+        grid_spacing.setObjectName("gridSpacingBox")
+        grid_spacing.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        grid_spacing.setMinimum(spacing_min)
+        grid_spacing.setMaximum(spacing_max)
+        grid_spacing.setValue(self.viewer.grid.spacing)
+        grid_spacing.setDecimals(2)
+        grid_spacing.setSingleStep(spacing_step)
+        grid_spacing.valueChanged.connect(self._update_grid_spacing)
+        self.grid_spacing_box = grid_spacing
 
         # layout
         layout = hp.make_form_layout()
         layout.setContentsMargins(6, 6, 6, 6)
-        layout.insertRow(0, QLabel("Grid stride:"), hp.make_h_layout(grid_stride, stride_help_symbol, stretch_id=0))
-        layout.insertRow(1, QLabel("Grid width:"), hp.make_h_layout(grid_width, shape_help_symbol_width, stretch_id=0))
         layout.insertRow(
-            2, QLabel("Grid height:"), hp.make_h_layout(grid_height, shape_help_symbol_height, stretch_id=0)
+            0,
+            QLabel("Grid stride:"),
+            hp.make_h_layout(grid_stride, hp.make_help_label(self, stride_help_msg), stretch_id=0),
+        )
+        layout.insertRow(
+            1,
+            QLabel("Grid width:"),
+            hp.make_h_layout(grid_width, hp.make_help_label(self, shape_help_msg), stretch_id=0),
+        )
+        layout.insertRow(
+            2,
+            QLabel("Grid height:"),
+            hp.make_h_layout(grid_height, hp.make_help_label(self, shape_help_msg), stretch_id=0),
+        )
+        layout.insertRow(
+            3,
+            QLabel("Grid spacing:"),
+            hp.make_h_layout(grid_spacing, hp.make_help_label(self, spacing_help_msg), stretch_id=0),
         )
         return layout
 
@@ -100,3 +124,7 @@ class QtGridControls(QtFramelessPopup):
     def _update_grid_height(self, value):
         """Update height value in grid shape."""
         self.viewer.grid.shape = (value, self.viewer.grid.shape[1])
+
+    def _update_grid_spacing(self, value: float) -> None:
+        """Update spacing value in grid settings."""
+        self.viewer.grid.spacing = value

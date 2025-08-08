@@ -46,6 +46,8 @@ update_icon_mapping(
         "ellipse": "mdi6.ellipse-outline",
         "polygon": "mdi.pentagon-outline",
         "zoom": "ri.zoom-in-line",
+        "new_points": "mdi6.scatter-plot",
+        "new_shapes": "mdi6.shape-outline",
     },
     key="qtextraplot",
 )

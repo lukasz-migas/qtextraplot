@@ -33,6 +33,7 @@ QtLayerWidget > QCheckBox#editable::indicator:checked {
   image: url("theme_{{ id }}://unlocked.svg");
 }
 
+
 /* --------------- QtLayerWidget -------------------- */
 QtLayerWidget {
   padding: 0px;
@@ -277,9 +278,9 @@ QtLayerControls > QLabel {
 }
 
 /* ------------------------------------------------------ */
-QtLayerControlsContainer QWidget {
-    background-color: none;
-}
+/*QtLayerControlsContainer QWidget {*/
+/*    background-color: none;*/
+/*}*/
 
 QtLayerControlsContainer > QCheckBox {
    background-color: {{ secondary }};
