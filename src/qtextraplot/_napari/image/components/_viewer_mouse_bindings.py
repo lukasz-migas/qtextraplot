@@ -29,37 +29,6 @@ def crosshair(viewer, event):
     yield
 
 
-def zoom(viewer, event):
-    """Enable zoom."""
-    if "Shift" not in event.modifiers or viewer.dims.ndisplay == 3:
-        return
-
-    if not viewer.zoom_box.visible:
-        viewer.zoom_box.visible = True
-
-    # on mouse press
-    press_position = None
-    if event.type == "mouse_press":
-        press_position = event.position
-        viewer.zoom_box.bounds = (press_position, press_position)
-        # viewer.events.crosshair(position=event.position)
-        yield
-
-    # on mouse move
-    while event.type == "mouse_move" and "Shift" in event.modifiers:
-        if press_position is None:
-            continue
-        position = event.position
-        viewer.zoom_box.bounds = (press_position, position)
-        # viewer.events.crosshair(position=event.position)
-        yield
-
-    # on mouse release
-    viewer.zoom_box.visible = False
-    viewer.events.zoom(value=viewer.zoom_box.extents())
-    yield
-
-
 def double_click_to_zoom_reset(viewer, event):
     """Zoom in on double click by zoom_factor; zoom out with Alt."""
     if viewer.layers.selection.active and viewer.layers.selection.active.mode != "pan_zoom":
