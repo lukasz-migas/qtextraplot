@@ -22,8 +22,6 @@ class MplToolbar(QWidget):
         self.tools_erase_btn = toolbar.insert_qta_tool("erase", tooltip="Clear image", func=view.clear)
         self.tools_erase_btn.hide()
         self.tools_zoomout_btn = toolbar.insert_qta_tool("zoom_out", tooltip="Zoom-out", func=view.on_zoom_out)
-        # view modifiers
-        toolbar.insert_separator()
         self.tools_clip_btn = toolbar.insert_qta_tool(
             "screenshot",
             tooltip="Copy figure to clipboard",

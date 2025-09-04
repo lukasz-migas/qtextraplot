@@ -213,14 +213,14 @@ class QtViewRightToolbar(QtMiniToolbar):
         from napari_plot._qt.component_controls.qt_axis_controls import QtAxisControls
 
         dlg = QtAxisControls(self.ref_viewer(), self.ref_qt_viewer())
-        dlg.show_left_of_mouse()
+        dlg.show_left_of_widget(self.tools_axes_btn)
 
     def on_open_camera_config(self) -> None:
         """Open camera config."""
         from napari_plot._qt.component_controls.qt_camera_controls import QtCameraControls
 
         dlg = QtCameraControls(self.ref_viewer(), self.ref_qt_viewer())
-        dlg.show_left_of_mouse()
+        dlg.show_left_of_widget(self.tools_zoomout_btn)
 
     def on_clipboard(self) -> None:
         """Copy figure to clipboard."""
