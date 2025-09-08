@@ -5,7 +5,7 @@ import numpy as np
 
 def crosshair(viewer, event):
     """Enable crosshair."""
-    if "Alt" not in event.modifiers:
+    if "Control" not in event.modifiers:
         return
 
     if not viewer.cross_hair.visible:
@@ -18,7 +18,7 @@ def crosshair(viewer, event):
         yield
 
     # on mouse move
-    while event.type == "mouse_move" and "Alt" in event.modifiers:
+    while event.type == "mouse_move" and "Control" in event.modifiers:
         viewer.cross_hair.position = event.position
         viewer.events.crosshair(position=event.position)
         yield
