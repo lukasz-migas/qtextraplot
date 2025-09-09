@@ -8,6 +8,7 @@ import numpy as np
 from koyo.secret import get_short_hash
 from napari.utils.events import Event
 from napari_plot.layers import Centroids, InfLine, Line, Region, Scatter, Shapes
+from napari_plot.layers.base import update_layer_attributes
 from napari_plot.viewer import ViewerModel as Viewer
 from qtpy.QtCore import QMutex
 from qtpy.QtWidgets import QWidget
@@ -134,13 +135,14 @@ class NapariLineView(ViewerBase):
         name: str = LINE_NAME,
         reset_y: bool = False,
         reset_x: bool = False,
+        reuse: bool = True,
         **kwargs: ty.Any,
     ) -> Line:
         """Update data."""
-        layer = self.try_reuse(name, Line)
+        layer = self.try_reuse(name, Line, reuse=reuse)
         color = kwargs.pop("color", as_array("line", CANVAS))
         if layer:
-            layer.update_attributes(False, data=np.c_[x, y], color=color, **kwargs)
+            update_layer_attributes(layer, False, data=np.c_[x, y], color=color, **kwargs)
         else:
             layer = self.viewer.add_line(np.c_[x, y], name=name, color=color, **kwargs)
         if reset_y:
@@ -157,13 +159,14 @@ class NapariLineView(ViewerBase):
         name: str = "Histogram",
         orientation: str = "vertical",
         face_color: str = "red",
+        reuse: bool = True,
         **kwargs: ty.Any,
     ) -> Shapes:
         """Add histogram using Shapes layer."""
         from qtextraplot._napari.line.plotting import convert_hist_to_shapes
 
         shapes = convert_hist_to_shapes(array, bins, orientation, rel_width)
-        layer = self.try_reuse(name, Shapes)
+        layer = self.try_reuse(name, Shapes, reuse=reuse)
         if layer:
             self.remove_layer(layer)
         layer = self.viewer.add_shapes(shapes, edge_width=0, name=name, face_color=face_color, **kwargs)
@@ -175,17 +178,18 @@ class NapariLineView(ViewerBase):
         y: ty.Iterable | np.ndarray | None = None,
         name: str = SCATTER_NAME,
         xy: np.ndarray | None = None,
+        reuse: bool = True,
         **kwargs: ty.Any,
     ) -> Scatter:
         """Add scatter points."""
-        layer = self.try_reuse(name, Scatter)
+        layer = self.try_reuse(name, Scatter, reuse=reuse)
         color = kwargs.pop("color", as_array("scatter", CANVAS))
         if xy is None:
             if x is not None and y is not None:
                 xy = np.c_[y, x]
         if layer:
             try:
-                layer.update_attributes(False, data=xy, color=color, **kwargs)
+                update_layer_attributes(layer, False, data=xy, color=color, **kwargs)
                 layer.visible = kwargs.get("visible", True)
             except Exception:
                 self.remove_layer(layer)
@@ -205,19 +209,22 @@ class NapariLineView(ViewerBase):
         orientation: str = "vertical",
         color: tuple | str = (1.0, 0.0, 0.0, 1.0),
         name: str = "InfLine",
+        reuse: bool = True,
         **kwargs: ty.Any,
     ) -> InfLine:
         """Add inf line."""
-        layer = self.try_reuse(name, InfLine)
+        layer = self.try_reuse(name, InfLine, reuse=reuse)
         if layer:
-            layer.update_attributes(False, data=[position], color=color, **kwargs)
+            update_layer_attributes(layer, False, data=[position], color=color, **kwargs)
         else:
             layer = self.viewer.add_inf_line([position], name=name, color=color, orientation=orientation)
         return layer
 
-    def add_centroids(self, x: np.ndarray, y: np.ndarray, name: str = CENTROID_NAME, **kwargs: ty.Any) -> Centroids:
+    def add_centroids(
+        self, x: np.ndarray, y: np.ndarray, name: str = CENTROID_NAME, reuse: bool = True, **kwargs: ty.Any
+    ) -> Centroids:
         """Add centroids."""
-        layer = self.try_reuse(name, Centroids)
+        layer = self.try_reuse(name, Centroids, reuse=reuse)
         color = kwargs.pop("color", as_array("line", CANVAS))
         if layer:
             layer.data = np.c_[x, y]
@@ -226,9 +233,11 @@ class NapariLineView(ViewerBase):
             layer = self.viewer.add_centroids(np.c_[x, y], name=name, color=color, **kwargs)
         return layer
 
-    def add_inf_centroids(self, x: np.ndarray, name: str = CENTROID_NAME, **kwargs: ty.Any) -> InfLine:
+    def add_inf_centroids(
+        self, x: np.ndarray, name: str = CENTROID_NAME, reuse: bool = True, **kwargs: ty.Any
+    ) -> InfLine:
         """Add centroids."""
-        layer = self.try_reuse(name, InfLine)
+        layer = self.try_reuse(name, InfLine, reuse=reuse)
         color = kwargs.pop("color", as_array("line", CANVAS))
         if layer:
             layer.data = x
@@ -238,15 +247,20 @@ class NapariLineView(ViewerBase):
         return layer
 
     def add_region(
-        self, window: tuple[float, float], name: str = REGION_NAME, editable: bool = True, **kwargs: ty.Any
+        self,
+        window: tuple[float, float],
+        name: str = REGION_NAME,
+        editable: bool = True,
+        reuse: bool = True,
+        **kwargs: ty.Any,
     ) -> Region | None:
         """Add region of interest."""
         # get currently selected layers
         try:
-            layer = self.try_reuse(name, Region)
+            layer = self.try_reuse(name, Region, reuse=reuse)
             color = kwargs.pop("color", as_array("highlight", CANVAS))
             if layer:
-                layer.update_attributes(False, data=(window, "vertical"), color=color, **kwargs)
+                update_layer_attributes(layer, False, data=(window, "vertical"), color=color, **kwargs)
             else:
                 layer = self.viewer.add_region((window, "vertical"), name=name, color=color, **kwargs)
             # set editable flag
@@ -256,14 +270,19 @@ class NapariLineView(ViewerBase):
             return None
 
     def add_regions(
-        self, window: tuple[float | int, float | int], name: str = REGION_NAME, editable: bool = True, **kwargs: ty.Any
+        self,
+        window: tuple[float | int, float | int],
+        name: str = REGION_NAME,
+        editable: bool = True,
+        reuse: bool = True,
+        **kwargs: ty.Any,
     ) -> Region:
         """Add region of interest."""
         # get currently selected layers
-        layer = self.try_reuse(name, Region)
+        layer = self.try_reuse(name, Region, reuse=reuse)
         color = kwargs.pop("color", as_array("highlight", CANVAS))
         if layer:
-            layer.update_attributes(False, data=window, **kwargs)
+            update_layer_attributes(layer, False, data=window, **kwargs)
         else:
             layer = self.viewer.add_region(window, orientation="vertical", name=name, color=color, **kwargs)
         # set editable flag

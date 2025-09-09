@@ -73,8 +73,11 @@ class ViewerBase(ABC):
         for name in names:
             self.remove_layer(name)
 
-    def try_reuse(self, name: str, cls: ty.Type[Layer]) -> ty.Optional[Layer]:
+    def try_reuse(self, name: str, cls: ty.Type[Layer], reuse: bool = True) -> ty.Optional[Layer]:
         """Try retrieving layer from the layer list."""
+        if not reuse:
+            self.remove_layer(name, silent=True)
+            return None
         try:
             layer = self.viewer.layers[name]
             return layer if isinstance(layer, cls) else None

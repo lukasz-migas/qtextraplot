@@ -1,6 +1,7 @@
 """Base class for all mpl-based plotting functionality."""
 
 import typing as ty
+import warnings
 from contextlib import contextmanager, suppress
 
 import matplotlib
@@ -817,7 +818,9 @@ class PlotBase(QWidget):
     def tight(self, tight: bool = True):
         """Tighten layout."""
         if tight:
-            self.figure.tight_layout()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=UserWarning)
+                self.figure.tight_layout()
 
     def clear(self):
         """Clear the plot and rest some of the parameters."""
