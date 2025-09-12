@@ -65,8 +65,8 @@ class QtViewToolbar(QWidget):
         # this branch provides additional tools in the toolbar to allow extraction
         if self.allow_extraction:
             self.tools_off_btn = toolbar_left.add_qta_tool(
-                "none",
-                tooltip="Disable data extraction (default)",
+                "zoom",
+                tooltip="Click here to enable default zoom interaction",
                 checkable=True,
                 check=True,
             )

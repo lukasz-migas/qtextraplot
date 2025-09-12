@@ -136,10 +136,11 @@ class NapariImageView(ViewerBase):
         contrast_limits: tuple[float, float] | None = None,
         interpolation: str = "nearest",
         keep_auto_contrast: bool = False,
+        reuse: bool = True,
         **kwargs: ty.Any,
     ) -> Image:
         """Add image layer."""
-        layer: ty.Optional[Image] = self.try_reuse(name, Image)
+        layer: ty.Optional[Image] = self.try_reuse(name, Image, reuse=reuse)
         if layer:
             layer.data = array
             if contrast_limits is not None:

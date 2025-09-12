@@ -76,6 +76,24 @@ class ViewMplLine(ViewBase):
             )
             self.figure.repaint(repaint)
 
+    def plot_calibration_curve(self, x: np.ndarray, y: np.ndarray, y_err: np.ndarray | None = None, **kwargs: ty.Any):
+        """Plot calibration curve."""
+        with QMutexLocker(MUTEX):
+            self.set_labels(**kwargs)
+            self.figure.clear()
+            self.figure.plot_scatter(
+                x,
+                y,
+                color="k",
+                size=10,
+                y_lower_start=0,
+                set_formatters=False,
+                x_label=self.x_label,
+                y_label=self.y_label,
+            )
+            self.figure.repaint()
+            self._data.update(x=x, y=y)
+
     def update(self, x: np.ndarray, y: np.ndarray, repaint: bool = True, **kwargs: ty.Any) -> None:
         """Update plot without having to clear it."""
         #         t_start = time.time()

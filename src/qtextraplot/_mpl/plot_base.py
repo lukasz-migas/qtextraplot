@@ -1196,7 +1196,8 @@ class PlotBase(QWidget):
             self.plot_1d_add_under_curve(x, y, **kwargs)
 
         # setup axis formatters
-        self.ax.yaxis.set_major_formatter(get_intensity_formatter())
+        if kwargs.get("set_formatters", True):
+            self.ax.yaxis.set_major_formatter(get_intensity_formatter())
         self.set_plot_xlabel(x_label, **kwargs)
         self.set_plot_ylabel(y_label, **kwargs)
         self.set_plot_title(title, **kwargs)
