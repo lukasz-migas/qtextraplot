@@ -76,22 +76,31 @@ class ViewMplLine(ViewBase):
             )
             self.figure.repaint(repaint)
 
-    def plot_calibration_curve(self, x: np.ndarray, y: np.ndarray, y_err: np.ndarray | None = None, **kwargs: ty.Any):
+    def plot_calibration_curve(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        y_err: np.ndarray | None = None,
+        clear: bool = True,
+        repaint: bool = True,
+        **kwargs: ty.Any,
+    ):
         """Plot calibration curve."""
         with QMutexLocker(MUTEX):
             self.set_labels(**kwargs)
-            self.figure.clear()
+            if clear:
+                self.figure.clear()
             self.figure.plot_scatter(
                 x,
                 y,
-                color="k",
-                size=10,
+                color="r",
+                size=20,
                 y_lower_start=0,
                 set_formatters=False,
                 x_label=self.x_label,
                 y_label=self.y_label,
             )
-            self.figure.repaint()
+            self.figure.repaint(repaint)
             self._data.update(x=x, y=y)
 
     def update(self, x: np.ndarray, y: np.ndarray, repaint: bool = True, **kwargs: ty.Any) -> None:
@@ -240,10 +249,12 @@ class ViewMplLine(ViewBase):
             self.figure.tight(tight)
             self.figure.repaint(repaint)
 
-    def add_line(self, x, y, color: str = "r", gid: str = "gid", zorder: int = 5, repaint: bool = True):
+    def add_line(
+        self, x, y, color: str = "r", gid: str = "gid", zorder: int = 5, repaint: bool = True, label: str = ""
+    ):
         """Add line."""
         with QMutexLocker(MUTEX):
-            self.figure.plot_1d_add(x, y, color, gid, zorder=zorder)
+            self.figure.plot_1d_add(x, y, color, gid, zorder=zorder)  # , label=label)
             self.figure.set_xy_line_limits()
             self.figure.repaint(repaint)
 

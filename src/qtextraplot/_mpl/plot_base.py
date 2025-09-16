@@ -1067,9 +1067,12 @@ class PlotBase(QWidget):
         line_width: int = 1,
         line_alpha: float = 1.0,
         line_style: str = "solid",
+        label: str = "",
     ):
         """Add spectrum."""
-        self.ax.plot(x, y, color=color, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style)
+        self.ax.plot(
+            x, y, color=color, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style, label=label
+        )
 
     def plot_1d_update_color(self, gid: str, color):
         """Update plot color."""

@@ -60,6 +60,8 @@ class ViewerBase(ABC):
 
     def remove_layer(self, name: str, silent: bool = True) -> bool:
         """Remove layer with `name`."""
+        if hasattr(name, "name"):
+            name = name.name  # it's actually a layer
         try:
             self.viewer.layers.remove(name)
             return True

@@ -12,6 +12,9 @@ from qtextraplot._napari.components.overlays.color_bar import ColorBarOverlay
 from qtextraplot._napari.components.overlays.crosshair import CrossHairOverlay
 from qtextraplot._napari.image.components._viewer_mouse_bindings import crosshair, double_click_to_zoom_reset
 
+if ty.TYPE_CHECKING:
+    from napari.layers import Image, Labels
+
 DEFAULT_OVERLAYS = {
     "cross_hair": CrossHairOverlay,
     "color_bar": ColorBarOverlay,
@@ -52,3 +55,14 @@ class Viewer(_ViewerModel):
         self.layers.select_all()
         self.layers.remove_selected()
         self.events.clear_canvas()
+
+    def new_labels_for_image(self, image: Image, name: str) -> Labels:
+        """Create a new labels layer for a given image layer."""
+        import numpy as np
+
+        layers_extent = self.layers.extent
+        extent = layers_extent.world
+        scale = layers_extent.step
+        corner = extent[0]
+        empty_labels = np.zeros(image.data.shape, dtype=np.uint8)
+        return self.add_labels(empty_labels, translate=np.array(corner), scale=scale, name=name)

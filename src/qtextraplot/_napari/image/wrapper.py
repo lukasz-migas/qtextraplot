@@ -249,14 +249,14 @@ class NapariImageView(ViewerBase):
     def add_paint_mask(self) -> None:
         """Add new paint layer if one is not present yet."""
         if self.paint_layer is None:
-            self.viewer.new_labels_for_image([self.image_layer], PAINT_NAME)
+            self.viewer.new_labels_for_image(self.image_layer, PAINT_NAME)
             self.paint_layer = self.viewer.layers[PAINT_NAME]
         self.viewer.layers.selection.add(self.paint_layer)
 
     def add_extract_labels_layer(self) -> Labels:
         """Add new (or reuse existing) layer to enable data extraction."""
         if self.extract_layer is None:
-            self.viewer.new_labels_for_image([self.image_layer], LABELS_NAME)
+            self.viewer.new_labels_for_image(self.image_layer, LABELS_NAME)
             self.extract_layer = self.viewer.layers[LABELS_NAME]
         self.viewer.layers.selection.add(self.extract_layer)
         return self.extract_layer
