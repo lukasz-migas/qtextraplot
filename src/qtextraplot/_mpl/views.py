@@ -51,6 +51,13 @@ class ViewMplLine(ViewBase):
                 # set data
                 self._data.update(x=x, y=y)
 
+    def imshow(self, image: np.ndarray, axis: bool = False, **kwargs: ty.Any) -> None:
+        """Display image."""
+        with QMutexLocker(MUTEX):
+            self.figure.clear()
+            self.figure.imshow(image, axis=axis, **kwargs)
+            self.figure.repaint()
+
     def scatter(
         self,
         x: np.ndarray,

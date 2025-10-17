@@ -964,6 +964,15 @@ class PlotBase(QWidget):
         self.store_plot_limits([extent], [self.ax])
         self.PLOT_TYPE = "line"
 
+    def imshow(self, image: np.ndarray, axis: bool = False, **kwargs) -> None:
+        """Display image data."""
+        self.ax.imshow(image, **kwargs)
+        if not axis:
+            self.ax.axis("off")
+        extent = get_extent(self.ax)
+        self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
+        self.store_plot_limits([extent], [self.ax])
+
     def plot_1d_add_under_curve(self, xvals, yvals, gid=None, ax=None, **kwargs):
         """Fill data under the line."""
         color = kwargs.get("spectrum_fill_color", "k")
