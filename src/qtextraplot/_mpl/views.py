@@ -55,7 +55,7 @@ class ViewMplLine(ViewBase):
         """Display image."""
         with QMutexLocker(MUTEX):
             self.figure.clear()
-            self.figure.imshow(image, axis=axis, **kwargs)
+            self.figure.imshow(image, axis=axis, vmin=0, aspect="equal", **kwargs)
             self.figure.repaint()
 
     def scatter(

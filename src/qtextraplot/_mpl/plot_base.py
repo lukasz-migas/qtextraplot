@@ -928,7 +928,7 @@ class PlotBase(QWidget):
         y_lower_start=None,
         y_upper_multiplier=1.1,
         gid=PlotIds.PLOT_1D_LINE_GID,
-        color="k",------
+        color="k",
         zorder: int = 5,
         line_width: int = 1,
         line_alpha: float = 1.0,
@@ -964,7 +964,7 @@ class PlotBase(QWidget):
         self.store_plot_limits([extent], [self.ax])
         self.PLOT_TYPE = "line"
 
-    def imshow(self, image: np.ndarray, axis: bool = False, --**kwargs) -> None:
+    def imshow(self, image: np.ndarray, axis: bool = False, **kwargs) -> None:
         """Display image data."""
         self.ax.imshow(image, **kwargs)
         if not axis:
