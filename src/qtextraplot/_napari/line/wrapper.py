@@ -15,6 +15,7 @@ from qtpy.QtWidgets import QWidget
 
 from qtextraplot._napari._wrapper import ViewerBase
 from qtextraplot._napari.line._vispy.overrides.axis import tick_formatter
+from qtextraplot._napari.line.config import Config
 from qtextraplot._napari.line.qt_viewer import QtViewer, as_array
 from qtextraplot.config import CANVAS
 
@@ -67,7 +68,10 @@ class NapariLineView(ViewerBase):
         self.main_parent = kwargs.pop("main_parent", None)
         self.PLOT_ID = get_short_hash()
 
-        # create instance of viewer
+        # Configuration file
+        self.config = Config()
+
+        # create an instance of viewer
         self.viewer: Viewer = Viewer()
         self.viewer.axis.y_tick_formatter = tick_formatter
         self.viewer.drag_tool.active = tool
