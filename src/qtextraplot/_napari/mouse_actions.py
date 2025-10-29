@@ -38,6 +38,7 @@ def install_auto_scale_checkbox(view: NapariLineView) -> None:
     )
     # handle initial state when the state changes
     view.config.events.auto_zoom.connect(on_update_state)
+    view.config.events.auto_zoom.connect(on_auto_zoom)
     # connect to zoomed event
     view.viewer.camera.events.zoomed.connect(on_auto_zoom)
 
