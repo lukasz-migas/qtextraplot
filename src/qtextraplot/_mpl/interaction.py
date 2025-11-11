@@ -1,7 +1,9 @@
 """Interaction."""
 
 import typing as ty
+from contextlib import suppress
 
+import matplotlib.pyplot as plt
 import numpy as np
 from koyo.system import IS_MAC
 from loguru import logger
@@ -19,7 +21,7 @@ from qtextraplot.utils.interaction import ExtractEvent, Polygon, get_center
 # TODO: add new class to handle return of extraction windows to enable better handling of different rois
 
 
-def reset_visible(axes):
+def reset_visible(axes: plt.Axes) -> None:
     """Reset visible axes."""
     for line in axes.lines:
         line.set_clip_on(True)
@@ -676,9 +678,10 @@ class MPLInteraction(QWidget):
                 axes.set_xlim(xmin, xmax)
             # reset both axes
             else:
-                axes.set_xlim(xmin, xmax)
-                axes.set_ylim(ymin, ymax)
-                reset_visible(axes)
+                with suppress(UserWarning):
+                    axes.set_xlim(xmin, xmax)
+                    axes.set_ylim(ymin, ymax)
+                    reset_visible(axes)
             self._on_callback_key(ExtractEvent(self.roi_shape, xmin, xmax, ymin, ymax), "ZOOM")
 
         # update axes
