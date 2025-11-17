@@ -15,7 +15,7 @@ from napari_plot._qt.qt_main_window import Window, _QtMainWindow
 from napari_plot._qt.qt_viewer import QtViewer as _QtViewer
 from napari_plot._vispy.overlays import register_vispy_overlays
 from qtpy.QtCore import QCoreApplication, QEvent, Qt
-from qtpy.QtWidgets import QApplication, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QApplication, QWidget
 
 from qtextraplot._napari.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
 from qtextraplot._napari.line._vispy.canvas import VispyCanvas
@@ -217,7 +217,7 @@ class QtViewer(QWidget):
 
     @property
     def layer_to_visual(self):
-        """Mapping of Napari layer to Vispy layer. Added for backward compatibility"""
+        """Mapping of Napari layer to Vispy layer. Added for backward compatibility."""
         return self.canvas.layer_to_visual
 
     def on_resize(self, event):
