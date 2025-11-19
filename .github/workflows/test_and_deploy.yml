@@ -24,7 +24,7 @@ jobs:
 
 
   test_uv:
-    name: Test UV (${{ matrix.backend }} py${{ matrix.python-version }} ${{ matrix.os }})
+    name: Test UV (${{ matrix.backend }} ${{ matrix.python-version }} ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     env:
       UV_NO_SYNC: "1"
