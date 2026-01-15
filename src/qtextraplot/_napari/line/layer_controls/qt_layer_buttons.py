@@ -39,7 +39,9 @@ class QtLayerButtons(QFrame):
         self.delete_btn = make_qta_btn(
             self, "delete", tooltip="Delete selected layers", func=self.viewer.layers.remove_selected
         )
-        self.delete_btn.setParent(self)
+        self.hide_btn = make_qta_btn(
+            self, "visible_on", tooltip="Toggle visibility of the selected layers", func=self.viewer.layers.toggle_selected_visibility
+        )
 
         self.new_points_btn = make_qta_btn(
             self,
@@ -77,6 +79,7 @@ class QtLayerButtons(QFrame):
         layout.addWidget(self.new_points_btn)
         layout.addWidget(self.new_v_infline_btn)
         layout.addStretch(0)
+        layout.addWidget(self.hide_btn)
         layout.addWidget(self.delete_btn)
         self.setLayout(layout)
 
