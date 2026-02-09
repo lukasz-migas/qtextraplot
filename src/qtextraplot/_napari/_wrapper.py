@@ -108,9 +108,8 @@ class ViewerBase(ABC):
         """Get all layers of type."""
         layers = []
         for layer in self.viewer.layers:
-            if isinstance(layer, cls):
-                if getattr(layer, attr) == value:
-                    layers.append(layer)
+            if isinstance(layer, cls) and getattr(layer, attr) == value:
+                layers.append(layer)
         return layers
 
     def update_attribute(self, name: str, **kwargs: ty.Any) -> None:
@@ -133,3 +132,8 @@ class ViewerBase(ABC):
         image_layer._contrast_limits = tuple(image_layer.contrast_limits_range)
         image_layer.contrast_limits = image_layer._contrast_limits
         image_layer._update_dims()
+
+    def update_image(self, image_layer: Image, new_data) -> None:
+        """Update image data for specified layer."""
+        image_layer.data = new_data
+        self.update_image_contrast_limits(image_layer)

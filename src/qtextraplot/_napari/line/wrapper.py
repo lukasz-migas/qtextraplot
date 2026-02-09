@@ -173,8 +173,7 @@ class NapariLineView(ViewerBase):
         layer = self.try_reuse(name, Shapes, reuse=reuse)
         if layer:
             self.remove_layer(layer)
-        layer = self.viewer.add_shapes(shapes, edge_width=0, name=name, face_color=face_color, **kwargs)
-        return layer
+        return self.viewer.add_shapes(shapes, edge_width=0, name=name, face_color=face_color, **kwargs)
 
     def add_scatter(
         self,
@@ -188,9 +187,8 @@ class NapariLineView(ViewerBase):
         """Add scatter points."""
         layer = self.try_reuse(name, Scatter, reuse=reuse)
         color = kwargs.pop("color", as_array("scatter", CANVAS))
-        if xy is None:
-            if x is not None and y is not None:
-                xy = np.c_[y, x]
+        if xy is None and x is not None and y is not None:
+            xy = np.c_[y, x]
         if layer:
             try:
                 update_layer_attributes(layer, False, data=xy, color=color, **kwargs)
@@ -225,20 +223,30 @@ class NapariLineView(ViewerBase):
         return layer
 
     def add_centroids(
-        self, x: np.ndarray, y: np.ndarray, name: str = CENTROID_NAME, reuse: bool = True, **kwargs: ty.Any
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        name: str = CENTROID_NAME,
+        reuse: bool = True,
+        **kwargs: ty.Any,
     ) -> Centroids:
         """Add centroids."""
         layer = self.try_reuse(name, Centroids, reuse=reuse)
         color = kwargs.pop("color", as_array("line", CANVAS))
+        width = kwargs.get("width", 5)
         if layer:
             layer.data = np.c_[x, y]
             layer.visible = kwargs.get("visible", True)
         else:
-            layer = self.viewer.add_centroids(np.c_[x, y], name=name, color=color, **kwargs)
+            layer = self.viewer.add_centroids(np.c_[x, y], name=name, color=color, width=width, **kwargs)
         return layer
 
     def add_inf_centroids(
-        self, x: np.ndarray, name: str = CENTROID_NAME, reuse: bool = True, **kwargs: ty.Any
+        self,
+        x: np.ndarray,
+        name: str = CENTROID_NAME,
+        reuse: bool = True,
+        **kwargs: ty.Any,
     ) -> InfLine:
         """Add centroids."""
         layer = self.try_reuse(name, InfLine, reuse=reuse)
@@ -297,7 +305,10 @@ class NapariLineView(ViewerBase):
         """Add region of interest layer."""
         if self.region_layer is None:
             self.region_layer = self.viewer.add_region(
-                ((0, 0.1), "vertical"), name=EXTRACT_NAME, color=as_array("scatter", CANVAS), opacity=0.5
+                ((0, 0.1), "vertical"),
+                name=EXTRACT_NAME,
+                color=as_array("scatter", CANVAS),
+                opacity=0.5,
             )
         self.select_one_layer(self.region_layer)
         return self.region_layer
