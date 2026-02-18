@@ -65,10 +65,10 @@ class ImageViewMixin:
 
         # single-dataset mode
         if isinstance(image, np.ndarray):
-            if image.ndim == 3:
-                self.image_layer = view_image.plot_rgb(image)
-            else:
+            if image.ndim == 2:
                 self.image_layer = view_image.plot(image)
+            else:
+                self.image_layer = view_image.plot_rgb(image)
         # multi-dataset mode
         else:
             layers = {}

@@ -4,7 +4,7 @@ from koyo.secret import get_short_hash
 
 
 class PlotIds:
-    """This class should be used to keep track of the various ids each part of the plot has. It should speed-up
+    """"Class should be used to keep track of the various ids each part of the plot has. It should speed-up
     plotting of individual elements in the plot area.
     """
 

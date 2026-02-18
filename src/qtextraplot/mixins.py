@@ -27,7 +27,7 @@ class NapariMixin:
             self._views_2d.extend(views_2d)
 
     def _update_after_activate(self) -> None:
-        """This method is called just after user requested to see this widget.
+        """"Method is called just after user requested to see this widget.
 
         It is necessary in order to force updates in the vispy canvas which is otherwise not updated when the panel
         is not visible.

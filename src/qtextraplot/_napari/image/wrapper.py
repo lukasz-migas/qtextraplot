@@ -7,7 +7,7 @@ import typing as ty
 import numpy as np
 from koyo.image import clip_hotspots
 from koyo.secret import get_short_hash
-from napari.layers import Image, Labels, Points, Shapes
+from napari.layers import Image, Labels, Layer, Points, Shapes
 from napari.layers.utils.layer_utils import Extent
 from napari.utils import DirectLabelColormap
 from qtpy.QtCore import QMutex, QMutexLocker, Slot  # type: ignore[attr-defined]
@@ -48,9 +48,9 @@ class NapariImageView(ViewerBase):
         self.main_parent = kwargs.pop("main_parent", None)
         self.PLOT_ID = get_short_hash()
 
-        # create instance of viewer
+        # create an instance of viewer
         self.viewer: Viewer = Viewer(**kwargs)
-        # create instance of qt widget
+        # create an instance of qt widget
         self.widget: QtViewer = QtViewer(
             viewer=self.viewer,
             parent=parent,
@@ -73,6 +73,18 @@ class NapariImageView(ViewerBase):
         # connect events
         # self.viewer.events.clear_canvas.connect(self._clear)
         self.viewer.layers.events.removed.connect(self._on_remove_layer)
+
+    def move_to_front(self, layer: Layer) -> None:
+        """Move layer to the front."""
+        if layer is None:
+            return
+        self.viewer.layers.move(self.viewer.layers.index(layer), len(self.viewer.layers))
+
+    def move_to_back(self, layer: Layer) -> None:
+        """Move layer to the back."""
+        if layer is None:
+            return
+        self.viewer.layers.move(self.viewer.layers.index(layer), 0)
 
     def _on_remove_layer(self, _evt=None):
         """Indicate if layer has been deleted."""
@@ -175,10 +187,9 @@ class NapariImageView(ViewerBase):
     def plot_rgb(self, array: np.ndarray, name: str = IMAGE_NAME, **kwargs: ty.Any) -> Image:
         """Full replot of the data."""
         # array = np.nan_to_num(array)
-        if self.image_layer is not None:
-            if array.ndim != self.image_layer.data.ndim:
-                self.viewer.layers.selection.select_only(self.image_layer)
-                self.viewer.layers.remove_selected()
+        if self.image_layer is not None and array.ndim != self.image_layer.data.ndim:
+            self.viewer.layers.selection.select_only(self.image_layer)
+            self.viewer.layers.remove_selected()
         return self.plot(array, name=name, **kwargs)
 
     def quick_update(self, array: np.ndarray) -> None:
@@ -226,14 +237,13 @@ class NapariImageView(ViewerBase):
 
     def add_shapes_layer(self, data: ty.List[np.ndarray], shape_type: ty.List[str], name: str) -> Shapes:
         """Add new shapes layer with specified shapes."""
-        layer = self.viewer.add_shapes(
+        return self.viewer.add_shapes(
             data=data,
             shape_type=shape_type,
             ndim=max(self.viewer.dims.ndim, 2),
             scale=self.viewer.layers.extent.step,
             name=name,
         )
-        return layer
 
     def remove_image_mask(self, name: str = "Masks") -> None:
         """Remove image labels layer."""
@@ -370,7 +380,7 @@ if __name__ == "__main__":  # pragma: no cover
             """Button action."""
             nonlocal wrapper
 
-            raise ValueError("Test error")
+            raise ValueError("Test error")  # noqa
 
         wrapper = NapariImageView(frame)
         ha.addWidget(wrapper.widget, stretch=True)
@@ -397,7 +407,7 @@ if __name__ == "__main__":  # pragma: no cover
             """Button action."""
             nonlocal wrapper1, wrapper2
 
-            raise ValueError("Test error")
+            raise ValueError("Test error")  # noqa
 
         wrapper1 = NapariImageView(frame, title="one")
         THEMES.set_theme_stylesheet(wrapper1.widget)
