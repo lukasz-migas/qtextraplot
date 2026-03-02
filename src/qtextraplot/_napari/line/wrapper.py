@@ -289,7 +289,7 @@ class NapariLineView(ViewerBase):
         reuse: bool = True,
         **kwargs: ty.Any,
     ) -> Region:
-        """Add region of interest."""
+        """Add a region of interest."""
         # get currently selected layers
         layer = self.try_reuse(name, Region, reuse=reuse)
         color = kwargs.pop("color", as_array("highlight", CANVAS))
