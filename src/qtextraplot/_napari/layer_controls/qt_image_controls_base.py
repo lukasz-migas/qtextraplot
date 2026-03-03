@@ -1,8 +1,13 @@
 """Base image controls."""
 
 import qtextra.helpers as hp
-from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
-from napari._qt.layer_controls.qt_image_controls_base import AutoScaleButtons, QContrastLimitsPopup
+
+try:
+    from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
+    from napari._qt.layer_controls.qt_image_controls_base import AutoScaleButtons, QContrastLimitsPopup
+except ImportError:
+    from napari._qt.layer_controls.widgets.qt_colormap_control import QtColormapComboBox
+    from napari._qt.layer_controls.widgets.qt_contrast_limits import AutoScaleButtons, QContrastLimitsPopup
 from napari.layers import Image
 from napari.utils.colormaps import AVAILABLE_COLORMAPS
 from napari.utils.events.event_utils import connect_setattr
