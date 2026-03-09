@@ -32,7 +32,12 @@ def add_new_shapes(viewer):
 
 
 def make_qta_btn(
-    parent: QWidget, icon_name: str, tooltip: str = "", action: str = "", extra_tooltip_text: str = "", **kwargs: ty.Any
+    parent: QWidget,
+    icon_name: str,
+    tooltip: str = "",
+    action: str = "",
+    extra_tooltip_text: str = "",
+    **kwargs: ty.Any,
 ) -> QtImagePushButton:
     """Make a button with an icon from QtAwesome."""
     btn = hp.make_qta_btn(parent=parent, icon_name=icon_name, tooltip=tooltip, **kwargs)
@@ -53,28 +58,32 @@ class QtLayerButtons(QFrame):
         self.delete_btn = make_qta_btn(
             self,
             "delete",
-            action="napari:delete_selected_layers",
+            tooltip="Delete selected layers",
+            func=self.viewer.layers.remove_selected,
         )
         self.hide_btn = make_qta_btn(
-            self, "visible_on", tooltip="Toggle visibility of the selected layers", func=self.viewer.layers.toggle_selected_visibility
+            self,
+            "visible_on",
+            tooltip="Toggle visibility of the selected layers",
+            func=self.viewer.layers.toggle_selected_visibility,
         )
 
         self.new_points_btn = make_qta_btn(
             self,
             "new_points",
-            "Add new points layer",
+            tooltip="Add new points layer",
             func=partial(add_new_points, self.viewer),
         )
         self.new_shapes_btn = make_qta_btn(
             self,
             "new_shapes",
-            "Add new shapes layer",
+            tooltip="Add new shapes layer",
             func=partial(add_new_shapes, self.viewer),
         )
         self.new_labels_btn = make_qta_btn(
             self,
             "new_labels",
-            "Add new free-hand draw shapes layer",
+            tooltip="Add new free-hand draw shapes layer",
             func=self.viewer._new_labels,
         )
         if disable_new_layers:
@@ -116,7 +125,8 @@ class QtViewerButtons(QFrame):
             checkable=True,
             checked=self.viewer.dims.ndisplay == 3,
             checked_icon_name="ndisplay_on",
-            action="napari:toggle_ndisplay",
+            # action="napari:toggle_ndisplay",
+            func=self.toggle_ndisplay,
             func_menu=self.open_perspective_popup,
         )
 
@@ -124,7 +134,8 @@ class QtViewerButtons(QFrame):
             self,
             "roll",
             "Roll dimensions order for display. Right-click on the button to manually order dimensions.",
-            action="napari:roll_axes",
+            # action="napari:roll_axes",
+            func=self.roll_axes,
             func_menu=self.open_roll_popup,
         )
 
@@ -132,7 +143,8 @@ class QtViewerButtons(QFrame):
             self,
             "transpose",
             "Transpose displayed dimensions.",
-            action="napari:transpose_axes",
+            # action="napari:transpose_axes",
+            func=self.transpose_axes,
         )
         self.transposeDimsButton.installEventFilter(self)
 
@@ -143,7 +155,8 @@ class QtViewerButtons(QFrame):
             checkable=True,
             checked=viewer.grid.enabled,
             checked_icon_name="grid_on",
-            action="napari:toggle_grid",
+            # action="napari:toggle_grid",
+            func=self.toggle_grid,
             func_menu=self.open_grid_popup,
         )
 
@@ -155,7 +168,8 @@ class QtViewerButtons(QFrame):
             self,
             "zoom_out",
             "Reset view",
-            action="napari:reset_view",
+            func=self.viewer.reset_view,
+            # action="napari:reset_view",
         )
 
         layout = QHBoxLayout()
@@ -187,6 +201,25 @@ class QtViewerButtons(QFrame):
             action_manager.trigger("napari:rotate_layers")
             return True
         return False
+
+    def toggle_ndisplay(self) -> None:
+        """Toggle ndisplay and update button state."""
+        if self.viewer.dims.ndisplay == 3:
+            self.viewer.dims.ndisplay = 2
+        else:
+            self.viewer.dims.ndisplay = 3
+
+    def roll_axes(self) -> None:
+        """Change order of the visible axes, e.g. [0, 1, 2] -> [2, 0, 1]."""
+        self.viewer.dims._roll()
+
+    def transpose_axes(self) -> None:
+        """Transpose axes."""
+        self.viewer.dims._transpose()
+
+    def toggle_grid(self) -> None:
+        """Toggle grid."""
+        self.viewer.grid.enabled = not self.viewer.grid.enabled
 
     def open_roll_popup(self):
         """Open a grid popup to manually order the dimensions."""

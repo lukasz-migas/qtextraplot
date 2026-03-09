@@ -3,8 +3,9 @@
 import typing as ty
 
 import numpy as np
-from psygnal._evented_model import EventedModel
+from koyo.color import get_random_hex_color
 from napari._pydantic_compat import PrivateAttr
+from psygnal._evented_model import EventedModel
 from pydantic.color import Color
 from qtextra.config import THEMES
 from qtextra.config.config import ConfigBase
@@ -122,6 +123,17 @@ class CanvasThemes(ConfigBase):
         """Return color as hex."""
         color: Color = getattr(self.active, name)
         return color.as_hex()
+
+    def check_color(self, color: ty.Any) -> ty.Any:
+        """Check whether color clashes with the background color."""
+        from napari.utils.colormaps.standardize_color import transform_color
+
+        background = transform_color(self.active.canvas.as_hex())[0]
+        color = transform_color(color)[0]
+        # check whether color is too similar to background
+        if np.linalg.norm(color - background) < 50:  # arbitrary threshold
+            return get_random_hex_color()
+        return color
 
 
 CANVAS: CanvasThemes = CanvasThemes()
