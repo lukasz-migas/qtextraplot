@@ -103,15 +103,14 @@ class ImageMaskROIExtractPopupBase(QtFramelessTool):
         self._help_sep.setVisible(False)
         self._help_msg = hp.make_label(self, "", wrap=True, object_name="ViewerStatusBar")
 
-        select_btn = hp.make_btn(self, "Activate")
+        select_btn = hp.make_btn(self, "Activate", func=self.on_select)
         select_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        select_btn.clicked.connect(self.on_select)
-        ok_btn = hp.make_btn(self, "OK")
+
+        ok_btn = hp.make_btn(self, "OK", func=self.on_ok)
         ok_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        ok_btn.clicked.connect(self.on_ok)
-        cancel_btn = hp.make_btn(self, "Cancel")
+
+        cancel_btn = hp.make_btn(self, "Cancel", func=self.close)
         cancel_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        cancel_btn.clicked.connect(self.close)
 
         layout = QVBoxLayout()
         layout.addSpacing(2)

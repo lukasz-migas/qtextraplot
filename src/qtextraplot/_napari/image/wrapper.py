@@ -223,10 +223,11 @@ class NapariImageView(ViewerBase):
         layer = self.try_reuse(name, Labels)
         if layer is None:
             layer = self.viewer.add_labels(
-                array,
+                array.astype(np.uint8),
                 name=name,
                 colormap=colors,
                 opacity=opacity,
+                multiscale=False,
             )
         else:
             layer.data = array
