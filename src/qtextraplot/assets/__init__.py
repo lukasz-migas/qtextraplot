@@ -28,7 +28,8 @@ update_styles(STYLES)
 update_icon_mapping(
     {
         "new_surface": "ei.star",
-        "new_labels": "fa5s.tag",
+        # "new_labels": "fa5s.tag",
+        "new_labels": "fa5s.paint-brush",
         "ndisplay_off": "ph.square",
         "ndisplay_on": "ph.cube",
         "roll": "mdi6.rotate-right-variant",

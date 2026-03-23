@@ -122,6 +122,9 @@ class NapariImageView(ViewerBase):
             array = clip_hotspots(array)
 
         if self.image_layer is None:
+            if "rgb" not in kwargs:
+                kwargs["rgb"] = array.ndim == 3 and array.shape[2] in (3, 4)
+
             self.image_layer: Image = self.viewer.add_image(  # type: ignore[no-untyped-call]
                 array,
                 name=name,
@@ -131,6 +134,21 @@ class NapariImageView(ViewerBase):
             self.image_layer.interpolation2d = interpolation  # type: ignore[attr-defined]
             self.image_layer._keep_auto_contrast = True  # type: ignore[attr-defined]
         else:
+            if self.image_layer.rgb and array.ndim == 2:
+                self.remove_layer(self.image_layer)
+                return self.plot(array, name=name, colormap=colormap, interpolation=interpolation, clip=False, **kwargs)
+            if not self.image_layer.rgb and array.ndim == 3 and array.shape[2] in (3, 4):
+                self.remove_layer(self.image_layer)
+                return self.plot(
+                    array,
+                    name=name,
+                    colormap=colormap,
+                    interpolation=interpolation,
+                    clip=False,
+                    rgb=True,
+                    **kwargs,
+                )
+
             # update image data
             self.image_layer.data = array
             if colormap is not None:
@@ -138,6 +156,13 @@ class NapariImageView(ViewerBase):
             # update contrast limits
             self.update_image_contrast_limits(self.image_layer)
         return self.image_layer
+
+    def plot_rgb(self, array: np.ndarray, name: str = IMAGE_NAME, **kwargs: ty.Any) -> Image:
+        """Full replot of the data."""
+        # array = np.nan_to_num(array)
+        if self.image_layer is not None and array.ndim != self.image_layer.data.ndim:
+            self.remove_layer(self.image_layer)
+        return self.plot(array, name=name, **kwargs)
 
     def add_image(
         self,
@@ -183,14 +208,6 @@ class NapariImageView(ViewerBase):
             )
             layer._keep_auto_contrast = keep_auto_contrast
         return layer
-
-    def plot_rgb(self, array: np.ndarray, name: str = IMAGE_NAME, **kwargs: ty.Any) -> Image:
-        """Full replot of the data."""
-        # array = np.nan_to_num(array)
-        if self.image_layer is not None and array.ndim != self.image_layer.data.ndim:
-            self.viewer.layers.selection.select_only(self.image_layer)
-            self.viewer.layers.remove_selected()
-        return self.plot(array, name=name, **kwargs)
 
     def quick_update(self, array: np.ndarray) -> None:
         """Quickly update image data."""
