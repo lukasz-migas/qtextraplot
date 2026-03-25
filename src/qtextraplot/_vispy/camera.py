@@ -65,25 +65,10 @@ class BoxZoomCamera(PanZoomCamera):
         self.polygon = PolygonEvent()
 
     def _on_callback(self, extract_evt: ExtractEvent):
-        """Callbacks."""
-        # process CTRL callbacks
-        # if self._callbacks.get("CTRL", False) and isinstance(self._callbacks["CTRL"], list):
-        #     for callback in self._callbacks["CTRL"]:
-        #         pub.sendMessage(callback, event=extract_evt)
-        # # process SHIFT callbacks
-        # elif self._callbacks.get("SHIFT", False) and isinstance(self._callbacks["SHIFT"], list):
-        #     for callback in self._callbacks["SHIFT"]:
-        #         pub.sendMessage(callback, event=extract_evt)
-        # # process ALT callbacks
-        # elif self._callbacks.get("ALT", False) and isinstance(self._callbacks["ALT"], list):
-        #     for callback in self._callbacks["ALT"]:
-        #         pub.sendMessage(callback, event=extract_evt)
+        """Dispatch extraction event to registered callbacks (no-op by default)."""
 
     def _on_callback_key(self, extract_evt: ExtractEvent, key: str):
-        """Process callbacks."""
-        # if self._callbacks.get(key, False) and isinstance(self._callbacks[key], list):
-        #     for callback in self._callbacks[key]:
-        #         pub.sendMessage(callback, event=extract_evt)
+        """Dispatch key-qualified extraction event to registered callbacks (no-op by default)."""
 
     def set_extents(self, xmin, xmax, ymin, ymax):
         """Set plot extents."""
@@ -151,7 +136,7 @@ class BoxZoomCamera(PanZoomCamera):
 
     @property
     def y_extent(self):
-        """X-axis extent."""
+        """Y-axis extent."""
         return self.rect.bottom, self.rect.top
 
     @property
@@ -207,9 +192,6 @@ class BoxZoomCamera(PanZoomCamera):
 
         # Scrolling
         BaseCamera.viewbox_mouse_event(self, event)
-
-        # mouse wheel zoom
-        # pub.sendMessage("statusbar.update.coordinates", msg=self.get_motion_msg(event))
 
         if event.type == "mouse_wheel":
             center = self._scene_transform.imap(event.pos)
@@ -430,12 +412,12 @@ class BoxZoomCameraMixin:
             pass
 
     def _on_zoom_box_visible(self, event):
-        """Handle zoom."""
+        """Show or hide the zoom-selection overlay according to *event.show*."""
         if event.roi_shape == "rect":
-            self._zoom_roi.visible = True if event.show else False
+            self._zoom_roi.visible = event.show
             if not event.show:
                 self._zoom_roi.pos = [[0, 0], [1, 1]]
         elif event.roi_shape == "circle":
-            self._zoom_ellipse.visible = True if event.show else False
+            self._zoom_ellipse.visible = event.show
             if not event.show:
-                self._zoom_roi.pos = [[0, 0], [1, 1]]
+                self._zoom_ellipse.center = (0, 0)

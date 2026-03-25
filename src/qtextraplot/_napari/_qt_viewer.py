@@ -18,7 +18,7 @@ class QtViewerBase(QWidget):
 
     Parameters
     ----------
-    viewer : imimspy.napari.components.ViewerModel
+    viewer : qtextraplot._napari.components.viewer_model.ViewerModel
         Napari viewer containing the rendered scene, layers, and controls.
 
     Attributes
@@ -96,7 +96,7 @@ class QtViewerBase(QWidget):
 
     @property
     def text_overlay(self):
-        """Grid lines."""
+        """Text overlay."""
         return self.overlay_to_visual[self.viewer._overlays["text"]]
 
     def _add_overlay(self, overlay: Overlay) -> None:
@@ -156,13 +156,13 @@ class QtViewerBase(QWidget):
         """Complete initialization with post-init events."""
 
     def enterEvent(self, event):
-        """Enable status on canvas enter"""
+        """Set viewer status and mouse-over flag when pointer enters the canvas."""
         self.viewer.status = "Ready"
         self.viewer.mouse_over_canvas = True
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        """Disable status on canvas leave"""
+        """Clear viewer status and mouse-over flag when pointer leaves the canvas."""
         self.viewer.status = ""
         self.viewer.mouse_over_canvas = False
         super().leaveEvent(event)
@@ -251,7 +251,7 @@ class QtViewerBase(QWidget):
                     raise ValueError(f"screenshot size must be 2 values, got {len(size)}")
                 # Scale the requested size to account for HiDPI
                 size = tuple(int(dim / self.devicePixelRatio()) for dim in size)
-                canvas.size = size[::-1]  # invert x ad y for vispy
+                canvas.size = size[::-1]  # invert x and y for vispy
             if scale is not None:
                 # multiply canvas dimensions by the scale factor to get new size
                 canvas.size = tuple(int(dim * scale) for dim in canvas.size)

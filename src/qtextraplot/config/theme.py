@@ -68,7 +68,7 @@ class CanvasThemes(ConfigBase):
         self.add_theme("light", CanvasTheme(**LIGHT_THEME))
 
         for theme in self.themes.values():
-            theme.events.connect(lambda _: self.evt_theme_changed.emit())
+            theme.events.connect(self._on_theme_model_changed)
 
     @property
     def integrate_canvas(self):
@@ -80,6 +80,10 @@ class CanvasThemes(ConfigBase):
         self._integrate_canvas = value
         background = THEMES.active.background if value else self.active._canvas_backup
         self.active.canvas = background
+
+    def _on_theme_model_changed(self, _event=None) -> None:
+        """Forward any field-level change on the active theme model to listeners."""
+        self.evt_theme_changed.emit()
 
     def add_theme(self, name: str, theme_data: ty.Union[CanvasTheme, ty.Dict[str, str]]):
         """Add theme."""
@@ -134,8 +138,6 @@ class CanvasThemes(ConfigBase):
         if np.linalg.norm(color - background) < 50:  # arbitrary threshold
             return get_random_hex_color()
         return color
-
-
 
 
 CANVAS: CanvasThemes = CanvasThemes()

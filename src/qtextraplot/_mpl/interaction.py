@@ -65,8 +65,7 @@ class MPLInteraction(QWidget):
         zoom_color=Qt.black,
         roi_shape: str = "rect",
     ):
-        QWidget.__init__(self)
-        self.parent = parent
+        QWidget.__init__(self, parent)
         self.axes = None
         self.canvas = None
         self.mpl_events = []

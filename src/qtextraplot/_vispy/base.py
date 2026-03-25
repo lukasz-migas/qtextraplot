@@ -11,8 +11,8 @@ from vispy.scene.visuals import Line as LineNode
 from vispy.scene.visuals import Markers as MarkersNode
 from vispy.util import keys
 
-from qtextraplot.vispy.camera import BoxZoomCameraMixin
-from qtextraplot.vispy.models.extents import Extents
+from qtextraplot._vispy.camera import BoxZoomCameraMixin
+from qtextraplot._vispy.models.extents import Extents
 from qtextra.utils.color import hex_to_rgb
 
 
@@ -54,31 +54,22 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
         self._key_alt = False
 
     def savefig(self, path, dpi: int = 150, transparent: bool = True, **kwargs):
-        """Export figure."""
+        """Export the current canvas to an image file at *path*.
+
+        Parameters
+        ----------
+        path:
+            Destination file path.  The format is inferred from the extension
+            by ``imageio``.
+        dpi:
+            Output resolution in dots-per-inch.
+        transparent:
+            Unused — reserved for future use.
+        """
         from imageio import imwrite
 
         im_array = self.render()
-        imwrite(
-            path,
-            im_array,
-            dpi=(dpi, dpi),
-            #                 transparency=transparent
-        )
-
-        # TODO: add option to resize the plot area
-        # if not hasattr(self, "plot_base"):
-        #     logger.warning("Cannot save a plot that has not been plotted yet")
-        #     return
-        # self.figure.savefig(
-        #     path,
-        #     transparent=transparent,
-        #     dpi=dpi,
-        #     compression=compression,
-        #     format=image_fmt,
-        #     optimize=True,
-        #     quality=95,
-        #     bbox_inches="tight" if tight else None,
-        # )
+        imwrite(path, im_array, dpi=(dpi, dpi))
 
     def on_key_press(self, event):
         """Process key press."""
@@ -108,22 +99,16 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
         return self.view.camera
 
     def _on_key_press(self, event):
-        """Process keyboard press."""
+        """Track keyboard modifier state on key press."""
         self._key_control = keys.CONTROL in event.modifiers
         self._key_shift = keys.SHIFT in event.modifiers
         self._key_alt = keys.ALT in event.modifiers
-
-    #         self.camera.set_keys(key_x=event.key.name=="X", key_y=event.key.name=="Y")
-    # print(f"CTRL-{self._key_control}; SHIFT-{self._key_shift}; ALT-{self._key_alt}")
 
     def _on_key_release(self, event):
-        """Process keyboard press."""
+        """Track keyboard modifier state on key release."""
         self._key_control = keys.CONTROL in event.modifiers
         self._key_shift = keys.SHIFT in event.modifiers
         self._key_alt = keys.ALT in event.modifiers
-
-    #         self.camera.set_keys(key_x=event.key.name=="X", key_y=event.key.name=="Y")
-    # print(f"CTRL-{self._key_control}; SHIFT-{self._key_shift}; ALT-{self._key_alt}")
 
     def _set_xy_limits_from_array(self, x: np.ndarray, y: np.ndarray, reset: bool = False):
         """Set x/y-axis limits."""
@@ -137,18 +122,16 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
     def _set_xy_limits(
         self, x_min: float, x_max: float, y_min: float, y_max: float, x_pad: float = 0, y_pad: float = 0
     ):
-        """Sey x/y-axis limits."""
+        """Set x/y-axis limits."""
         x_min, x_max, y_min, y_max = x_min - x_pad, x_max + x_pad, y_min - y_pad, y_max + y_pad
         self._extents.add_range(x_min, x_max, y_min, y_max)
         self.set_xy_view(*self._extents.get_xy())
 
     def on_reset_zoom(self):
-        """Reset zoom."""
-        print("on_reset_zoom")
+        """Reset zoom to the default extents."""
 
     def copy_to_clipboard(self):
-        """Copy to clipboard."""
-        print("copy_to_clipboard")
+        """Copy the current canvas to the system clipboard."""
         return None
 
     def set_xy_view(self, x_min: float, x_max: float, y_min: float, y_max: float):
@@ -334,16 +317,10 @@ class PlotLine(BasePlot):
             self.nodes[gid].set_data(width=line_width)
 
     def plot_1d_update_line_style(self, line_style: str, gid: str | None = None):
-        """Update plot style."""
-        print("Not supported!")
+        """Update plot line style (not yet supported by the vispy backend)."""
 
     def plot_1d_update_line_alpha(self, opacity: float, gid: str | None = None):
-        """Update line transparency."""
-        print(self.node.color, opacity, gid)
-        # if gid is None:
-        #     self.node.set_data(width=line_width)
-        # else:
-        #     self.nodes[gid].set_data(width=line_width)
+        """Update line transparency (not yet supported by the vispy backend)."""
 
     def plot_1d_centroid(self, *args, **kwargs):
         pass

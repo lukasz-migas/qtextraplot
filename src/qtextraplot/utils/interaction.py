@@ -114,7 +114,7 @@ class ExtractEvent:
         return self.xmin, self.xmax
 
     def get_y_range(self) -> tuple[float, float]:
-        """Get the x-axis extraction range."""
+        """Get the y-axis extraction range."""
         return self.ymin, self.ymax
 
     def get_rect(self) -> tuple[float, float, float, float]:

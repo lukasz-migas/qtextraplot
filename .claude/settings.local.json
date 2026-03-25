@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(head -30 /Users/lgmigas/Documents/GitHub/qtextraplot/tests/test_*.py)"
+    ]
+  }
+}
