@@ -12,10 +12,12 @@ BACKSPACE = "delete" if sys.platform == "darwin" else "backspace"
 POSITION_TRANSLATIONS = OrderedDict(
     [
         (CanvasPosition.TOP_LEFT, "Top left"),
+        (CanvasPosition.TOP_CENTER, "Top center"),
         (CanvasPosition.TOP_RIGHT, "Top right"),
         (CanvasPosition.BOTTOM_RIGHT, "Bottom right"),
+        (CanvasPosition.BOTTOM_CENTER, "Bottom center"),
         (CanvasPosition.BOTTOM_LEFT, "Bottom left"),
-    ]
+    ],
 )
 
 
@@ -27,7 +29,7 @@ TEXT_POSITION_TRANSLATIONS = OrderedDict(
         (CanvasPosition.BOTTOM_RIGHT, "Bottom right"),
         (CanvasPosition.BOTTOM_CENTER, "Bottom center"),
         (CanvasPosition.BOTTOM_LEFT, "Bottom left"),
-    ]
+    ],
 )
 
 UNITS_TRANSLATIONS = OrderedDict(
@@ -35,7 +37,7 @@ UNITS_TRANSLATIONS = OrderedDict(
         ("", "No units"),
         ("um", "Micrometers"),
         ("px", "Pixel units"),
-    ]
+    ],
 )
 
 BLENDING_TRANSLATIONS = OrderedDict(
@@ -45,7 +47,7 @@ BLENDING_TRANSLATIONS = OrderedDict(
         (Blending.ADDITIVE, "Additive"),
         (Blending.OPAQUE, "Opaque"),
         (Blending.MINIMUM, "Minimum"),
-    ]
+    ],
 )
 
 
@@ -53,14 +55,14 @@ RENDER_MODE_TRANSLATIONS = OrderedDict(
     [
         (LabelsRendering.TRANSLUCENT, "Translucent"),
         (LabelsRendering.ISO_CATEGORICAL, "Iso-categorical"),
-    ]
+    ],
 )
 
 LABEL_COLOR_MODE_TRANSLATIONS = OrderedDict(
     [
         (LabelColorMode.AUTO, "auto"),
         (LabelColorMode.DIRECT, "direct"),
-    ]
+    ],
 )
 
 
@@ -122,5 +124,5 @@ SYMBOL_TRANSLATION = OrderedDict(
         (Symbol.TRIANGLE_UP, "triangle up"),
         (Symbol.VBAR, "vbar"),
         (Symbol.X, "x"),
-    ]
+    ],
 )

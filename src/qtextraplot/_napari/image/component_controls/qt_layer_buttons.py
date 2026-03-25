@@ -211,11 +211,11 @@ class QtViewerButtons(QFrame):
 
     def roll_axes(self) -> None:
         """Change order of the visible axes, e.g. [0, 1, 2] -> [2, 0, 1]."""
-        self.viewer.dims._roll()
+        self.viewer.dims.roll()
 
     def transpose_axes(self) -> None:
         """Transpose axes."""
-        self.viewer.dims._transpose()
+        self.viewer.dims.transpose()
 
     def toggle_grid(self) -> None:
         """Toggle grid."""

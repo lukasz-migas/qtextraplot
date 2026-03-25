@@ -248,9 +248,8 @@ class QtViewToolbar(QWidget):
 
     def _toggle_color_bar_visible(self, state: bool) -> None:
         for layer in self.viewer.layers:
-            if hasattr(layer, "colorbar") and not layer.rgb:
+            if hasattr(layer, "colorbar") and hasattr(layer, "rgb") and not layer.rgb:
                 layer.colorbar.visible = state
-        # self.qt_viewer.viewer.color_bar.visible = state
 
     def _toggle_text_visible(self, state: bool) -> None:
         self.qt_viewer.viewer.text_overlay.visible = state

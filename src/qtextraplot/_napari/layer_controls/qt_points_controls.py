@@ -34,22 +34,21 @@ class QtPointsControls(QtLayerControls):
         self.layer.events.visible.connect(self._on_editable_or_visible_change)
         self.layer.text.events.visible.connect(self._on_text_visibility_change)
 
-        if self.layer.size.size:
-            max_value = max(100, int(np.max(self.layer.size)) + 1)
-        else:
-            max_value = 100
+        max_value = max(100, int(np.max(self.layer.size)) + 1) if self.layer.size.size else 100
         self.sizeSlider = hp.make_slider_with_text(self, 1, max_value, tooltip="Scatter point size")
         self.sizeSlider.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.sizeSlider.setValue(int(self.layer.current_size))
         self.sizeSlider.valueChanged.connect(self.on_change_size)
 
         self.faceColorEdit = QColorSwatchEdit(
-            initial_color=self.layer.current_face_color, tooltip="Click to set current face color"
+            initial_color=self.layer.current_face_color,
+            tooltip="Click to set current face color",
         )
         self.faceColorEdit.color_changed.connect(self.on_change_face_color)
 
         self.edgeColorEdit = QColorSwatchEdit(
-            initial_color=self.layer.current_edge_color, tooltip="Click to set current edge color"
+            initial_color=self.layer.current_edge_color,
+            tooltip="Click to set current edge color",
         )
         self.edgeColorEdit.color_changed.connect(self.on_change_edge_color)
 
@@ -186,22 +185,19 @@ class QtPointsControls(QtLayerControls):
 
     def _on_editable_or_visible_change(self, event=None) -> None:
         """Receive layer model editable change event & enable/disable buttons."""
-        hp.enable_with_opacity(
-            self,
-            [
-                self.select_button,
-                self.addition_button,
-                self.delete_button,
-                self.symbolComboBox,
-                self.sizeSlider,
-                self.faceColorEdit,
-                self.edgeColorEdit,
-                self.blendComboBox,
-                self.opacitySlider,
-                self.outOfSliceCheckBox,
-                self.text_display_checkbox,
-            ],
-            self.layer.editable and self.layer.visible,
+        hp.disable_widgets(
+            self.select_button,
+            self.addition_button,
+            self.delete_button,
+            self.symbolComboBox,
+            self.sizeSlider,
+            self.faceColorEdit,
+            self.edgeColorEdit,
+            self.blendComboBox,
+            self.opacitySlider,
+            self.outOfSliceCheckBox,
+            self.text_display_checkbox,
+            disabled=not (self.layer.editable and self.layer.visible),
         )
         super()._on_editable_or_visible_change(event)
 
