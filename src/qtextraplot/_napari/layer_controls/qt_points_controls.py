@@ -26,8 +26,8 @@ class QtPointsControls(QtLayerControls):
         self.layer.events.n_dimensional.connect(self._on_out_of_slice_change)
         self.layer.events.symbol.connect(self._on_symbol_change)
         self.layer.events.size.connect(self._on_size_change)
-        self.layer.events.current_edge_color.connect(self._on_current_edge_color_change)
-        self.layer._edge.events.current_color.connect(self._on_current_edge_color_change)
+        self.layer.events.current_border_color.connect(self._on_current_border_color_change)
+        self.layer._edge.events.current_color.connect(self._on_current_border_color_change)
         self.layer.events.current_face_color.connect(self._on_current_face_color_change)
         self.layer._face.events.current_color.connect(self._on_current_face_color_change)
         self.layer.events.editable.connect(self._on_editable_or_visible_change)
@@ -47,7 +47,7 @@ class QtPointsControls(QtLayerControls):
         self.faceColorEdit.color_changed.connect(self.on_change_face_color)
 
         self.edgeColorEdit = QColorSwatchEdit(
-            initial_color=self.layer.current_edge_color,
+            initial_color=self.layer.current_border_color,
             tooltip="Click to set current edge color",
         )
         self.edgeColorEdit.color_changed.connect(self.on_change_edge_color)
@@ -175,13 +175,13 @@ class QtPointsControls(QtLayerControls):
 
     def on_change_edge_color(self, color: np.ndarray) -> None:
         """Update edge color of layer model from color picker user input."""
-        with self.layer.events.current_edge_color.blocker():
-            self.layer.current_edge_color = color
+        with self.layer.events.current_border_color.blocker():
+            self.layer.current_border_color = color
 
-    def _on_current_edge_color_change(self, _event=None):
-        """Receive layer.current_edge_color() change event and update view."""
+    def _on_current_border_color_change(self, _event=None):
+        """Receive layer.current_border_color() change event and update view."""
         with hp.qt_signals_blocked(self.edgeColorEdit):
-            self.edgeColorEdit.setColor(self.layer.current_edge_color)
+            self.edgeColorEdit.setColor(self.layer.current_border_color)
 
     def _on_editable_or_visible_change(self, event=None) -> None:
         """Receive layer model editable change event & enable/disable buttons."""

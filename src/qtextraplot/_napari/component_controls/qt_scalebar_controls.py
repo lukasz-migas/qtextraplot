@@ -122,7 +122,7 @@ class QtScaleBarControls(QtFramelessPopup):
             self.viewer.scale_bar.color = color
 
     def _on_color_changed(self, _event=None):
-        """Receive layer.current_edge_color() change event and update view."""
+        """Receive layer.current_border_color() change event and update view."""
         with hp.qt_signals_blocked(self.color_swatch):
             self.color_swatch.setColor(self.viewer.scale_bar.color)
 
@@ -141,7 +141,7 @@ class QtScaleBarControls(QtFramelessPopup):
             self.viewer.scale_bar.box_color = color
 
     def _on_box_color_changed(self, _event=None):
-        """Receive layer.current_edge_color() change event and update view."""
+        """Receive layer.current_border_color() change event and update view."""
         with hp.qt_signals_blocked(self.box_color_swatch):
             self.box_color_swatch.setColor(self.viewer.scale_bar.box_color)
 
