@@ -131,8 +131,7 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
         # )
 
     @field_validator("theme")
-    @classmethod
-    def _valid_theme(cls, v):
+    def _valid_theme(v):
         if not is_theme_available(v):
             themes = ", ".join(available_themes())
             raise ValueError(f"Theme '{v}' not found; options are {themes}.")

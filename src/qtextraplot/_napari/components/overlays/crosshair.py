@@ -1,11 +1,16 @@
 """Cross-hair."""
+
 from enum import Enum
 from typing import Tuple
 
 from napari.components.overlays import SceneOverlay
 from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events.custom_types import Array
-from pydantic import field_validator
+
+try:
+    from pydantic.v1 import validator
+except ImportError:
+    from pydantic import validator
 
 
 class Shape(str, Enum):
@@ -25,7 +30,6 @@ class CrossHairOverlay(SceneOverlay):
     shape: Shape = Shape.BOX
     auto_hide: bool = True
 
-    @field_validator("color", mode="before")
-    @classmethod
+    @validator("color", pre=True, always=True)
     def _coerce_color(cls, v):
         return transform_color(v)[0]

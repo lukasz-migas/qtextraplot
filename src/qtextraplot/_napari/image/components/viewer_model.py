@@ -35,7 +35,9 @@ class Viewer(_ViewerModel):
             self.mouse_double_click_callbacks.clear()
             self.mouse_double_click_callbacks.append(double_click_to_zoom_reset)
 
-        self._overlays.update({k: v() for k, v in DEFAULT_OVERLAYS.items()})
+        for key, value in DEFAULT_OVERLAYS.items():
+            self._overlays[key] = value()
+        # self._overlays.update({k: v() for k, v in DEFAULT_OVERLAYS.items()})
 
         self.events.add(crosshair=Event, zoom=Event, clear_canvas=Event)
         self._instances.add(self)
