@@ -5,7 +5,7 @@ import warnings
 
 import napari.layers as n_layers
 import numpy as np
-from napari._pydantic_compat import Extra, Field, PrivateAttr, validator
+from qtextra._pydantic_compat import Extra, Field, PrivateAttr, validator
 from napari.components._layer_slicer import _LayerSlicer
 from napari.components.cursor import Cursor
 from napari.components.dims import Dims
@@ -184,13 +184,13 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
         """
         if len(self.layers) == 0 and self.dims.ndim != 2:
             # If no data is present and dims model has not been reset to 0
-            # than someone has passed more than two axis labels which are
+            # then someone has passed more than two axis labels which are
             # being saved and so default values are used.
             return np.vstack([np.zeros(self.dims.ndim), np.repeat(512, self.dims.ndim)])
         return self.layers.extent.world[:, self.dims.displayed]
 
     def _on_grid_change(self, event) -> None:
-        """Arrange the current layers is a 2D grid."""
+        """Arrange the current layers in a 2D grid."""
         extent = self._sliced_extent_world
         n = len(self.layers)
         for i, layer in enumerate(self.layers):

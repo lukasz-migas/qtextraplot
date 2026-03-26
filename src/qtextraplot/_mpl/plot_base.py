@@ -33,8 +33,11 @@ from loguru import logger
 
 try:
     matplotlib.use("Qt5Agg")
-except ImportError:
-    print("Failed to load qt5 backend")
+except Exception:
+    try:
+        matplotlib.use("QtAgg")
+    except Exception:
+        pass  # fall back to whatever matplotlib chooses
 matplotlib.rcParams["agg.path.chunksize"] = 10000
 
 
@@ -112,7 +115,7 @@ class PlotBase(QWidget):
         self.markers = []
         self.arrows = []
 
-        # occasionally used to tag to mark what plot was used previously
+        # occasionally used to mark what plot was used previously
         self.plot_name = ""
         self.y_divider = 1
 
@@ -310,7 +313,7 @@ class PlotBase(QWidget):
         self.store_plot_limits([extent], [self.ax])
 
     def plot_boxplot(self, df: "pd.DataFrame", **kwargs):
-        """Plot violin plot."""
+        """Plot box plot."""
         if not sns:
             raise ImportError("Seaborn is required for this function")
         sns.boxplot(data=df, ax=self.ax, **kwargs)
@@ -401,7 +404,7 @@ class PlotBase(QWidget):
         self.ax.set_xlim([start_x, end_x])
 
     def on_zoom_y_axis(self, start_y=None, end_y=None):
-        """Horizontal zoom."""
+        """Vertical zoom."""
         _, _, _start_y, _end_y = self.get_xy_limits()
         if start_y is None:
             start_y = _start_y
@@ -515,7 +518,7 @@ class PlotBase(QWidget):
         return self.ax.get_xlim()
 
     def get_current_ylim(self):
-        """Get current x-axis limits."""
+        """Get current y-axis limits."""
         return self.ax.get_ylim()
 
     def get_ylim(self):
@@ -610,7 +613,7 @@ class PlotBase(QWidget):
         return patch
 
     def plot_remove_patches(self, start_with: ty.Optional[str] = None, repaint: bool = True):
-        """Remove patch fr-om the plot area."""
+        """Remove patch from the plot area."""
         patches = []
         for patch in self.patch:
             if start_with is not None and hasattr(patch, "obj_name"):
@@ -777,7 +780,7 @@ class PlotBase(QWidget):
                 plot_id=self.plot_id,
                 zoom_color=zoom_color or self.zoom_color,
             )
-        connect(self.zoom.evt_pick, self.evt_pressed.emit)
+        connect(self.zoom.evt_pick, self.evt_pick.emit)
         connect(self.zoom.evt_move, self.evt_move.emit)
         connect(self.zoom.evt_pressed, self.evt_pressed.emit)
         connect(self.zoom.evt_released, self.evt_released.emit)
@@ -823,7 +826,7 @@ class PlotBase(QWidget):
                 self.figure.tight_layout()
 
     def clear(self):
-        """Clear the plot and rest some of the parameters."""
+        """Clear the plot and reset some of the parameters."""
         self._clear()
         self.figure.clear()
         self.zoom = None

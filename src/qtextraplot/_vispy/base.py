@@ -71,8 +71,8 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
         im_array = self.render()
         imwrite(path, im_array, dpi=(dpi, dpi))
 
-    def on_key_press(self, event):
-        """Process key press."""
+    def on_key_press(self, event):  # noqa: B027
+        """Process key press (override in subclasses to handle specific keys)."""
 
     @property
     def plot_base(self):
@@ -182,7 +182,7 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
             self.node.parent = None
             self.node = None
         for value in self.nodes.values():
-            del value
+            value.parent = None
         self.nodes.clear()
 
 
@@ -526,5 +526,5 @@ if __name__ == "__main__":  # pragma: no cover
     dlg.show()
     # view_line.show()
     # view_image.show()
-    sys.exit(dlg.exec_())
+    sys.exit(dlg.exec())
     # run()

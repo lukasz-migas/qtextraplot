@@ -4,7 +4,7 @@ import typing as ty
 
 import numpy as np
 from koyo.color import get_random_hex_color
-from napari._pydantic_compat import PrivateAttr
+from qtextra._pydantic_compat import PrivateAttr
 from psygnal._evented_model import EventedModel
 from pydantic.color import Color
 from qtextra.config import THEMES
@@ -135,7 +135,7 @@ class CanvasThemes(ConfigBase):
         background = transform_color(self.active.canvas.as_hex())[0]
         color = transform_color(color)[0]
         # check whether color is too similar to background
-        if np.linalg.norm(color - background) < 50:  # arbitrary threshold
+        if np.linalg.norm(color - background) < 0.3:  # arbitrary threshold; colors are normalised 0–1
             return get_random_hex_color()
         return color
 

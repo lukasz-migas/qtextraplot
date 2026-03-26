@@ -120,16 +120,6 @@ class QtViewerBase(QWidget):
         """Create the canvas and hook up events."""
         raise NotImplementedError("Must implement method")
 
-    def enterEvent(self, event):
-        """Emit our own event when mouse enters the canvas."""
-        self.viewer.mouse_over_canvas = True
-        super().enterEvent(event)
-
-    def leaveEvent(self, event):
-        """Emit our own event when mouse leaves the canvas."""
-        self.viewer.mouse_over_canvas = False
-        super().leaveEvent(event)
-
     def _create_widgets(self, **kwargs):
         """Create ui widgets."""
         raise NotImplementedError("Must implement method")
@@ -141,8 +131,8 @@ class QtViewerBase(QWidget):
     def _set_events(self):
         raise NotImplementedError("Must implement method")
 
-    def _set_camera(self):
-        pass
+    def _set_camera(self):  # noqa: B027
+        """Configure the camera; override in subclasses as needed."""
 
     def _add_visuals(self) -> None:
         """Add visuals for axes, scale bar."""
@@ -152,7 +142,7 @@ class QtViewerBase(QWidget):
         """Set view."""
         self.view = self.canvas.central_widget.add_view(border_width=0)
 
-    def _post_init(self):
+    def _post_init(self):  # noqa: B027
         """Complete initialization with post-init events."""
 
     def enterEvent(self, event):

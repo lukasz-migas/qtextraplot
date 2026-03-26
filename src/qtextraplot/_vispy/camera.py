@@ -164,7 +164,7 @@ class BoxZoomCamera(PanZoomCamera):
         if self._is_1d:
             return f"x={x1:.4f} y={y1:.4f}"
         else:
-            if x1 < 0 or y1 < 1:
+            if x1 < 0 or y1 < 0:
                 return ""
             return f"x={int(x1)} y={int(y1)}"
 
@@ -395,7 +395,7 @@ class BoxZoomCameraMixin:
 
     def _on_mouse_double_click(self, event):
         """Process mouse double click event."""
-        if 1 == event.button:
+        if event.button == 1:
             self.view.camera.reset()
 
     def _on_zoom_box(self, event):

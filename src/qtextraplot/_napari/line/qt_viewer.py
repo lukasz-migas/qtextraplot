@@ -249,7 +249,7 @@ class QtViewer(QWidget):
             self._layers_controls_dialog = DialogLineControls(self)
         # make sure the dialog is shown
         self._layers_controls_dialog.show()
-        # make sure the the dialog gets focus
+        # make sure the dialog gets focus
         self._layers_controls_dialog.raise_()  # for macOS
         self._layers_controls_dialog.activateWindow()  # for Windows
 

@@ -62,8 +62,8 @@ def render_image(fig, dpi: float) -> np.ndarray:
 class ColorBar(Image):
     """A colorbar visual fixed to the right side of the canvas.
 
-    This is based on the rendering from Matplotlib, then display this rendered image as a scene.visuals.
-    Image visual node on the canvas.
+    This is based on rendering from Matplotlib; the rendered image is then displayed as a
+    ``scene.visuals.Image`` visual node on the canvas.
     """
 
     def __init__(
@@ -280,5 +280,4 @@ class ColorBar(Image):
                 )
             if i != n_rows - 1:
                 cb.set_ticks([])
-        plt.close(fig)
         return render_image(fig, dpi)

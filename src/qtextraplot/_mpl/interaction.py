@@ -62,7 +62,7 @@ class MPLInteraction(QWidget):
         is_joint: bool = False,
         is_heatmap: bool = False,
         obj=None,
-        zoom_color=Qt.black,
+        zoom_color=Qt.GlobalColor.black,
         roi_shape: str = "rect",
     ):
         QWidget.__init__(self, parent)
@@ -120,7 +120,7 @@ class MPLInteraction(QWidget):
     def validate_input(axes, callbacks, data_limits):
         """Validate input to ensure correct parameters are being used."""
         if not isinstance(axes, list):
-            axes = list(axes)
+            axes = [axes] if not hasattr(axes, "__iter__") else list(axes)
 
         if callbacks is None:
             callbacks = {}
@@ -860,7 +860,7 @@ class ImageMPLInteraction(MPLInteraction):
         is_joint: bool = False,
         is_heatmap: bool = False,
         obj=None,
-        zoom_color=Qt.black,
+        zoom_color=Qt.GlobalColor.black,
     ):
         MPLInteraction.__init__(
             self,
@@ -927,7 +927,7 @@ class ImageMPLInteraction(MPLInteraction):
         _shape = [_ymax - _ymin, _xmax - _xmin]
         _aspect_ratio = get_aspect_ratio(_shape)
 
-        # adjust the width of the plot if the the aspect ratio is too high
+        # adjust the width of the plot if the aspect ratio is too high
         if _aspect_ratio > self._aspect_ratio:
             x_center = get_center(_xmin, _xmax)
             width = _shape[1]

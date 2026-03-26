@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(head -30 /Users/lgmigas/Documents/GitHub/qtextraplot/tests/test_*.py)"
+      "Bash(head -30 /Users/lgmigas/Documents/GitHub/qtextraplot/tests/test_*.py)",
+      "Bash(python -m py_compile tests/_mpl/test_plot_base.py)",
+      "Bash(python -m py_compile tests/_mpl/test_plot_base.py tests/_vispy/test_base.py tests/_vispy/test_camera.py tests/test_utils.py tests/test_config_theme.py tests/_napari/test_utilities.py)",
+      "Bash(python -m py_compile src/qtextraplot/_napari/_qt_viewer.py src/qtextraplot/_napari/_vispy/overlays/color_bar.py src/qtextraplot/_mpl/plot_base.py src/qtextraplot/_mpl/interaction.py src/qtextraplot/_vispy/base.py src/qtextraplot/_vispy/camera.py src/qtextraplot/_vispy/models/extents.py src/qtextraplot/config/theme.py src/qtextraplot/_napari/components/viewer_model.py src/qtextraplot/_napari/line/qt_viewer.py)"
     ]
   }
 }
