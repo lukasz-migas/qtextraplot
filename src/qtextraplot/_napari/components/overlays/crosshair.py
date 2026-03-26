@@ -5,7 +5,7 @@ from typing import Tuple
 from napari.components.overlays import SceneOverlay
 from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events.custom_types import Array
-from napari._pydantic_compat import validator
+from pydantic import field_validator
 
 
 class Shape(str, Enum):
@@ -25,6 +25,7 @@ class CrossHairOverlay(SceneOverlay):
     shape: Shape = Shape.BOX
     auto_hide: bool = True
 
-    @validator("color", pre=True)
+    @field_validator("color", mode="before")
+    @classmethod
     def _coerce_color(cls, v):
         return transform_color(v)[0]

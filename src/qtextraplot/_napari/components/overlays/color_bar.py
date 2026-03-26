@@ -6,7 +6,7 @@ import numpy as np
 from napari.components.overlays import CanvasOverlay
 from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events.custom_types import Array
-from qtextra._pydantic_compat import validator
+from pydantic import field_validator
 
 ColorBarItem = Tuple[np.ndarray, str, Tuple[float, float]]
 
@@ -22,6 +22,7 @@ class ColorBarOverlay(CanvasOverlay):
     colormap: str = "viridis"
     data: Optional[Tuple[ColorBarItem, ...]] = None
 
-    @validator("border_color", "label_color", pre=True)
+    @field_validator("border_color", "label_color", mode="before")
+    @classmethod
     def _coerce_color(cls, v):
         return transform_color(v)[0]

@@ -5,7 +5,7 @@ import warnings
 
 import napari.layers as n_layers
 import numpy as np
-from qtextra._pydantic_compat import Extra, Field, PrivateAttr, validator
+from pydantic import ConfigDict, Field, PrivateAttr, field_validator
 from napari.components._layer_slicer import _LayerSlicer
 from napari.components.cursor import Cursor
 from napari.components.dims import Dims
@@ -39,12 +39,14 @@ if GridLinesOverlay:
 class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
     """Viewer containing the rendered scene, layers and controlling elements."""
 
-    # Using allow_mutation=False means these attributes aren't settable and don't
+    model_config = ConfigDict(extra="ignore")
+
+    # Using frozen=True means these attributes aren't settable and don't
     # have an event emitter associated with them
-    grid: GridCanvas = Field(default_factory=GridCanvas, allow_mutation=False)
-    dims: Dims = Field(default_factory=Dims, allow_mutation=False)
-    cursor: Cursor = Field(default_factory=Cursor, allow_mutation=False)
-    layers: LayerList = Field(default_factory=LayerList, allow_mutation=False)
+    grid: GridCanvas = Field(default_factory=GridCanvas, frozen=True)
+    dims: Dims = Field(default_factory=Dims, frozen=True)
+    cursor: Cursor = Field(default_factory=Cursor, frozen=True)
+    layers: LayerList = Field(default_factory=LayerList, frozen=True)
 
     # private track of overlays, only expose the old ones for backward compatibility
     _overlays: EventedDict[str, Overlay] = PrivateAttr(default_factory=EventedDict)
@@ -52,7 +54,7 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
     help: str = ""
     status: ty.Union[str, ty.Dict] = "Ready"
     title: str = "qtextra"
-    tooltip: Tooltip = Field(default_factory=Tooltip, allow_mutation=False)
+    tooltip: Tooltip = Field(default_factory=Tooltip, frozen=True)
     theme: str = Field(default_factory=_current_theme)
 
     # 2-tuple indicating height and width
@@ -72,7 +74,6 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
         order: ty.Tuple[int, ...] = (),
         axis_labels: ty.Tuple[str, ...] = (),
     ):
-        self.__config__.extra = Extra.allow
         super().__init__(
             title=title,
             dims={
@@ -81,7 +82,6 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
                 "order": order,
             },
         )
-        self.__config__.extra = Extra.ignore
 
         # Add extra events - ideally these will be removed too!
         self.events.add(layers_change=Event, reset_view=Event, clear_canvas=Event)
@@ -130,7 +130,8 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
         #     settings.application.grid_width,
         # )
 
-    @validator("theme", allow_reuse=True)
+    @field_validator("theme")
+    @classmethod
     def _valid_theme(cls, v):
         if not is_theme_available(v):
             themes = ", ".join(available_themes())
