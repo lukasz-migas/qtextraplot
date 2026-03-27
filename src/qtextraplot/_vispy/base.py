@@ -445,8 +445,8 @@ if __name__ == "__main__":  # pragma: no cover
 
     # def fcn():
     #     global image
-    #     image += int(np.random.randint(0, 20, 1))
-    #     # image = np.random.randint(0, 255, (N_PTS, N_PTS), dtype=np.ubyte)
+    #     image += int(np.random.default_rng().integers(0, 20, 1))
+    #     # image = np.random.default_rng().integers(0, 255, (N_PTS, N_PTS), dtype=np.ubyte)
     #     view_image.plot_2d_update_data(image)
     #
     # def set_opacity_1():
@@ -487,9 +487,9 @@ if __name__ == "__main__":  # pragma: no cover
     dlg.setLayout(layout)
 
     N_PTS = 100
-    # view_line.plot_1d(np.arange(N_PTS), np.random.randint(-255, 255, N_PTS), color=(0, 1, 0))
-    # view_line.add_line(np.arange(N_PTS), np.random.randint(0, 255, N_PTS), color=(1, 0, 0))
-    # view_line.add_line(np.arange(N_PTS), np.random.randint(0, 255, N_PTS), color=(0, 0, 1))
+    # view_line.plot_1d(np.arange(N_PTS), np.random.default_rng().integers(-255, 255, N_PTS), color=(0, 1, 0))
+    # view_line.add_line(np.arange(N_PTS), np.random.default_rng().integers(0, 255, N_PTS), color=(1, 0, 0))
+    # view_line.add_line(np.arange(N_PTS), np.random.default_rng().integers(0, 255, N_PTS), color=(0, 0, 1))
     # view_line.plot_add_hline(color="#FFFFFF")
     # view_line.plot_add_vline(color="#FFFFFF")
     # view_line.plot_scatter(np.arange(N_PTS), np.arange(N_PTS))
@@ -501,7 +501,7 @@ if __name__ == "__main__":  # pragma: no cover
     # image[:, 50] += 3.0
     # image = ((image - image.min()) * (253.0 / (image.max() - image.min()))).astype(np.ubyte)
     # print(image)
-    image = np.random.randint(0, 255, (N_PTS, N_PTS), dtype=np.ubyte)
+    image = np.random.default_rng().integers(0, 255, (N_PTS, N_PTS), dtype=np.ubyte)
     # image = np.zeros((N_PTS, N_PTS), dtype=np.ubyte)
     # image[0:500, 0:500] = 150
     # view_image.plot_2d(image, opacity=0.5)
@@ -516,7 +516,7 @@ if __name__ == "__main__":  # pragma: no cover
     # image[500:600, 500:] = 255
     # view_image.plot_2d_mask(image, opacity=0.5, colormap=cmap)
 
-    # view_image.plot_2d_mask(np.random.randint(0, 255, (N_PTS, N_PTS), dtype=np.ubyte), colormap=cmap)
+    # view_image.plot_2d_mask(np.random.default_rng().integers(0, 255, (N_PTS, N_PTS), dtype=np.ubyte), colormap=cmap)
 
     # timer = QTimer(dlg)
     # timer.setInterval(20)
