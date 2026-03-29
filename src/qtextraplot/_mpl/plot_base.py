@@ -385,7 +385,23 @@ class PlotBase(QWidget):
 
     def _get_extent(self, xmin, xmax, ymin, ymax):
         """Get extent."""
+        return self._plot_limits_to_extent([xmin, xmax, ymin, ymax])
+
+    @staticmethod
+    def _plot_limits_to_extent(plot_limits: ty.Sequence[float]) -> list[float]:
+        """Convert internal plot limits into the public extent format."""
+        if len(plot_limits) != 4:
+            raise ValueError("Plot limits must be [xmin, xmax, ymin, ymax]")
+        xmin, xmax, ymin, ymax = plot_limits
         return [xmin, ymin, xmax, ymax]
+
+    @staticmethod
+    def _extent_to_plot_limits(extent: ty.Sequence[float]) -> list[float]:
+        """Convert a public extent into the internal plot-limits format."""
+        if len(extent) != 4:
+            raise ValueError("Extent must be [xmin, ymin, xmax, ymax]")
+        xmin, ymin, xmax, ymax = extent
+        return [xmin, xmax, ymin, ymax]
 
     def get_xy_limits(self) -> list[float]:
         """Get x- and y-axis limits that are currently shown in the plot."""
@@ -453,9 +469,7 @@ class PlotBase(QWidget):
             raise ValueError("Could not store plot limits")
 
         for _ax, _extent in zip(ax, extent):
-            if len(_extent) != 4:
-                raise ValueError("Extent must be [xmin, ymin, xmax, ymax]")
-            _ax.plot_limits = [_extent[0], _extent[2], _extent[1], _extent[3]]
+            _ax.plot_limits = self._extent_to_plot_limits(_extent)
 
     def set_plot_xlabel(self, xlabel: ty.Optional[str] = None, ax=None, **kwargs):
         """Set plot x-axis label."""

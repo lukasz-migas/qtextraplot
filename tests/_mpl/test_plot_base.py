@@ -79,6 +79,16 @@ class TestPlotBaseClear:
 
 
 class TestPlotBaseXYLimits:
+    def test_plot_limits_to_extent_round_trip(self, plot_widget):
+        plot_limits = [0, 5, 1, 9]
+        extent = plot_widget._plot_limits_to_extent(plot_limits)
+        assert extent == [0, 1, 5, 9]
+        assert plot_widget._extent_to_plot_limits(extent) == plot_limits
+
+    def test_plot_limits_to_extent_rejects_invalid_length(self, plot_widget):
+        with pytest.raises(ValueError, match="Plot limits must be"):
+            plot_widget._plot_limits_to_extent([0, 1, 2])
+
     def test_store_plot_limits_normalizes_extent_order(self, plot_widget):
         ax = plot_widget.ax
         extent = [0, 1, 5, 9]

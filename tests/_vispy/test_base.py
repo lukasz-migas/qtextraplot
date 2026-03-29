@@ -160,6 +160,25 @@ class TestPlotScatter:
         kwargs = scatter_plot._marker_data_kwargs(symbol="square", size=3)
         assert kwargs == {"symbol": "square", "size": 3}
 
+    def test_ensure_marker_node_initializes_once(self, scatter_plot):
+        node = scatter_plot._ensure_marker_node()
+        assert node is scatter_plot.node
+        assert scatter_plot._ensure_marker_node() is node
+
+    def test_set_marker_data_initializes_node(self, scatter_plot):
+        x = np.array([0.0, 1.0])
+        y = np.array([1.0, 2.0])
+        scatter_plot._set_marker_data(
+            x,
+            y,
+            zorder=7,
+            face_color="#00FF00",
+            edge_color="#000000",
+            size=4,
+        )
+        assert scatter_plot.node is not None
+        assert scatter_plot.node.order == 7
+
     def test_plot_scatter_creates_node(self, scatter_plot):
         x = np.random.rand(20)
         y = np.random.rand(20)

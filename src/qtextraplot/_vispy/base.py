@@ -399,6 +399,37 @@ class PlotScatter(PlotLine):
             kwargs["scaling"] = False
         return kwargs
 
+    def _ensure_marker_node(self) -> MarkersNode:
+        """Create the scatter node on first use and return it."""
+        if self.node is None:
+            self.init()
+        return self.node
+
+    def _set_marker_data(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        *,
+        zorder: int,
+        face_color: str,
+        edge_color: str,
+        size: float | np.ndarray,
+        edge_width: int | float | None = None,
+    ) -> None:
+        """Apply marker data using the installed VisPy API shape."""
+        node = self._ensure_marker_node()
+        node.order = zorder
+        node.set_data(
+            np.c_[x, y],
+            **self._marker_data_kwargs(
+                symbol="square",
+                size=size,
+                face_color=face_color,
+                edge_color=edge_color,
+                edge_width=edge_width,
+            ),
+        )
+
     def plot_scatter(
         self,
         x,
@@ -409,18 +440,13 @@ class PlotScatter(PlotLine):
         size: float | np.ndarray = 1,
         **kwargs,
     ):
-        if self.node is None:
-            self.init()
-
-        self.node.order = zorder
-        self.node.set_data(
-            np.c_[x, y],
-            **self._marker_data_kwargs(
-                symbol="square",
-                size=size,
-                face_color=face_color,
-                edge_color=edge_color,
-            ),
+        self._set_marker_data(
+            x,
+            y,
+            zorder=zorder,
+            face_color=face_color,
+            edge_color=edge_color,
+            size=size,
         )
         self._set_xy_limits_from_array(x, y, True)
 
@@ -435,16 +461,14 @@ class PlotScatter(PlotLine):
         **kwargs,
     ):
         """Update scatter data."""
-        self.node.order = zorder
-        self.node.set_data(
-            np.c_[x, y],
-            **self._marker_data_kwargs(
-                symbol="square",
-                size=size,
-                face_color=face_color,
-                edge_color=edge_color,
-                edge_width=0,
-            ),
+        self._set_marker_data(
+            x,
+            y,
+            zorder=zorder,
+            face_color=face_color,
+            edge_color=edge_color,
+            size=size,
+            edge_width=0,
         )
         # self._set_xy_limits_from_array(x, y, True)
 
