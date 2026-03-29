@@ -1,6 +1,5 @@
 """Zoom-box."""
 
-import typing as ty
 
 from napari.components.overlays.base import SceneOverlay
 

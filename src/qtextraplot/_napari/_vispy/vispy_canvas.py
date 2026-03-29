@@ -1,4 +1,5 @@
 """Vispy canvas."""
+
 from napari._vispy.utils.gl import get_max_texture_sizes
 from qtpy.QtCore import QSize
 from vispy.scene import SceneCanvas, Widget
@@ -97,9 +98,8 @@ class VispyCanvas(SceneCanvas):
 if __name__ == "__main__":  # pragma: no cover
     import sys
 
-    from qtpy.QtWidgets import QDialog, QVBoxLayout
-
     from qtextra.utils.dev import qapplication
+    from qtpy.QtWidgets import QDialog, QVBoxLayout
 
     _ = qapplication()  # analysis:ignore
 

@@ -44,7 +44,7 @@ if Centroids is not None:
             Region: QtRegionControls,
             InfLine: QtInfLineControls,
             MultiLine: QtMultiLineControls,
-        }
+        },
     )
 
 

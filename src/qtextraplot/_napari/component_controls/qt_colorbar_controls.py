@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import typing as ty
 
-import numpy as np
 import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
 from qtextra.widgets.qt_dialog import QtFramelessPopup

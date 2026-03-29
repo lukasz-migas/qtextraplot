@@ -72,7 +72,7 @@ class QtScreenshotDialog(QtFramelessPopup):
                 "Copy to clipboard",
                 tooltip="Copy screenshot to clipboard",
                 func=self.on_copy_to_clipboard,
-            )
+            ),
         )
         layout.addRow(
             hp.make_btn(
@@ -80,7 +80,7 @@ class QtScreenshotDialog(QtFramelessPopup):
                 "Save to file",
                 tooltip="Save screenshot to file",
                 func=self.on_save_figure,
-            )
+            ),
         )
         return layout
 

@@ -31,7 +31,7 @@ class Polygon(QObject):
         self._last_idx = -1
         self.evt_n_changed.emit(0)
 
-    def add_point(self, x: Union[int, float], y: Union[int, float]):
+    def add_point(self, x: float, y: float):
         """Add point to the polygon container."""
         if [x, y] in self.points:
             return
@@ -39,7 +39,7 @@ class Polygon(QObject):
         self._last_idx += 1
         self.evt_n_changed.emit(self.n_points)
 
-    def remove_point(self, x: Union[int, float], y: Union[int, float]):
+    def remove_point(self, x: float, y: float):
         """Remove point (x, y) from the list."""
         remove_id = -1
         for i, (_x, _y) in enumerate(self.points):

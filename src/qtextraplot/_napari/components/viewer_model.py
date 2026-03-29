@@ -5,7 +5,6 @@ import warnings
 
 import napari.layers as n_layers
 import numpy as np
-from pydantic import ConfigDict, Field, PrivateAttr, field_validator
 from napari.components._layer_slicer import _LayerSlicer
 from napari.components.cursor import Cursor
 from napari.components.dims import Dims
@@ -18,6 +17,7 @@ from napari.utils.events import Event, EventedDict, EventedModel, disconnect_eve
 from napari.utils.key_bindings import KeymapProvider
 from napari.utils.mouse_bindings import MousemapProvider
 from napari.utils.theme import available_themes, is_theme_available
+from pydantic import ConfigDict, Field, PrivateAttr, field_validator
 
 from qtextraplot._napari.components.layerlist import LayerList
 

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import inspect
 import typing as ty
 
 import numpy as np
+from koyo.color import hex_to_rgb
 from koyo.utilities import get_min_max
 from vispy.scene import AxisWidget, InfiniteLine, SceneCanvas, ViewBox
 from vispy.scene.visuals import Line as LineNode
@@ -13,7 +15,6 @@ from vispy.util import keys
 
 from qtextraplot._vispy.camera import BoxZoomCameraMixin
 from qtextraplot._vispy.models.extents import Extents
-from qtextra.utils.color import hex_to_rgb
 
 
 class BasePlot(SceneCanvas, BoxZoomCameraMixin):
@@ -71,7 +72,7 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
         im_array = self.render()
         imwrite(path, im_array, dpi=(dpi, dpi))
 
-    def on_key_press(self, event):  # noqa: B027
+    def on_key_press(self, event):
         """Process key press (override in subclasses to handle specific keys)."""
 
     @property
@@ -120,7 +121,7 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
         self.set_xy_view(*self._extents.get_xy())
 
     def _set_xy_limits(
-        self, x_min: float, x_max: float, y_min: float, y_max: float, x_pad: float = 0, y_pad: float = 0
+        self, x_min: float, x_max: float, y_min: float, y_max: float, x_pad: float = 0, y_pad: float = 0,
     ):
         """Set x/y-axis limits."""
         x_min, x_max, y_min, y_max = x_min - x_pad, x_max + x_pad, y_min - y_pad, y_max + y_pad
@@ -132,7 +133,7 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
 
     def copy_to_clipboard(self):
         """Copy the current canvas to the system clipboard."""
-        return None
+        return
 
     def set_xy_view(self, x_min: float, x_max: float, y_min: float, y_max: float):
         """Set x/y limits."""
@@ -164,6 +165,10 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
 
     def plot_add_patch(self, *args, **kwargs):
         pass
+
+    def remove_gid(self, gid: str) -> None:
+        """Remove any node tracked under the provided gid."""
+        self.plot_remove_line(gid)
 
     def set_xy_line_limits(self, *args, **kwargs):
         pass
@@ -377,6 +382,7 @@ class PlotScatter(PlotLine):
     def __init__(self, parent, facecolor="white", x_label: str = "", y_label: str = "", **kwargs):
         super().__init__(parent, facecolor=facecolor, x_label=x_label, y_label=y_label, **kwargs)
         self.unfreeze()
+        self._marker_set_data_supports_scaling: bool | None = None
 
     def init(self):
         """Initialize view."""
@@ -386,6 +392,47 @@ class PlotScatter(PlotLine):
             "#000000" if self._kwargs["facecolor"] in ["white", "#FFFFFF"] else "#FFFFFF",
             x_label=self._kwargs["x_label"],
             y_label=self._kwargs["y_label"],
+        )
+
+    def _marker_data_kwargs(self, **kwargs) -> dict[str, ty.Any]:
+        """Build kwargs supported by the installed VisPy markers API."""
+        if self._marker_set_data_supports_scaling is None:
+            params = inspect.signature(self.node.set_data).parameters
+            self._marker_set_data_supports_scaling = "scaling" in params
+
+        if self._marker_set_data_supports_scaling:
+            kwargs["scaling"] = False
+        return kwargs
+
+    def _ensure_marker_node(self) -> MarkersNode:
+        """Create the scatter node on first use and return it."""
+        if self.node is None:
+            self.init()
+        return self.node
+
+    def _set_marker_data(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        *,
+        zorder: int,
+        face_color: str,
+        edge_color: str,
+        size: float | np.ndarray,
+        edge_width: float | None = None,
+    ) -> None:
+        """Apply marker data using the installed VisPy API shape."""
+        node = self._ensure_marker_node()
+        node.order = zorder
+        node.set_data(
+            np.c_[x, y],
+            **self._marker_data_kwargs(
+                symbol="square",
+                size=size,
+                face_color=face_color,
+                edge_color=edge_color,
+                edge_width=edge_width,
+            ),
         )
 
     def plot_scatter(
@@ -398,17 +445,13 @@ class PlotScatter(PlotLine):
         size: float | np.ndarray = 1,
         **kwargs,
     ):
-        if self.node is None:
-            self.init()
-
-        self.node.order = zorder
-        self.node.set_data(
-            np.c_[x, y],
-            symbol="square",
-            size=size,
+        self._set_marker_data(
+            x,
+            y,
+            zorder=zorder,
             face_color=face_color,
             edge_color=edge_color,
-            scaling=False,
+            size=size,
         )
         self._set_xy_limits_from_array(x, y, True)
 
@@ -423,15 +466,14 @@ class PlotScatter(PlotLine):
         **kwargs,
     ):
         """Update scatter data."""
-        self.node.order = zorder
-        self.node.set_data(
-            np.c_[x, y],
-            symbol="square",
-            size=size,
+        self._set_marker_data(
+            x,
+            y,
+            zorder=zorder,
             face_color=face_color,
             edge_color=edge_color,
+            size=size,
             edge_width=0,
-            scaling=False,
         )
         # self._set_xy_limits_from_array(x, y, True)
 
@@ -439,9 +481,8 @@ class PlotScatter(PlotLine):
 if __name__ == "__main__":  # pragma: no cover
     import sys
 
-    from qtpy.QtWidgets import QDialog, QVBoxLayout
-
     from qtextra.utils.dev import qapplication
+    from qtpy.QtWidgets import QDialog, QVBoxLayout
 
     # def fcn():
     #     global image

@@ -10,7 +10,7 @@ def register_vispy_overlays():
         {
             ColorBarOverlay: VispyColorbarOverlay,
             CrossHairOverlay: VispyCrosshairOverlay,
-        }
+        },
     )
 
 

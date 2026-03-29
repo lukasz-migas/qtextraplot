@@ -14,9 +14,18 @@ from napari._qt.widgets.qt_dims import QtDims
 from napari._vispy.canvas import VispyCanvas
 from napari.utils.key_bindings import KeymapHandler
 from qtpy.QtCore import QCoreApplication, QEvent, Qt
-from qtpy.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QWidget
 from superqt import ensure_main_thread
 
+from qtextraplot._napari._qt_viewer_utils import (
+    QtViewerInstanceTracker,
+    calc_status_from_cursor,
+    cleanup_qt_viewer,
+    copy_screenshot_to_clipboard,
+    set_mouse_over_status,
+    show_controls_dialog,
+    toggle_controls_dialog,
+)
 from qtextraplot._napari._vispy import register_vispy_overlays
 from qtextraplot._napari.image._qapp_model import init_qactions, reset_default_keymap
 from qtextraplot._napari.image._vispy import register_vispy_overlays as register_image_vispy_overlays
@@ -25,47 +34,15 @@ from qtextraplot._napari.image.component_controls.qt_layer_controls_container im
 from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
 
 if ty.TYPE_CHECKING:
-    from napari.viewer import Viewer
+    pass
 
 reset_default_keymap()
 register_vispy_overlays()
 register_image_vispy_overlays()
 
 
-def _calc_status_from_cursor(viewer: Viewer) -> tuple[str | dict, str]:
-    if not viewer.mouse_over_canvas:
-        return None
-    active = viewer.layers.selection.active
-    if active is not None and active._loaded:
-        status = active.get_status(
-            viewer.cursor.position,
-            view_direction=viewer.cursor._view_direction,
-            dims_displayed=list(viewer.dims.displayed),
-            world=True,
-        )
-        tooltip_text = ""
-        if viewer.tooltip.visible:
-            tooltip_text = active._get_tooltip_text(
-                np.asarray(viewer.cursor.position),
-                view_direction=np.asarray(viewer.cursor._view_direction),
-                dims_displayed=list(viewer.dims.displayed),
-                world=True,
-            )
-        return status, tooltip_text
-    x, y = viewer.cursor.position
-    status = f"[{round(x)} {round(y)}]"
-    return status, status
-
-
-class QtViewer(QWidget):
+class QtViewer(QtViewerInstanceTracker, QWidget):
     """Widget view."""
-
-    # To track window instances and facilitate getting the "active" viewer...
-    # We use this instead of QApplication.activeWindow for compatibility with
-    # IPython usage. When you activate IPython, it will appear that there are
-    # *no* active windows, so we want to track the most recently active windows
-    _instances: ty.ClassVar[list[QWidget]] = []
-    _instance_index: ty.ClassVar[int] = -1
 
     _layers_controls_dialog = None
 
@@ -91,10 +68,8 @@ class QtViewer(QWidget):
         self._remote_manager = None
 
         self.viewer = viewer
-        self._instances.append(self)
-        _QtMainWindow._instances.append(self)
+        self._register_instance(_QtMainWindow._instances)
         self._qt_viewer = self._qt_window = self
-        self.current_index = len(self._instances) - 1
 
         self.dims = QtDims(self.viewer.dims)
         self._controls = None
@@ -142,18 +117,6 @@ class QtViewer(QWidget):
 
         self._set_layout(add_dims=add_dims, add_toolbars=add_toolbars, **kwargs)
 
-    @classmethod
-    def set_current_index(cls, index_or_widget: ty.Union[int, QtViewer]):
-        """Set current index."""
-        if isinstance(index_or_widget, QtViewer):
-            index_or_widget = cls._instances.index(index_or_widget)
-        QtViewer._instance_index = index_or_widget
-
-    @classmethod
-    def current(cls) -> ty.Optional[QtViewer]:
-        """Return current instance."""
-        return cls._instances[cls._instance_index] if cls._instances else None
-
     def _set_layout(self, add_dims: bool, add_toolbars: bool, **kwargs):
         # set in main canvas
         self.viewerToolbar = QtViewToolbar(view=self.view, viewer=self.viewer, qt_viewer=self, **kwargs)
@@ -194,7 +157,7 @@ class QtViewer(QWidget):
     def update_status_and_tooltip(self) -> None:
         """Set statusbar."""
         with suppress(Exception):
-            status_and_tooltip = _calc_status_from_cursor(self.viewer)
+            status_and_tooltip = calc_status_from_cursor(self.viewer)
             _QtMainWindow.set_status_and_tooltip(self, status_and_tooltip)
 
     def _update_camera_depth(self):
@@ -217,7 +180,7 @@ class QtViewer(QWidget):
     ):
         """Capture a screenshot of the Vispy canvas."""
         return Window._screenshot(
-            self, size=size, scale=scale, flash=flash, canvas_only=canvas_only, fit_to_data_extent=fit_to_data_extent
+            self, size=size, scale=scale, flash=flash, canvas_only=canvas_only, fit_to_data_extent=fit_to_data_extent,
         )
 
     def clipboard(
@@ -229,10 +192,14 @@ class QtViewer(QWidget):
         fit_to_data_extent: bool = False,
     ):
         """Take a screenshot of the currently displayed screen and copy the image to the clipboard."""
-        img = self._screenshot(
-            flash=flash, canvas_only=canvas_only, size=size, scale=scale, fit_to_data_extent=fit_to_data_extent
+        copy_screenshot_to_clipboard(
+            self._screenshot,
+            flash=flash,
+            canvas_only=canvas_only,
+            size=size,
+            scale=scale,
+            fit_to_data_extent=fit_to_data_extent,
         )
-        QApplication.clipboard().setImage(img)
 
     def on_save_figure(
         self,
@@ -274,25 +241,11 @@ class QtViewer(QWidget):
         """Open dialog responsible for layer settings."""
         from qtextraplot._napari.image.component_controls.qt_layers_dialog import DialogNapariControls
 
-        if self._disable_controls:
-            return
-
-        if self._layers_controls_dialog is None:
-            self._layers_controls_dialog = DialogNapariControls(self)
-        # make sure the dialog is shown
-        self._layers_controls_dialog.show()
-        # make sure the dialog gets focus
-        self._layers_controls_dialog.raise_()  # for macOS
-        self._layers_controls_dialog.activateWindow()  # for Windows
+        show_controls_dialog(self, DialogNapariControls)
 
     def on_toggle_controls_dialog(self, _event=None) -> None:
         """Toggle between on/off state of the layer settings."""
-        if self._disable_controls:
-            return
-        if self._layers_controls_dialog is None:
-            self.on_open_controls_dialog()
-        else:
-            self._layers_controls_dialog.setVisible(not self._layers_controls_dialog.isVisible())
+        toggle_controls_dialog(self, self.on_open_controls_dialog)
 
     def closeEvent(self, event):
         """Cleanup and close.
@@ -306,18 +259,14 @@ class QtViewer(QWidget):
         # the AnimationThread before close, otherwise it will cause a segFault
         # or Abort trap. (calling stop() when no animation is occurring is also
         # not a problem)
-        self.dims.stop()
-        self.canvas.native.deleteLater()
-        event.accept()
+        cleanup_qt_viewer(event, dims=self.dims, canvas_native=self.canvas.native)
 
     def enterEvent(self, event: QEvent) -> None:
         """Emit our own event when mouse enters the canvas."""
-        self.viewer.status = "Ready"
-        self.viewer.mouse_over_canvas = True
+        set_mouse_over_status(self.viewer, True)
         super().enterEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:
         """Emit our own event when mouse leaves the canvas."""
-        self.viewer.status = ""
-        self.viewer.mouse_over_canvas = False
+        set_mouse_over_status(self.viewer, False)
         super().leaveEvent(event)

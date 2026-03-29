@@ -1,14 +1,19 @@
 """Init."""
 
+import contextlib
+import sys
+
 try:
     import napari
 except ImportError:
-    raise ImportError("please install napari using 'pip install napari'") from None
+    raise ImportError(
+        "Failed to import optional dependency 'napari'. "
+        f"Current interpreter: {sys.executable}. "
+        "Install it in this environment with 'pip install napari' or use the same interpreter where napari is already installed.",
+    ) from None
 
-try:
+with contextlib.suppress(ImportError, TypeError):
     import napari_plot
-except (ImportError, TypeError):
-    pass
     # raise ImportError("please install napari using 'pip install napari-plot'") from None
 
 
@@ -21,3 +26,7 @@ from qtextraplot.assets import ICONS
 # overwrite napari list of icons
 # This is required because we've added several new layer types that have custom icons associated with them.
 napari.resources._icons.ICONS.update(ICONS)
+
+
+from qtextraplot._napari.image.wrapper import NapariImageView
+from qtextraplot._napari.line.wrapper import NapariLineView

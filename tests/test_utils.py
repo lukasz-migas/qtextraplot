@@ -10,7 +10,6 @@ from qtextraplot.utils.interaction import ExtractEvent, Polygon, get_center
 from qtextraplot.utils.utilities import running_under_pytest
 from qtextraplot.utils.views_base import build_wildcard
 
-
 # ---------------------------------------------------------------------------
 # running_under_pytest
 # ---------------------------------------------------------------------------
