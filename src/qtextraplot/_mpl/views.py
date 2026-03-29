@@ -32,10 +32,21 @@ class ViewMplLine(ViewBase):
         """Get widget."""
         return self.figure
 
+    def _cache_xy_state(self, x: np.ndarray, y: np.ndarray, **kwargs: ty.Any) -> None:
+        """Cache the current x/y data and plot kwargs."""
+        self._data.update(x=np.asarray(x), y=np.asarray(y))
+        self._plt_kwargs = dict(kwargs)
+
+    def _cache_image_state(self, image: np.ndarray, **kwargs: ty.Any) -> None:
+        """Cache the current image data and plot kwargs."""
+        self._data.update(image=np.asarray(image))
+        self._plt_kwargs = dict(kwargs)
+
     def plot(
         self, x: np.ndarray, y: np.ndarray, repaint: bool = True, forced_kwargs: dict | None = None, **kwargs: ty.Any,
     ) -> None:
         """Simple line plot."""
+        del forced_kwargs
         with QMutexLocker(MUTEX):
             self.set_labels(**kwargs)
 
@@ -47,9 +58,7 @@ class ViewMplLine(ViewBase):
                     x, y, x_label=self.x_label, y_label=self.y_label, callbacks=self._callbacks, **kwargs,
                 )
                 self.figure.repaint(repaint)
-
-                # set data
-                self._data.update(x=x, y=y)
+                self._cache_xy_state(x, y, **kwargs)
 
     def imshow(self, image: np.ndarray, axis: bool = False, **kwargs: ty.Any) -> None:
         """Display image."""
@@ -57,6 +66,7 @@ class ViewMplLine(ViewBase):
             self.figure.clear()
             self.figure.imshow(image, axis=axis, vmin=0, aspect="equal", **kwargs)
             self.figure.repaint()
+            self._cache_image_state(image, axis=axis, **kwargs)
 
     def scatter(
         self,
@@ -70,6 +80,7 @@ class ViewMplLine(ViewBase):
     ):
         """Simple scatter plot."""
         with QMutexLocker(MUTEX):
+            self.set_labels(**kwargs)
             self.figure.plot_scatter(
                 x,
                 y,
@@ -82,6 +93,7 @@ class ViewMplLine(ViewBase):
                 **kwargs,
             )
             self.figure.repaint(repaint)
+            self._cache_xy_state(x, y, marker=marker, color=color, size=size, **kwargs)
 
     def plot_calibration_curve(
         self,
@@ -108,7 +120,7 @@ class ViewMplLine(ViewBase):
                 y_label=self.y_label,
             )
             self.figure.repaint(repaint)
-            self._data.update(x=x, y=y)
+            self._cache_xy_state(x, y, clear=clear, **kwargs)
 
     def update(self, x: np.ndarray, y: np.ndarray, repaint: bool = True, **kwargs: ty.Any) -> None:
         """Update plot without having to clear it."""
@@ -120,9 +132,7 @@ class ViewMplLine(ViewBase):
         self.figure.set_xy_line_limits(reset_y=True)
         # self.figure.on_reset_zoom(False)
         self.figure.repaint(repaint)
-
-        # set data
-        self._data.update(x=x, y=y)
+        self._cache_xy_state(x, y, **kwargs)
 
     def update_x(self, x: np.ndarray, repaint: bool = True, **kwargs: ty.Any) -> None:
         """Update x-axis."""
@@ -133,15 +143,17 @@ class ViewMplLine(ViewBase):
             self.figure.plot_1d_update_x_axis(x, **kwargs)
             self.figure.set_xy_line_limits(reset_x=True)
             self.figure.repaint(repaint)
+            if "y" in self._data:
+                self._cache_xy_state(x, self._data["y"], **kwargs)
 
     def reset(self) -> None:
         """Resets the image."""
         self.light_clear()
 
-        if "x" not in self._data or "y" not in self._data:
-            return
-        # show base image
-        self.plot(self._data["x"], self._data["y"], **self._plt_kwargs)
+        if "x" in self._data and "y" in self._data:
+            self.plot(self._data["x"], self._data["y"], **self._plt_kwargs)
+        elif "image" in self._data:
+            self.imshow(self._data["image"], **self._plt_kwargs)
 
     def figure_update(self, add_zoom: bool = True, repaint: bool = True, tight: bool = True):
         """Update and repaint figure."""

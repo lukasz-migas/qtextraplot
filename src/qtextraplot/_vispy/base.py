@@ -166,6 +166,10 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
     def plot_add_patch(self, *args, **kwargs):
         pass
 
+    def remove_gid(self, gid: str) -> None:
+        """Remove any node tracked under the provided gid."""
+        self.plot_remove_line(gid)
+
     def set_xy_line_limits(self, *args, **kwargs):
         pass
 
