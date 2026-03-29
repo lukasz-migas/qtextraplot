@@ -266,4 +266,5 @@ ignore = [
     "docs/**/*",
     "examples/**/*",
     "MANIFEST.in",
+    ".claude/*",
 ]

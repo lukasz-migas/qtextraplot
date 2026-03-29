@@ -151,6 +151,15 @@ class TestPlotScatter:
     def test_node_initially_none(self, scatter_plot):
         assert scatter_plot.node is None
 
+    def test_marker_data_kwargs_omits_scaling_when_unsupported(self, scatter_plot):
+        class _Node:
+            def set_data(self, pos=None, size=10.0):
+                return pos, size
+
+        scatter_plot.node = _Node()
+        kwargs = scatter_plot._marker_data_kwargs(symbol="square", size=3)
+        assert kwargs == {"symbol": "square", "size": 3}
+
     def test_plot_scatter_creates_node(self, scatter_plot):
         x = np.random.rand(20)
         y = np.random.rand(20)

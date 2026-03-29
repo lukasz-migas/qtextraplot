@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import typing as ty
 
 import numpy as np
@@ -13,8 +14,7 @@ from vispy.util import keys
 
 from qtextraplot._vispy.camera import BoxZoomCameraMixin
 from qtextraplot._vispy.models.extents import Extents
-from qtextra.utils.color import hex_to_rgb
-
+from koyo.color import hex_to_rgb
 
 class BasePlot(SceneCanvas, BoxZoomCameraMixin):
     """Base view."""
@@ -377,6 +377,7 @@ class PlotScatter(PlotLine):
     def __init__(self, parent, facecolor="white", x_label: str = "", y_label: str = "", **kwargs):
         super().__init__(parent, facecolor=facecolor, x_label=x_label, y_label=y_label, **kwargs)
         self.unfreeze()
+        self._marker_set_data_supports_scaling: bool | None = None
 
     def init(self):
         """Initialize view."""
@@ -387,6 +388,16 @@ class PlotScatter(PlotLine):
             x_label=self._kwargs["x_label"],
             y_label=self._kwargs["y_label"],
         )
+
+    def _marker_data_kwargs(self, **kwargs) -> dict[str, ty.Any]:
+        """Build kwargs supported by the installed VisPy markers API."""
+        if self._marker_set_data_supports_scaling is None:
+            params = inspect.signature(self.node.set_data).parameters
+            self._marker_set_data_supports_scaling = "scaling" in params
+
+        if self._marker_set_data_supports_scaling:
+            kwargs["scaling"] = False
+        return kwargs
 
     def plot_scatter(
         self,
@@ -404,11 +415,12 @@ class PlotScatter(PlotLine):
         self.node.order = zorder
         self.node.set_data(
             np.c_[x, y],
-            symbol="square",
-            size=size,
-            face_color=face_color,
-            edge_color=edge_color,
-            scaling=False,
+            **self._marker_data_kwargs(
+                symbol="square",
+                size=size,
+                face_color=face_color,
+                edge_color=edge_color,
+            ),
         )
         self._set_xy_limits_from_array(x, y, True)
 
@@ -426,12 +438,13 @@ class PlotScatter(PlotLine):
         self.node.order = zorder
         self.node.set_data(
             np.c_[x, y],
-            symbol="square",
-            size=size,
-            face_color=face_color,
-            edge_color=edge_color,
-            edge_width=0,
-            scaling=False,
+            **self._marker_data_kwargs(
+                symbol="square",
+                size=size,
+                face_color=face_color,
+                edge_color=edge_color,
+                edge_width=0,
+            ),
         )
         # self._set_xy_limits_from_array(x, y, True)
 

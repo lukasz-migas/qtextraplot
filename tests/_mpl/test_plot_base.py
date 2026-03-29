@@ -8,7 +8,6 @@ import pytest
 pytest.importorskip("matplotlib", reason="matplotlib is not installed")
 
 from qtpy.QtCore import Qt  # noqa: E402
-from qtpy.QtWidgets import QWidget  # noqa: E402
 
 from qtextraplot._mpl.plot_base import PlotBase  # noqa: E402
 
@@ -20,9 +19,7 @@ class _ConcretePlot(PlotBase):
 @pytest.fixture
 def plot_widget(qtbot):
     """Return a minimal PlotBase instance registered with qtbot."""
-    parent = QWidget()
-    widget = _ConcretePlot(parent)
-    qtbot.addWidget(parent)
+    widget = _ConcretePlot(None)
     qtbot.addWidget(widget)
     return widget
 
@@ -82,6 +79,16 @@ class TestPlotBaseClear:
 
 
 class TestPlotBaseXYLimits:
+    def test_store_plot_limits_normalizes_extent_order(self, plot_widget):
+        ax = plot_widget.ax
+        extent = [0, 1, 5, 9]
+        plot_widget.store_plot_limits([extent], [ax])
+        assert ax.plot_limits == [0, 5, 1, 9]
+
+    def test_store_plot_limits_rejects_invalid_extent_length(self, plot_widget):
+        with pytest.raises(ValueError, match="Extent must be"):
+            plot_widget.store_plot_limits([[0, 1, 2]], [plot_widget.ax])
+
     def test_get_xy_limits_after_plot(self, plot_widget):
         x = np.arange(10, dtype=float)
         y = x ** 2
@@ -97,7 +104,7 @@ class TestPlotBaseXYLimits:
         y = x.copy()
         ax = plot_widget.ax
         ax.plot(x, y)
-        plot_widget.store_plot_limits([[0, 5, 0, 5]], [ax])
+        plot_widget.store_plot_limits([[0, 0, 5, 5]], [ax])
         # should not raise
         plot_widget.on_reset_zoom()
 

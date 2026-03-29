@@ -453,6 +453,8 @@ class PlotBase(QWidget):
             raise ValueError("Could not store plot limits")
 
         for _ax, _extent in zip(ax, extent):
+            if len(_extent) != 4:
+                raise ValueError("Extent must be [xmin, ymin, xmax, ymax]")
             _ax.plot_limits = [_extent[0], _extent[2], _extent[1], _extent[3]]
 
     def set_plot_xlabel(self, xlabel: ty.Optional[str] = None, ax=None, **kwargs):

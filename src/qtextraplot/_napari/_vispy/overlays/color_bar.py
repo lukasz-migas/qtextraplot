@@ -6,20 +6,20 @@ https://github.com/yunzhishi/seismic-canvas/blob/master/seismic_canvas/colorbar_
 
 Minor changes were made to make sure values can be easily updated and old unused figures are closed
 """
+
 import io
 from typing import Tuple
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from koyo.color import hex_to_rgb
 from koyo.utilities import chunks
 from matplotlib.colors import LinearSegmentedColormap
 from vispy.color import get_colormap
 from vispy.scene.visuals import Image
 from vispy.util.dpi import get_dpi
 from vispy.util.event import Event
-
-from qtextra.utils.color import hex_to_rgb
 
 
 def make_vispy_colormap(cmap: str) -> LinearSegmentedColormap:
@@ -228,10 +228,7 @@ class ColorBar(Image):
                 color, label, values = colorbar_data[i]
             extend = "neither" if len(values) == 2 else "max"
             # setup colorbar data
-            if isinstance(color, str):
-                cmap = make_vispy_colormap(color)
-            else:
-                cmap = make_rgb_colormap(color)
+            cmap = make_vispy_colormap(color) if isinstance(color, str) else make_rgb_colormap(color)
 
             sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
 
