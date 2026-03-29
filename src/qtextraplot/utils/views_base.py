@@ -21,7 +21,7 @@ class ViewBase:
     UPDATE_STYLES = ()
     ALLOWED_PLOTS = ()
     SUPPORTED_FILE_FORMATS = ("png", "eps", "jpeg", "tiff", "raw", "ps", "pdf", "svg", "svgz")
-    PLOT_TYPE = None
+    PLOT_TYPE: str | None = None
     IS_VISPY = False
 
     # ui elements
@@ -378,7 +378,9 @@ class ViewBase:
 
         if path is None:
             path = get_save_filename(
-                self.parent, "Save figure...", file_filter=build_wildcard(self.SUPPORTED_FILE_FORMATS)
+                self.parent,
+                "Save figure...",
+                file_filter=build_wildcard(self.SUPPORTED_FILE_FORMATS),
             )
 
         if path is None or path == "":

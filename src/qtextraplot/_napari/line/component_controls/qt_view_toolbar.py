@@ -167,7 +167,7 @@ class QtViewRightToolbar(QtMiniToolbar):
             func_menu=self.on_open_save_figure,
         )
         self.tools_zoomout_btn = self.add_qta_tool(
-            "zoom_out", tooltip="Zoom-out", func=viewer.reset_view, func_menu=self.on_open_camera_config
+            "zoom_out", tooltip="Zoom-out", func=viewer.reset_view, func_menu=self.on_open_camera_config,
         )
         self.tools_erase_btn = self.add_qta_tool("erase", tooltip="Clear image", func=viewer.clear_canvas)
         self.tools_erase_btn.hide()
@@ -179,13 +179,13 @@ class QtViewRightToolbar(QtMiniToolbar):
     def connect_toolbar(self) -> None:
         """Connect events."""
         self.ref_qt_viewer().viewer.grid_lines.events.visible.connect(
-            lambda x: self.tools_grid_btn.setChecked(self.ref_qt_viewer().viewer.grid_lines.visible)
+            lambda x: self.tools_grid_btn.setChecked(self.ref_qt_viewer().viewer.grid_lines.visible),
         )
         self.ref_qt_viewer().viewer.text_overlay.events.visible.connect(
-            lambda x: self.tools_text_btn.setChecked(self.ref_qt_viewer().viewer.text_overlay.visible)
+            lambda x: self.tools_text_btn.setChecked(self.ref_qt_viewer().viewer.text_overlay.visible),
         )
         self.ref_qt_viewer().viewer.axis.events.visible.connect(
-            lambda x: self.tools_axes_btn.setChecked(self.ref_qt_viewer().viewer.axis.visible)
+            lambda x: self.tools_axes_btn.setChecked(self.ref_qt_viewer().viewer.axis.visible),
         )
 
     def _toggle_grid_lines_visible(self, state: bool) -> None:

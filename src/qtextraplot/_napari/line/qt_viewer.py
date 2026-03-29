@@ -115,7 +115,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
             self._add_layer(layer)
 
         self._set_layout(
-            add_toolbars=add_toolbars, allow_extraction=allow_extraction, allow_tools=allow_tools, **kwargs
+            add_toolbars=add_toolbars, allow_extraction=allow_extraction, allow_tools=allow_tools, **kwargs,
         )
 
         self.viewer_left_toolbar.connect_toolbar()
@@ -240,7 +240,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
     ):
         """Capture a screenshot of the Vispy canvas."""
         return Window._screenshot(
-            self, size=size, scale=scale, flash=flash, canvas_only=canvas_only, fit_to_data_extent=fit_to_data_extent
+            self, size=size, scale=scale, flash=flash, canvas_only=canvas_only, fit_to_data_extent=fit_to_data_extent,
         )
 
     def clipboard(

@@ -33,7 +33,7 @@ class ViewMplLine(ViewBase):
         return self.figure
 
     def plot(
-        self, x: np.ndarray, y: np.ndarray, repaint: bool = True, forced_kwargs: dict | None = None, **kwargs: ty.Any
+        self, x: np.ndarray, y: np.ndarray, repaint: bool = True, forced_kwargs: dict | None = None, **kwargs: ty.Any,
     ) -> None:
         """Simple line plot."""
         with QMutexLocker(MUTEX):
@@ -44,7 +44,7 @@ class ViewMplLine(ViewBase):
             except (ValueError, AttributeError, OverflowError):
                 self.figure.clear()
                 self.figure.plot_1d(
-                    x, y, x_label=self.x_label, y_label=self.y_label, callbacks=self._callbacks, **kwargs
+                    x, y, x_label=self.x_label, y_label=self.y_label, callbacks=self._callbacks, **kwargs,
                 )
                 self.figure.repaint(repaint)
 
@@ -257,7 +257,7 @@ class ViewMplLine(ViewBase):
             self.figure.repaint(repaint)
 
     def add_line(
-        self, x, y, color: str = "r", gid: str = "gid", zorder: int = 5, repaint: bool = True, label: str = ""
+        self, x, y, color: str = "r", gid: str = "gid", zorder: int = 5, repaint: bool = True, label: str = "",
     ):
         """Add line."""
         with QMutexLocker(MUTEX):

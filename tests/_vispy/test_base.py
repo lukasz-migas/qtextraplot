@@ -10,7 +10,6 @@ vispy = pytest.importorskip("vispy", reason="vispy is not installed")
 from qtextraplot._vispy.base import PlotLine, PlotScatter  # noqa: E402
 from qtextraplot._vispy.models.extents import Extents  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Extents
 # ---------------------------------------------------------------------------

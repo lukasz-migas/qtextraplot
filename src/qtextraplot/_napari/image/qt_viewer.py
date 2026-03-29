@@ -34,7 +34,7 @@ from qtextraplot._napari.image.component_controls.qt_layer_controls_container im
 from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
 
 if ty.TYPE_CHECKING:
-    from napari.viewer import Viewer
+    pass
 
 reset_default_keymap()
 register_vispy_overlays()
@@ -180,7 +180,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
     ):
         """Capture a screenshot of the Vispy canvas."""
         return Window._screenshot(
-            self, size=size, scale=scale, flash=flash, canvas_only=canvas_only, fit_to_data_extent=fit_to_data_extent
+            self, size=size, scale=scale, flash=flash, canvas_only=canvas_only, fit_to_data_extent=fit_to_data_extent,
         )
 
     def clipboard(

@@ -243,7 +243,7 @@ class PlotBase(QWidget):
         ax = self.ax
         i = 0
         colors = sns.color_palette(n_colors=len(fpr))
-        for key in fpr.keys():
+        for key in fpr:
             if key == "micro" and plot_micro:
                 ax.plot(fpr[key], tpr[key], color="deeppink", linestyle=":", linewidth=4, label=labels[key])
             elif key == "macro" and plot_macro:
@@ -282,7 +282,7 @@ class PlotBase(QWidget):
         ax = self.ax
         i = 0
         colors = sns.color_palette(n_colors=len(precision))
-        for key in precision.keys():
+        for key in precision:
             if key == "micro" and plot_micro:
                 ax.plot(recall[key], precision[key], lw=4, linestyle=":", color="navy", label=labels[key])
             else:
@@ -616,11 +616,11 @@ class PlotBase(QWidget):
                     linewidth=linewidth,
                     picker=pickable,
                     edgecolor=edgecolor,
-                )
+                ),
             )
         except AttributeError:
             logger.warning("Please plot something first")
-            return
+            return None
 
         # set label
         patch.obj_name = obj_name
@@ -710,7 +710,7 @@ class PlotBase(QWidget):
         self.arrows.append(arrow)
 
     def plot_add_vlines(
-        self, vlines: np.ndarray, ymin: float = 0, color: str = "k", alpha: float = 0.5, ls="--", gid: str = "vlines"
+        self, vlines: np.ndarray, ymin: float = 0, color: str = "k", alpha: float = 0.5, ls="--", gid: str = "vlines",
     ):
         """Add vertical lines to the axes."""
         xmax = self.get_xlim()[1]
@@ -727,8 +727,8 @@ class PlotBase(QWidget):
         raise ValueError(
             "Plot modification is locked",
             "This plot is locked and you cannot use global setting updated. \n"
-            + "Please right-click in the plot area and select Customise plot..."
-            + " to adjust plot settings.",
+             "Please right-click in the plot area and select Customise plot..."
+             " to adjust plot settings.",
         )
 
     @property
@@ -959,7 +959,7 @@ class PlotBase(QWidget):
 
         # add 1d plot
         self.ax.plot(
-            x, y, color=color, label=label, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style
+            x, y, color=color, label=label, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style,
         )
         if kwargs.get("spectrum_line_fill_under", False):
             self.plot_1d_add_under_curve(x, y, **kwargs)
@@ -1001,7 +1001,7 @@ class PlotBase(QWidget):
             "alpha": kwargs.get("spectrum_fill_transparency", 0.25),
             "clip_on": kwargs.get("clip_on", True),
             "zorder": kwargs.get("zorder", 1),
-            "hatch": kwargs.get("spectrum_fill_hatch", None),
+            "hatch": kwargs.get("spectrum_fill_hatch"),
         }
         if ax is None:
             ax = self.ax
@@ -1099,7 +1099,7 @@ class PlotBase(QWidget):
     ):
         """Add spectrum."""
         self.ax.plot(
-            x, y, color=color, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style, label=label
+            x, y, color=color, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style, label=label,
         )
 
     def plot_1d_update_color(self, gid: str, color):
@@ -1169,7 +1169,7 @@ class PlotBase(QWidget):
                 return line
 
     def set_xy_line_limits(
-        self, y_lower_start=None, y_upper_multiplier=1.1, reset_x: bool = False, reset_y: bool = False
+        self, y_lower_start=None, y_upper_multiplier=1.1, reset_x: bool = False, reset_y: bool = False,
     ):
         """Get x/y-axis limits based on what is plotted."""
         xlimits, ylimits = [], []

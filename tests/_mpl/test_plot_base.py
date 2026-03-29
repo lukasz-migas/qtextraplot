@@ -7,9 +7,8 @@ import pytest
 
 pytest.importorskip("matplotlib", reason="matplotlib is not installed")
 
-from qtpy.QtCore import Qt  # noqa: E402
 
-from qtextraplot._mpl.plot_base import PlotBase  # noqa: E402
+from qtextraplot._mpl.plot_base import PlotBase
 
 
 class _ConcretePlot(PlotBase):
@@ -101,7 +100,7 @@ class TestPlotBaseXYLimits:
 
     def test_get_xy_limits_after_plot(self, plot_widget):
         x = np.arange(10, dtype=float)
-        y = x ** 2
+        y = x**2
         plot_widget.ax.plot(x, y)
         limits = plot_widget.get_xy_limits()
         assert len(limits) == 4
@@ -188,7 +187,6 @@ class TestPlotBaseSignals:
 
     def test_evt_pick_connected_to_evt_pick(self, qtbot, plot_widget):
         """After setup_new_zoom, evt_pick should forward to evt_pick (not evt_pressed)."""
-        import numpy as np
 
         ax = plot_widget.ax
         ax.plot([0, 1], [0, 1])

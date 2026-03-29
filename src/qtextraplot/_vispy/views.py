@@ -122,7 +122,7 @@ class ViewVispyScatter(ViewVispyLine):
             except (AttributeError, OverflowError):
                 self.figure.clear()
                 self.figure.plot_scatter(
-                    x, y, x_label=self.x_label, y_label=self.y_label, callbacks=self._callbacks, **kwargs
+                    x, y, x_label=self.x_label, y_label=self.y_label, callbacks=self._callbacks, **kwargs,
                 )
                 self.figure.repaint(repaint)
 

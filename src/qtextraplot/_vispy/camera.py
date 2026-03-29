@@ -163,10 +163,9 @@ class BoxZoomCamera(PanZoomCamera):
         x1, y1, _, _ = self._transform.imap(np.asarray(evt.pos[:2]))
         if self._is_1d:
             return f"x={x1:.4f} y={y1:.4f}"
-        else:
-            if x1 < 0 or y1 < 0:
-                return ""
-            return f"x={int(x1)} y={int(y1)}"
+        if x1 < 0 or y1 < 0:
+            return ""
+        return f"x={int(x1)} y={int(y1)}"
 
     def viewbox_mouse_event(self, event):
         """
@@ -181,7 +180,7 @@ class BoxZoomCamera(PanZoomCamera):
 
         def _zoom_callback():
             self._on_callback_key(
-                ExtractEvent(self.roi_shape, self.rect.left, self.rect.right, self.rect.bottom, self.rect.top), "ZOOM"
+                ExtractEvent(self.roi_shape, self.rect.left, self.rect.right, self.rect.bottom, self.rect.top), "ZOOM",
             )
 
         def _event_callback(xy_values):
@@ -286,11 +285,7 @@ class BoxZoomCamera(PanZoomCamera):
             if self._is_1d:
                 y0, _ = self.y_extent
 
-            if self._key_control and self.allow_extraction:
-                _event_callback((x0, x1, y0, y1))
-            elif self._key_shift and self.allow_extraction:
-                _event_callback((x0, x1, y0, y1))
-            elif self._key_alt and self.allow_extraction:
+            if (self._key_control and self.allow_extraction) or (self._key_shift and self.allow_extraction) or (self._key_alt and self.allow_extraction):
                 _event_callback((x0, x1, y0, y1))
             else:
                 if x1 - x0 <= 0.00001 or y1 - y0 <= 0.00001:
@@ -316,7 +311,7 @@ class BoxZoomCamera(PanZoomCamera):
         self.events.zoom_box_show(event=event, show=False, roi_shape=self.roi_shape)
         super().reset()
         self._on_callback_key(
-            ExtractEvent("rect", self.rect.left, self.rect.right, self.rect.bottom, self.rect.top), "ZOOM"
+            ExtractEvent("rect", self.rect.left, self.rect.right, self.rect.bottom, self.rect.top), "ZOOM",
         )
         self.events.zoom(event=event)
 
@@ -386,7 +381,7 @@ class BoxZoomCameraMixin:
         self._zoom_roi.visible = False
         # main ellipse
         self._zoom_ellipse = Ellipse(
-            (0, 0), parent=self.view.scene, color=color, border_color=border_color, border_width=4
+            (0, 0), parent=self.view.scene, color=color, border_color=border_color, border_width=4,
         )
         self._zoom_ellipse.visible = False
 

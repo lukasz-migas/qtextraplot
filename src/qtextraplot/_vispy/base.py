@@ -6,6 +6,7 @@ import inspect
 import typing as ty
 
 import numpy as np
+from koyo.color import hex_to_rgb
 from koyo.utilities import get_min_max
 from vispy.scene import AxisWidget, InfiniteLine, SceneCanvas, ViewBox
 from vispy.scene.visuals import Line as LineNode
@@ -14,7 +15,7 @@ from vispy.util import keys
 
 from qtextraplot._vispy.camera import BoxZoomCameraMixin
 from qtextraplot._vispy.models.extents import Extents
-from koyo.color import hex_to_rgb
+
 
 class BasePlot(SceneCanvas, BoxZoomCameraMixin):
     """Base view."""
@@ -71,7 +72,7 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
         im_array = self.render()
         imwrite(path, im_array, dpi=(dpi, dpi))
 
-    def on_key_press(self, event):  # noqa: B027
+    def on_key_press(self, event):
         """Process key press (override in subclasses to handle specific keys)."""
 
     @property
@@ -120,7 +121,7 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
         self.set_xy_view(*self._extents.get_xy())
 
     def _set_xy_limits(
-        self, x_min: float, x_max: float, y_min: float, y_max: float, x_pad: float = 0, y_pad: float = 0
+        self, x_min: float, x_max: float, y_min: float, y_max: float, x_pad: float = 0, y_pad: float = 0,
     ):
         """Set x/y-axis limits."""
         x_min, x_max, y_min, y_max = x_min - x_pad, x_max + x_pad, y_min - y_pad, y_max + y_pad
@@ -132,7 +133,7 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
 
     def copy_to_clipboard(self):
         """Copy the current canvas to the system clipboard."""
-        return None
+        return
 
     def set_xy_view(self, x_min: float, x_max: float, y_min: float, y_max: float):
         """Set x/y limits."""
@@ -414,7 +415,7 @@ class PlotScatter(PlotLine):
         face_color: str,
         edge_color: str,
         size: float | np.ndarray,
-        edge_width: int | float | None = None,
+        edge_width: float | None = None,
     ) -> None:
         """Apply marker data using the installed VisPy API shape."""
         node = self._ensure_marker_node()
@@ -476,9 +477,8 @@ class PlotScatter(PlotLine):
 if __name__ == "__main__":  # pragma: no cover
     import sys
 
-    from qtpy.QtWidgets import QDialog, QVBoxLayout
-
     from qtextra.utils.dev import qapplication
+    from qtpy.QtWidgets import QDialog, QVBoxLayout
 
     # def fcn():
     #     global image
