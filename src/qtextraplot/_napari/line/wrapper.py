@@ -122,15 +122,11 @@ class NapariLineView(ViewerBase):
 
     def _on_remove_layer(self, evt: Event) -> None:
         """Indicate if layer has been deleted."""
-        layer = evt.value
-        if self.line_layer is not None and layer.name == self.line_layer.name:
-            self.line_layer = None
-        if self.region_layer is not None and layer.name == self.region_layer.name:
-            self.region_layer = None
+        self._clear_tracked_layer_on_remove(evt.value, "line_layer", "region_layer")
 
     def _clear(self, _evt: ty.Any = None) -> None:
         """Clear canvas."""
-        self.line_layer, self.region_layer = None, None
+        self._clear_tracked_layers("line_layer", "region_layer")
 
     def plot(
         self,

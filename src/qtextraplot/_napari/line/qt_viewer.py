@@ -15,8 +15,17 @@ from napari_plot._qt.qt_main_window import Window, _QtMainWindow
 from napari_plot._qt.qt_viewer import QtViewer as _QtViewer
 from napari_plot._vispy.overlays import register_vispy_overlays
 from qtpy.QtCore import QCoreApplication, QEvent, Qt
-from qtpy.QtWidgets import QApplication, QWidget
+from qtpy.QtWidgets import QWidget
 
+from qtextraplot._napari._qt_viewer_utils import (
+    QtViewerInstanceTracker,
+    calc_status_from_cursor,
+    cleanup_qt_viewer,
+    copy_screenshot_to_clipboard,
+    set_mouse_over_status,
+    show_controls_dialog,
+    toggle_controls_dialog,
+)
 from qtextraplot._napari.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
 from qtextraplot._napari.line._vispy.canvas import VispyCanvas
 from qtextraplot._napari.line.component_controls.qt_view_toolbar import QtViewLeftToolbar, QtViewRightToolbar
@@ -30,31 +39,6 @@ reset_default_keymap()
 register_vispy_overlays()
 
 
-def _calc_status_from_cursor(viewer: Viewer) -> tuple[str | dict, str]:
-    if not viewer.mouse_over_canvas:
-        return None
-    active = viewer.layers.selection.active
-    if active is not None and active._loaded:
-        status = active.get_status(
-            viewer.cursor.position,
-            view_direction=viewer.cursor._view_direction,
-            dims_displayed=list(viewer.dims.displayed),
-            world=True,
-        )
-        tooltip_text = ""
-        if viewer.tooltip.visible:
-            tooltip_text = active._get_tooltip_text(
-                np.asarray(viewer.cursor.position),
-                view_direction=np.asarray(viewer.cursor._view_direction),
-                dims_displayed=list(viewer.dims.displayed),
-                world=True,
-            )
-        return status, tooltip_text
-    x, y = viewer.cursor.position
-    status = f"[{round(x)} {round(y)}]"
-    return status, status
-
-
 def as_array(name: str, canvas: CanvasThemes) -> np.ndarray:
     """Return color array."""
     from napari.utils.colormaps.standardize_color import transform_color
@@ -63,15 +47,8 @@ def as_array(name: str, canvas: CanvasThemes) -> np.ndarray:
     return transform_color(color.as_hex())[0]
 
 
-class QtViewer(QWidget):
+class QtViewer(QtViewerInstanceTracker, QWidget):
     """Qt view for the napari Viewer model."""
-
-    # To track window instances and facilitate getting the "active" viewer...
-    # We use this instead of QApplication.activeWindow for compatibility with
-    # IPython usage. When you activate IPython, it will appear that there are
-    # *no* active windows, so we want to track the most recently active windows
-    _instances: ty.ClassVar[list[QWidget]] = []
-    _instance_index: ty.ClassVar[int] = -1
 
     _layers_controls_dialog = None
 
@@ -94,12 +71,9 @@ class QtViewer(QWidget):
         QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
 
         self.viewer = viewer
-        self._instances.append(self)
         # essential that these are set because we need to use the providers for in_and_out
-        _QtMainWindow._instances.append(self)
-        _QtViewer._instances.append(self)
+        self._register_instance(_QtMainWindow._instances, _QtViewer._instances)
         self._qt_viewer = self._qt_window = self
-        self.current_index = len(self._instances) - 1
 
         self.dims = QtDims(self.viewer.dims)
         self._controls = None
@@ -190,7 +164,7 @@ class QtViewer(QWidget):
     def update_status_and_tooltip(self) -> None:
         """Set statusbar."""
         with suppress(Exception):
-            status_and_tooltip = _calc_status_from_cursor(self.viewer)
+            status_and_tooltip = calc_status_from_cursor(self.viewer)
             _QtMainWindow.set_status_and_tooltip(self, status_and_tooltip)
 
     def toggle_theme(self, _=None):
@@ -242,16 +216,7 @@ class QtViewer(QWidget):
         """Open dialog responsible for layer settings."""
         from qtextraplot._napari.line.component_controls.qt_layers_dialog import DialogLineControls
 
-        if self._disable_controls:
-            return
-
-        if self._layers_controls_dialog is None:
-            self._layers_controls_dialog = DialogLineControls(self)
-        # make sure the dialog is shown
-        self._layers_controls_dialog.show()
-        # make sure the dialog gets focus
-        self._layers_controls_dialog.raise_()  # for macOS
-        self._layers_controls_dialog.activateWindow()  # for Windows
+        show_controls_dialog(self, DialogLineControls)
 
     def on_save_figure(self, path=None):
         """Export figure."""
@@ -287,30 +252,27 @@ class QtViewer(QWidget):
         fit_to_data_extent: bool = False,
     ):
         """Take a screenshot of the currently displayed screen and copy the image to the clipboard."""
-        img = self._screenshot(
-            flash=flash, canvas_only=canvas_only, size=size, scale=scale, fit_to_data_extent=fit_to_data_extent
+        copy_screenshot_to_clipboard(
+            self._screenshot,
+            flash=flash,
+            canvas_only=canvas_only,
+            size=size,
+            scale=scale,
+            fit_to_data_extent=fit_to_data_extent,
         )
-        QApplication.clipboard().setImage(img)
 
     def on_toggle_controls_dialog(self, _event=None) -> None:
         """Toggle between on/off state of the layer settings."""
-        if self._disable_controls:
-            return
-        if self._layers_controls_dialog is None:
-            self.on_open_controls_dialog()
-        else:
-            self._layers_controls_dialog.setVisible(not self._layers_controls_dialog.isVisible())
+        toggle_controls_dialog(self, self.on_open_controls_dialog)
 
     def enterEvent(self, event: QEvent) -> None:
         """Emit our own event when mouse enters the canvas."""
-        self.viewer.status = "Ready"
-        self.viewer.mouse_over_canvas = True
+        set_mouse_over_status(self.viewer, True)
         super().enterEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:
         """Emit our own event when mouse leaves the canvas."""
-        self.viewer.status = ""
-        self.viewer.mouse_over_canvas = False
+        set_mouse_over_status(self.viewer, False)
         super().leaveEvent(event)
 
     def closeEvent(self, event):
@@ -321,9 +283,11 @@ class QtViewer(QWidget):
         event : qtpy.QtCore.QEvent
             Event from the Qt context.
         """
-        CANVAS.evt_theme_changed.disconnect(self.toggle_theme)
-        self.canvas.native.deleteLater()
-        event.accept()
+        cleanup_qt_viewer(
+            event,
+            canvas_native=self.canvas.native,
+            disconnect=lambda: CANVAS.evt_theme_changed.disconnect(self.toggle_theme),
+        )
 
     def keyPressEvent(self, event):
         """Called whenever a key is pressed.
