@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QWidget
 
 pg = pytest.importorskip("pyqtgraph")
 
-from qtextraplot._pyqtgraph import ViewPyQtGraphImage, ViewPyQtGraphLine, ViewPyQtGraphScatter
+from qtextraplot._pyqtgraph import ViewPyQtGraphCanvas, ViewPyQtGraphImage, ViewPyQtGraphLine, ViewPyQtGraphScatter
 
 
 def test_line_view_supports_lines_and_annotations(qtbot):
@@ -63,3 +63,28 @@ def test_image_view_supports_image_and_overlaid_annotation(qtbot):
     assert isinstance(item, pg.ImageItem)
     assert item.image.shape == image.T.shape
     assert "cursor" in view.figure._annotation_items
+
+
+def test_universal_canvas_supports_mixed_items_and_reset(qtbot):
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = ViewPyQtGraphCanvas(parent, x_label="x", y_label="y")
+    qtbot.addWidget(view.widget)
+
+    line_x = np.arange(5)
+    line_y = line_x * 2
+    image = np.arange(16).reshape(4, 4)
+
+    view.plot(line_x, line_y, gid="signal", color="r")
+    view.scatter(line_x, line_x + 1, gid="points", color="y", size=8)
+    view.imshow(image, gid="image", opacity=0.5)
+    view.add_vline(2, gid="cursor")
+    view.add_hline(1, gid="baseline")
+
+    assert {"signal", "points", "image"} <= set(view.figure._plot_items)
+    assert {"cursor", "baseline"} <= set(view.figure._annotation_items)
+
+    view.reset()
+
+    assert {"signal", "points", "image"} <= set(view.figure._plot_items)
+    assert {"cursor", "baseline"} <= set(view.figure._annotation_items)

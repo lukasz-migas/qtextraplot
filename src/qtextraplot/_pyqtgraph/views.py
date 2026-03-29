@@ -583,6 +583,186 @@ class _BasePyQtGraphView(ViewBase):
             self.update(self._data["x"], self._data["y"], **self._plt_kwargs)
 
 
+class ViewPyQtGraphCanvas(_BasePyQtGraphView):
+    """Universal PyQtGraph view that can mix lines, scatter, and images."""
+
+    PLOT_TYPE = "mixed"
+
+    def __init__(self, parent: QWidget, *args: ty.Any, **kwargs: ty.Any):
+        super().__init__(parent, *args, **kwargs)
+        self._items_state: dict[str, dict[str, ty.Any]] = {}
+
+    def _store_item_state(self, gid: str, kind: str, **kwargs: ty.Any) -> None:
+        """Persist item state so the canvas can be reconstructed after reset."""
+        self._items_state[gid] = {"kind": kind, **kwargs}
+
+    def _drop_item_state(self, gid: str) -> None:
+        """Remove stored state for an item."""
+        self._items_state.pop(gid, None)
+
+    def _rebuild_items(self) -> None:
+        """Recreate all stored items."""
+        states = list(self._items_state.items())
+        self.figure.clear()
+        for gid, state in states:
+            kind = state["kind"]
+            params = {key: value for key, value in state.items() if key != "kind"}
+            if kind == "line":
+                self.figure.plot_1d_add(gid=gid, **params)
+            elif kind == "scatter":
+                self.figure.plot_scatter(gid=gid, **params)
+            elif kind == "image":
+                self.figure.imshow(gid=gid, **params)
+            elif kind == "centroids":
+                self.figure.plot_1d_centroid(gid=gid, **params)
+            elif kind == "vline":
+                self.figure.plot_add_vline(gid=gid, **params)
+            elif kind == "hline":
+                self.figure.plot_add_hline(gid=gid, **params)
+            elif kind == "infline":
+                self.figure.plot_add_infline(gid=gid, **params)
+
+    def plot(
+        self,
+        x,
+        y,
+        repaint: bool = True,
+        forced_kwargs: dict | None = None,
+        gid: str = "__base__",
+        **kwargs: ty.Any,
+    ) -> None:
+        """Plot or replace a line item without clearing other items."""
+        del forced_kwargs
+        with QMutexLocker(MUTEX):
+            self.set_labels(**kwargs)
+            self._sync_labels()
+            plot_kwargs = dict(kwargs)
+            color = plot_kwargs.pop("color", "w")
+            width = plot_kwargs.pop("width", 1.0)
+            zorder = plot_kwargs.pop("zorder", 0)
+            x_array = np.asarray(x)
+            y_array = np.asarray(y)
+            self.figure.plot_1d_add(x_array, y_array, gid=gid, color=color, width=width, zorder=zorder)
+            self.figure.set_xy_line_limits()
+            self.figure.repaint(repaint)
+            self._store_item_state(
+                gid,
+                "line",
+                x=x_array,
+                y=y_array,
+                color=color,
+                width=width,
+                zorder=zorder,
+            )
+
+    def scatter(
+        self,
+        x,
+        y,
+        repaint: bool = True,
+        gid: str = "__scatter__",
+        **kwargs: ty.Any,
+    ) -> None:
+        """Plot or replace a scatter item without clearing other items."""
+        with QMutexLocker(MUTEX):
+            self.set_labels(**kwargs)
+            self._sync_labels()
+            plot_kwargs = dict(kwargs)
+            color = plot_kwargs.pop("color", "w")
+            size = plot_kwargs.pop("size", 5)
+            marker = plot_kwargs.pop("marker", "o")
+            width = plot_kwargs.pop("width", 1.0)
+            x_array = np.asarray(x)
+            y_array = np.asarray(y)
+            self.figure.plot_scatter(x_array, y_array, gid=gid, color=color, size=size, marker=marker, width=width)
+            self.figure.repaint(repaint)
+            self._store_item_state(
+                gid,
+                "scatter",
+                x=x_array,
+                y=y_array,
+                color=color,
+                size=size,
+                marker=marker,
+                width=width,
+            )
+
+    def imshow(self, image: np.ndarray, repaint: bool = True, gid: str = "__image__", **kwargs: ty.Any) -> None:
+        """Plot or replace an image item without clearing other items."""
+        with QMutexLocker(MUTEX):
+            self.set_labels(**kwargs)
+            self._sync_labels()
+            plot_kwargs = dict(kwargs)
+            image_array = np.asarray(image)
+            self.figure.imshow(image_array, gid=gid, **plot_kwargs)
+            self.figure.repaint(repaint)
+            self._store_item_state(gid, "image", image=image_array, **plot_kwargs)
+
+    def add_line(
+        self, x, y, color: str = "r", gid: str = "gid", zorder: int = 5, repaint: bool = True, label: str = "",
+    ):
+        """Add a secondary line."""
+        del label
+        self.plot(x, y, repaint=repaint, gid=gid, color=color, zorder=zorder)
+
+    def add_centroids(self, x: np.ndarray, y: np.ndarray, gid: str, repaint: bool = True):
+        """Add centroid markers."""
+        with QMutexLocker(MUTEX):
+            x_array = np.asarray(x)
+            y_array = np.asarray(y)
+            self.figure.plot_1d_centroid(x_array, y_array, gid=gid)
+            self.figure.repaint(repaint)
+            self._store_item_state(gid, "centroids", x=x_array, y=y_array)
+
+    def add_vline(self, xpos: float = 0, gid: str = "ax_vline", repaint: bool = True, **kwargs: ty.Any):
+        """Add a vertical annotation."""
+        with QMutexLocker(MUTEX):
+            self.figure.remove_gid(gid)
+            self.figure.plot_add_vline(xpos=xpos, gid=gid, **kwargs)
+            self.figure.repaint(repaint)
+            self._store_item_state(gid, "vline", xpos=xpos, **kwargs)
+
+    def add_hline(self, ypos: float = 0, gid: str = "ax_hline", repaint: bool = True, **kwargs: ty.Any):
+        """Add a horizontal annotation."""
+        with QMutexLocker(MUTEX):
+            self.figure.remove_gid(gid)
+            self.figure.plot_add_hline(ypos=ypos, gid=gid, **kwargs)
+            self.figure.repaint(repaint)
+            self._store_item_state(gid, "hline", ypos=ypos, **kwargs)
+
+    def add_infline(
+        self,
+        *,
+        pos: float,
+        angle: float,
+        gid: str = "infline",
+        repaint: bool = True,
+        **kwargs: ty.Any,
+    ) -> None:
+        """Add a generic infinite line annotation."""
+        with QMutexLocker(MUTEX):
+            self.figure.remove_gid(gid)
+            self.figure.plot_add_infline(pos=pos, angle=angle, gid=gid, **kwargs)
+            self.figure.repaint(repaint)
+            self._store_item_state(gid, "infline", pos=pos, angle=angle, **kwargs)
+
+    def remove_gid(self, gid: str, repaint: bool = True):
+        """Remove any plotted item or annotation."""
+        self.figure.remove_gid(gid)
+        self._drop_item_state(gid)
+        self.figure.repaint(repaint)
+
+    def clear(self) -> None:
+        """Clear the canvas and stored item state."""
+        self._items_state.clear()
+        super().clear()
+
+    def reset(self):
+        """Rebuild the full mixed canvas from stored item state."""
+        self._rebuild_items()
+        self.figure.repaint(True)
+
+
 class ViewPyQtGraphLine(_BasePyQtGraphView):
     """PyQtGraph line view."""
 
