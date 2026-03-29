@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 
 import numpy as np
+from qtextra.config import THEMES
 from qtpy.QtWidgets import QApplication, QTabWidget
 
 from qtextraplot._pyqtgraph import ViewPyQtGraphImage, ViewPyQtGraphLine, ViewPyQtGraphScatter
@@ -42,6 +43,7 @@ def main() -> int:
 
     tabs.resize(1000, 700)
     tabs.show()
+    THEMES.apply(tabs)
     return app.exec()
 
 

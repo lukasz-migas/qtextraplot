@@ -8,6 +8,7 @@ import numpy as np
 from qtpy.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from qtextraplot._napari import NapariLineView
+from qtextra.config import THEMES
 
 
 def main() -> int:
@@ -31,6 +32,7 @@ def main() -> int:
 
     window.resize(900, 500)
     window.show()
+    THEMES.apply(window)
     return app.exec()
 
 

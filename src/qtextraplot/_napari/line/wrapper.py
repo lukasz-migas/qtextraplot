@@ -229,7 +229,7 @@ class NapariLineView(ViewerBase):
         """Add centroids."""
         layer = self.try_reuse(name, Centroids, reuse=reuse)
         color = kwargs.pop("color", as_array("line", CANVAS))
-        width = kwargs.get("width", 5)
+        width = kwargs.pop("width", 5)
         if layer:
             layer.data = np.c_[x, y]
             layer.visible = kwargs.get("visible", True)

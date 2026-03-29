@@ -8,7 +8,7 @@ import numpy as np
 from qtpy.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from qtextraplot._napari import NapariImageView
-
+from qtextra.config import THEMES
 
 def main() -> int:
     """Run the example application."""
@@ -31,6 +31,7 @@ def main() -> int:
 
     window.resize(900, 700)
     window.show()
+    THEMES.apply(window)
     return app.exec()
 
 
