@@ -26,7 +26,7 @@ EXTRACT_NAME = "Extract mask"
 
 
 def get_font_for_os() -> str:
-    """Get font that supports unicode characters."""
+    """Get a font that supports unicode characters."""
     from koyo.system import IS_LINUX, IS_MAC, IS_WIN
     from vispy.util.fonts import list_fonts
 

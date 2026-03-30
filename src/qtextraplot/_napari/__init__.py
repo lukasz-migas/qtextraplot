@@ -9,7 +9,8 @@ except ImportError:
     raise ImportError(
         "Failed to import optional dependency 'napari'. "
         f"Current interpreter: {sys.executable}. "
-        "Install it in this environment with 'pip install napari' or use the same interpreter where napari is already installed.",
+        "Install it in this environment with 'pip install napari' or use the same interpreter where napari is already"
+        " installed.",
     ) from None
 
 with contextlib.suppress(ImportError, TypeError):
@@ -29,4 +30,6 @@ napari.resources._icons.ICONS.update(ICONS)
 
 
 from qtextraplot._napari.image.wrapper import NapariImageView
-from qtextraplot._napari.line.wrapper import NapariLineView
+
+with contextlib.suppress(ImportError):
+    from qtextraplot._napari.line.wrapper import NapariLineView
