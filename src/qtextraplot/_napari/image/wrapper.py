@@ -88,15 +88,14 @@ class NapariImageView(ViewerBase):
 
     def _on_remove_layer(self, _evt=None):
         """Indicate if layer has been deleted."""
-        layer = _evt.value
-        if self.image_layer is not None and layer.name == self.image_layer.name:
-            self.image_layer = None
-        if self.paint_layer is not None and layer.name == self.paint_layer.name:
-            self.paint_layer = None
-        if self.extract_layer is not None and layer.name == self.extract_layer.name:
-            self.extract_layer = None
-        if self.shape_layer is not None and layer.name == self.shape_layer.name:
-            self.shape_layer = None
+        self._clear_tracked_layer_on_remove(
+            _evt.value,
+            "image_layer",
+            "paint_layer",
+            "extract_layer",
+            "shape_layer",
+            "mask_layer",
+        )
 
     def has_plot(self):
         """Flag to indicate whether there is anything plotted."""
@@ -104,8 +103,7 @@ class NapariImageView(ViewerBase):
 
     def _clear(self, _evt=None):
         """Clear canvas."""
-        self.image_layer, self.paint_layer, self.extract_layer, self.shape_layer = None, None, None, None
-        self.mask_layer = None
+        self._clear_tracked_layers("image_layer", "paint_layer", "extract_layer", "shape_layer", "mask_layer")
 
     @Slot(np.ndarray)  # type: ignore[misc]
     def plot(

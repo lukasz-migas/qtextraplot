@@ -62,7 +62,7 @@ class ZoomPopup(QtFramelessPopup):
         self.window_spin.valueChanged.connect(self.on_zoom)
 
         self.auto_scale_y = hp.make_checkbox(
-            self, "", tooltip="When checked, the y-axis intensity will be auto-scaled to match the data range."
+            self, "", tooltip="When checked, the y-axis intensity will be auto-scaled to match the data range.",
         )
         self.auto_scale_y.setChecked(self._default_auto_scale or True)
         self.auto_scale_y.stateChanged.connect(self.on_zoom)

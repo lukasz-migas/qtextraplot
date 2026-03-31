@@ -131,7 +131,7 @@ class QtViewerBase(QWidget):
     def _set_events(self):
         raise NotImplementedError("Must implement method")
 
-    def _set_camera(self):  # noqa: B027
+    def _set_camera(self):
         """Configure the camera; override in subclasses as needed."""
 
     def _add_visuals(self) -> None:
@@ -142,7 +142,7 @@ class QtViewerBase(QWidget):
         """Set view."""
         self.view = self.canvas.central_widget.add_view(border_width=0)
 
-    def _post_init(self):  # noqa: B027
+    def _post_init(self):
         """Complete initialization with post-init events."""
 
     def enterEvent(self, event):

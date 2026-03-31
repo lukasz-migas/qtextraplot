@@ -26,7 +26,7 @@ EXTRACT_NAME = "Extract mask"
 
 
 def get_font_for_os() -> str:
-    """Get font that supports unicode characters."""
+    """Get a font that supports unicode characters."""
     from koyo.system import IS_LINUX, IS_MAC, IS_WIN
     from vispy.util.fonts import list_fonts
 
@@ -122,15 +122,11 @@ class NapariLineView(ViewerBase):
 
     def _on_remove_layer(self, evt: Event) -> None:
         """Indicate if layer has been deleted."""
-        layer = evt.value
-        if self.line_layer is not None and layer.name == self.line_layer.name:
-            self.line_layer = None
-        if self.region_layer is not None and layer.name == self.region_layer.name:
-            self.region_layer = None
+        self._clear_tracked_layer_on_remove(evt.value, "line_layer", "region_layer")
 
     def _clear(self, _evt: ty.Any = None) -> None:
         """Clear canvas."""
-        self.line_layer, self.region_layer = None, None
+        self._clear_tracked_layers("line_layer", "region_layer")
 
     def plot(
         self,
@@ -233,7 +229,7 @@ class NapariLineView(ViewerBase):
         """Add centroids."""
         layer = self.try_reuse(name, Centroids, reuse=reuse)
         color = kwargs.pop("color", as_array("line", CANVAS))
-        width = kwargs.get("width", 5)
+        width = kwargs.pop("width", 5)
         if layer:
             layer.data = np.c_[x, y]
             layer.visible = kwargs.get("visible", True)
@@ -338,7 +334,7 @@ if __name__ == "__main__":  # pragma: no cover
 
     def _main(frame, ha) -> tuple:
         def _on_btn() -> None:
-            n_bins = np.random.randint(5, 100, 1)[0]
+            n_bins = np.random.default_rng().integers(5, 100, 1)[0]
             rel_width = np.random.rand(1)
             wrapper.add_histogram(a, n_bins, rel_width=rel_width)
 
@@ -351,7 +347,7 @@ if __name__ == "__main__":  # pragma: no cover
         wrapper.plot(np.arange(100), np.random.random(100))
         wrapper.add_extract_region_layer()
 
-        # viewer.add_centroids(np.arange(100), np.random.randint(0, 1000, 100))
+        # viewer.add_centroids(np.arange(100), np.random.default_rng().integers(0, 1000, 100))
 
         ha.addWidget(wrapper.widget, stretch=True)
         ha.addWidget(make_btn(frame, "Click me", func=_on_btn))

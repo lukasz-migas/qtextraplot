@@ -4,8 +4,8 @@ import typing as ty
 
 import numpy as np
 from koyo.color import get_random_hex_color
-from pydantic import PrivateAttr
 from psygnal._evented_model import EventedModel
+from pydantic import PrivateAttr
 from pydantic_extra_types.color import Color
 from qtextra.config import THEMES
 from qtextra.config.config import ConfigBase

@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
-from qtextraplot.config.theme import CANVAS, CanvasTheme, CanvasThemes, DARK_THEME, LIGHT_THEME
+from qtextraplot.config.theme import CANVAS, DARK_THEME, LIGHT_THEME, CanvasTheme, CanvasThemes
 
 
 class TestCanvasTheme:

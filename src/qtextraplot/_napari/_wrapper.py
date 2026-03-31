@@ -37,11 +37,28 @@ class ViewerBase(ABC):
     def _clear(self, _evt=None) -> None:  # noqa: B027
         """Clear canvas."""
 
+    def _reset_text_overlay(self) -> None:
+        """Clear overlay text if the viewer exposes a text overlay."""
+        with suppress(AttributeError):
+            self.viewer.text_overlay.text = ""
+
+    def _clear_tracked_layers(self, *attr_names: str) -> None:
+        """Reset tracked wrapper layer references to ``None``."""
+        for attr_name in attr_names:
+            setattr(self, attr_name, None)
+
+    def _clear_tracked_layer_on_remove(self, removed_layer: Layer, *attr_names: str) -> None:
+        """Reset tracked layer references when the corresponding layer is removed."""
+        for attr_name in attr_names:
+            layer = getattr(self, attr_name, None)
+            if layer is not None and layer.name == removed_layer.name:
+                setattr(self, attr_name, None)
+
     def clear(self) -> None:
         """Clear canvas."""
         self._clear()
         self.viewer.layers.clear()
-        self.viewer.text_overlay.text = ""
+        self._reset_text_overlay()
 
     def clear_and_exclude(self, *name_or_layer: ty.Iterable[str | Layer]) -> None:
         """Clear canvas but exclude some layers."""
@@ -54,7 +71,7 @@ class ViewerBase(ABC):
         for layer in list(self.viewer.layers):
             if layer.name not in exclude_names:
                 self.viewer.layers.remove(layer)
-        self.viewer.text_overlay.text = ""
+        self._reset_text_overlay()
 
     def close(self) -> None:
         """Close the view instance."""

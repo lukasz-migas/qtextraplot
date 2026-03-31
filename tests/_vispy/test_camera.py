@@ -6,9 +6,8 @@ import pytest
 
 vispy = pytest.importorskip("vispy", reason="vispy is not installed")
 
-from qtextraplot._vispy.camera import BoxZoomCamera, round_to_half, to_rect  # noqa: E402
 from qtextraplot._vispy.base import PlotLine  # noqa: E402
-
+from qtextraplot._vispy.camera import round_to_half, to_rect  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Pure helpers

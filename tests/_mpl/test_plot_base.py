@@ -7,10 +7,8 @@ import pytest
 
 pytest.importorskip("matplotlib", reason="matplotlib is not installed")
 
-from qtpy.QtCore import Qt  # noqa: E402
-from qtpy.QtWidgets import QWidget  # noqa: E402
 
-from qtextraplot._mpl.plot_base import PlotBase  # noqa: E402
+from qtextraplot._mpl.plot_base import PlotBase
 
 
 class _ConcretePlot(PlotBase):
@@ -20,9 +18,7 @@ class _ConcretePlot(PlotBase):
 @pytest.fixture
 def plot_widget(qtbot):
     """Return a minimal PlotBase instance registered with qtbot."""
-    parent = QWidget()
-    widget = _ConcretePlot(parent)
-    qtbot.addWidget(parent)
+    widget = _ConcretePlot(None)
     qtbot.addWidget(widget)
     return widget
 
@@ -82,9 +78,29 @@ class TestPlotBaseClear:
 
 
 class TestPlotBaseXYLimits:
+    def test_plot_limits_to_extent_round_trip(self, plot_widget):
+        plot_limits = [0, 5, 1, 9]
+        extent = plot_widget._plot_limits_to_extent(plot_limits)
+        assert extent == [0, 1, 5, 9]
+        assert plot_widget._extent_to_plot_limits(extent) == plot_limits
+
+    def test_plot_limits_to_extent_rejects_invalid_length(self, plot_widget):
+        with pytest.raises(ValueError, match="Plot limits must be"):
+            plot_widget._plot_limits_to_extent([0, 1, 2])
+
+    def test_store_plot_limits_normalizes_extent_order(self, plot_widget):
+        ax = plot_widget.ax
+        extent = [0, 1, 5, 9]
+        plot_widget.store_plot_limits([extent], [ax])
+        assert ax.plot_limits == [0, 5, 1, 9]
+
+    def test_store_plot_limits_rejects_invalid_extent_length(self, plot_widget):
+        with pytest.raises(ValueError, match="Extent must be"):
+            plot_widget.store_plot_limits([[0, 1, 2]], [plot_widget.ax])
+
     def test_get_xy_limits_after_plot(self, plot_widget):
         x = np.arange(10, dtype=float)
-        y = x ** 2
+        y = x**2
         plot_widget.ax.plot(x, y)
         limits = plot_widget.get_xy_limits()
         assert len(limits) == 4
@@ -97,7 +113,7 @@ class TestPlotBaseXYLimits:
         y = x.copy()
         ax = plot_widget.ax
         ax.plot(x, y)
-        plot_widget.store_plot_limits([[0, 5, 0, 5]], [ax])
+        plot_widget.store_plot_limits([[0, 0, 5, 5]], [ax])
         # should not raise
         plot_widget.on_reset_zoom()
 
@@ -171,7 +187,6 @@ class TestPlotBaseSignals:
 
     def test_evt_pick_connected_to_evt_pick(self, qtbot, plot_widget):
         """After setup_new_zoom, evt_pick should forward to evt_pick (not evt_pressed)."""
-        import numpy as np
 
         ax = plot_widget.ax
         ax.plot([0, 1], [0, 1])

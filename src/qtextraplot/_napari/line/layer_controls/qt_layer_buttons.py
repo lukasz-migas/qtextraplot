@@ -2,10 +2,9 @@
 
 import typing as ty
 
-from qtpy.QtWidgets import QFrame, QHBoxLayout
-
 import qtextra.helpers as hp
 from qtextra.widgets.qt_button_icon import QtImagePushButton
+from qtpy.QtWidgets import QFrame, QHBoxLayout
 
 
 def make_qta_btn(parent, icon_name: str, tooltip: str, **kwargs: ty.Any) -> QtImagePushButton:

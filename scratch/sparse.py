@@ -1,18 +1,14 @@
 from __future__ import annotations
 
 import math
-import typing as ty
 from dataclasses import dataclass
 
 import numpy as np
 import scipy.sparse as sp
 from vispy import app, scene
-from vispy.color import get_colormap
 from vispy.geometry import Rect
 from vispy.gloo import IndexBuffer, Texture2D, VertexBuffer
 from vispy.scene.visuals import create_visual_node
-from vispy.visuals import transforms
-from vispy.visuals.shaders import Function
 from vispy.visuals.visual import Visual
 
 ArrayLike = np.ndarray
@@ -422,10 +418,10 @@ class SparseImageViewer(scene.SceneCanvas):
         qy = max(rect.height / 50.0, 1e-9)
         return (
             level.level,
-            int(round(rect.left / qx)),
-            int(round(rect.right / qx)),
-            int(round(rect.bottom / qy)),
-            int(round(rect.top / qy)),
+            round(rect.left / qx),
+            round(rect.right / qx),
+            round(rect.bottom / qy),
+            round(rect.top / qy),
             int(self.size[0] + self.size[1]),
         )
 
