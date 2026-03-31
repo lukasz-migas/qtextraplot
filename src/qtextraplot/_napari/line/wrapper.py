@@ -26,7 +26,7 @@ EXTRACT_NAME = "Extract mask"
 
 
 def get_font_for_os() -> str:
-    """Get font that supports unicode characters."""
+    """Get a font that supports unicode characters."""
     from koyo.system import IS_LINUX, IS_MAC, IS_WIN
     from vispy.util.fonts import list_fonts
 
@@ -122,15 +122,11 @@ class NapariLineView(ViewerBase):
 
     def _on_remove_layer(self, evt: Event) -> None:
         """Indicate if layer has been deleted."""
-        layer = evt.value
-        if self.line_layer is not None and layer.name == self.line_layer.name:
-            self.line_layer = None
-        if self.region_layer is not None and layer.name == self.region_layer.name:
-            self.region_layer = None
+        self._clear_tracked_layer_on_remove(evt.value, "line_layer", "region_layer")
 
     def _clear(self, _evt: ty.Any = None) -> None:
         """Clear canvas."""
-        self.line_layer, self.region_layer = None, None
+        self._clear_tracked_layers("line_layer", "region_layer")
 
     def plot(
         self,
@@ -173,8 +169,7 @@ class NapariLineView(ViewerBase):
         layer = self.try_reuse(name, Shapes, reuse=reuse)
         if layer:
             self.remove_layer(layer)
-        layer = self.viewer.add_shapes(shapes, edge_width=0, name=name, face_color=face_color, **kwargs)
-        return layer
+        return self.viewer.add_shapes(shapes, edge_width=0, name=name, face_color=face_color, **kwargs)
 
     def add_scatter(
         self,
@@ -188,9 +183,8 @@ class NapariLineView(ViewerBase):
         """Add scatter points."""
         layer = self.try_reuse(name, Scatter, reuse=reuse)
         color = kwargs.pop("color", as_array("scatter", CANVAS))
-        if xy is None:
-            if x is not None and y is not None:
-                xy = np.c_[y, x]
+        if xy is None and x is not None and y is not None:
+            xy = np.c_[y, x]
         if layer:
             try:
                 update_layer_attributes(layer, False, data=xy, color=color, **kwargs)
@@ -225,20 +219,30 @@ class NapariLineView(ViewerBase):
         return layer
 
     def add_centroids(
-        self, x: np.ndarray, y: np.ndarray, name: str = CENTROID_NAME, reuse: bool = True, **kwargs: ty.Any
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        name: str = CENTROID_NAME,
+        reuse: bool = True,
+        **kwargs: ty.Any,
     ) -> Centroids:
         """Add centroids."""
         layer = self.try_reuse(name, Centroids, reuse=reuse)
         color = kwargs.pop("color", as_array("line", CANVAS))
+        width = kwargs.pop("width", 5)
         if layer:
             layer.data = np.c_[x, y]
             layer.visible = kwargs.get("visible", True)
         else:
-            layer = self.viewer.add_centroids(np.c_[x, y], name=name, color=color, **kwargs)
+            layer = self.viewer.add_centroids(np.c_[x, y], name=name, color=color, width=width, **kwargs)
         return layer
 
     def add_inf_centroids(
-        self, x: np.ndarray, name: str = CENTROID_NAME, reuse: bool = True, **kwargs: ty.Any
+        self,
+        x: np.ndarray,
+        name: str = CENTROID_NAME,
+        reuse: bool = True,
+        **kwargs: ty.Any,
     ) -> InfLine:
         """Add centroids."""
         layer = self.try_reuse(name, InfLine, reuse=reuse)
@@ -281,7 +285,7 @@ class NapariLineView(ViewerBase):
         reuse: bool = True,
         **kwargs: ty.Any,
     ) -> Region:
-        """Add region of interest."""
+        """Add a region of interest."""
         # get currently selected layers
         layer = self.try_reuse(name, Region, reuse=reuse)
         color = kwargs.pop("color", as_array("highlight", CANVAS))
@@ -297,7 +301,10 @@ class NapariLineView(ViewerBase):
         """Add region of interest layer."""
         if self.region_layer is None:
             self.region_layer = self.viewer.add_region(
-                ((0, 0.1), "vertical"), name=EXTRACT_NAME, color=as_array("scatter", CANVAS), opacity=0.5
+                ((0, 0.1), "vertical"),
+                name=EXTRACT_NAME,
+                color=as_array("scatter", CANVAS),
+                opacity=0.5,
             )
         self.select_one_layer(self.region_layer)
         return self.region_layer
@@ -327,7 +334,7 @@ if __name__ == "__main__":  # pragma: no cover
 
     def _main(frame, ha) -> tuple:
         def _on_btn() -> None:
-            n_bins = np.random.randint(5, 100, 1)[0]
+            n_bins = np.random.default_rng().integers(5, 100, 1)[0]
             rel_width = np.random.rand(1)
             wrapper.add_histogram(a, n_bins, rel_width=rel_width)
 
@@ -340,7 +347,7 @@ if __name__ == "__main__":  # pragma: no cover
         wrapper.plot(np.arange(100), np.random.random(100))
         wrapper.add_extract_region_layer()
 
-        # viewer.add_centroids(np.arange(100), np.random.randint(0, 1000, 100))
+        # viewer.add_centroids(np.arange(100), np.random.default_rng().integers(0, 1000, 100))
 
         ha.addWidget(wrapper.widget, stretch=True)
         ha.addWidget(make_btn(frame, "Click me", func=_on_btn))

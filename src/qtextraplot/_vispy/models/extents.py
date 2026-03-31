@@ -29,4 +29,5 @@ class Extents:
         return np.nanmin(self.y), np.nanmax(self.y)
 
     def get_xy(self):
+        """Get x_min, x_max, y_min, y_max."""
         return np.nanmin(self.x), np.nanmax(self.x), np.nanmin(self.y), np.nanmax(self.y)

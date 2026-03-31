@@ -33,8 +33,11 @@ from loguru import logger
 
 try:
     matplotlib.use("Qt5Agg")
-except ImportError:
-    print("Failed to load qt5 backend")
+except Exception:
+    try:
+        matplotlib.use("QtAgg")
+    except Exception:
+        pass  # fall back to whatever matplotlib chooses
 matplotlib.rcParams["agg.path.chunksize"] = 10000
 
 
@@ -112,7 +115,7 @@ class PlotBase(QWidget):
         self.markers = []
         self.arrows = []
 
-        # occasionally used to tag to mark what plot was used previously
+        # occasionally used to mark what plot was used previously
         self.plot_name = ""
         self.y_divider = 1
 
@@ -240,7 +243,7 @@ class PlotBase(QWidget):
         ax = self.ax
         i = 0
         colors = sns.color_palette(n_colors=len(fpr))
-        for key in fpr.keys():
+        for key in fpr:
             if key == "micro" and plot_micro:
                 ax.plot(fpr[key], tpr[key], color="deeppink", linestyle=":", linewidth=4, label=labels[key])
             elif key == "macro" and plot_macro:
@@ -279,7 +282,7 @@ class PlotBase(QWidget):
         ax = self.ax
         i = 0
         colors = sns.color_palette(n_colors=len(precision))
-        for key in precision.keys():
+        for key in precision:
             if key == "micro" and plot_micro:
                 ax.plot(recall[key], precision[key], lw=4, linestyle=":", color="navy", label=labels[key])
             else:
@@ -310,7 +313,7 @@ class PlotBase(QWidget):
         self.store_plot_limits([extent], [self.ax])
 
     def plot_boxplot(self, df: "pd.DataFrame", **kwargs):
-        """Plot violin plot."""
+        """Plot box plot."""
         if not sns:
             raise ImportError("Seaborn is required for this function")
         sns.boxplot(data=df, ax=self.ax, **kwargs)
@@ -382,7 +385,23 @@ class PlotBase(QWidget):
 
     def _get_extent(self, xmin, xmax, ymin, ymax):
         """Get extent."""
+        return self._plot_limits_to_extent([xmin, xmax, ymin, ymax])
+
+    @staticmethod
+    def _plot_limits_to_extent(plot_limits: ty.Sequence[float]) -> list[float]:
+        """Convert internal plot limits into the public extent format."""
+        if len(plot_limits) != 4:
+            raise ValueError("Plot limits must be [xmin, xmax, ymin, ymax]")
+        xmin, xmax, ymin, ymax = plot_limits
         return [xmin, ymin, xmax, ymax]
+
+    @staticmethod
+    def _extent_to_plot_limits(extent: ty.Sequence[float]) -> list[float]:
+        """Convert a public extent into the internal plot-limits format."""
+        if len(extent) != 4:
+            raise ValueError("Extent must be [xmin, ymin, xmax, ymax]")
+        xmin, ymin, xmax, ymax = extent
+        return [xmin, xmax, ymin, ymax]
 
     def get_xy_limits(self) -> list[float]:
         """Get x- and y-axis limits that are currently shown in the plot."""
@@ -401,7 +420,7 @@ class PlotBase(QWidget):
         self.ax.set_xlim([start_x, end_x])
 
     def on_zoom_y_axis(self, start_y=None, end_y=None):
-        """Horizontal zoom."""
+        """Vertical zoom."""
         _, _, _start_y, _end_y = self.get_xy_limits()
         if start_y is None:
             start_y = _start_y
@@ -450,7 +469,7 @@ class PlotBase(QWidget):
             raise ValueError("Could not store plot limits")
 
         for _ax, _extent in zip(ax, extent):
-            _ax.plot_limits = [_extent[0], _extent[2], _extent[1], _extent[3]]
+            _ax.plot_limits = self._extent_to_plot_limits(_extent)
 
     def set_plot_xlabel(self, xlabel: ty.Optional[str] = None, ax=None, **kwargs):
         """Set plot x-axis label."""
@@ -515,7 +534,7 @@ class PlotBase(QWidget):
         return self.ax.get_xlim()
 
     def get_current_ylim(self):
-        """Get current x-axis limits."""
+        """Get current y-axis limits."""
         return self.ax.get_ylim()
 
     def get_ylim(self):
@@ -597,11 +616,11 @@ class PlotBase(QWidget):
                     linewidth=linewidth,
                     picker=pickable,
                     edgecolor=edgecolor,
-                )
+                ),
             )
         except AttributeError:
             logger.warning("Please plot something first")
-            return
+            return None
 
         # set label
         patch.obj_name = obj_name
@@ -610,7 +629,7 @@ class PlotBase(QWidget):
         return patch
 
     def plot_remove_patches(self, start_with: ty.Optional[str] = None, repaint: bool = True):
-        """Remove patch fr-om the plot area."""
+        """Remove patch from the plot area."""
         patches = []
         for patch in self.patch:
             if start_with is not None and hasattr(patch, "obj_name"):
@@ -691,7 +710,7 @@ class PlotBase(QWidget):
         self.arrows.append(arrow)
 
     def plot_add_vlines(
-        self, vlines: np.ndarray, ymin: float = 0, color: str = "k", alpha: float = 0.5, ls="--", gid: str = "vlines"
+        self, vlines: np.ndarray, ymin: float = 0, color: str = "k", alpha: float = 0.5, ls="--", gid: str = "vlines",
     ):
         """Add vertical lines to the axes."""
         xmax = self.get_xlim()[1]
@@ -708,8 +727,8 @@ class PlotBase(QWidget):
         raise ValueError(
             "Plot modification is locked",
             "This plot is locked and you cannot use global setting updated. \n"
-            + "Please right-click in the plot area and select Customise plot..."
-            + " to adjust plot settings.",
+             "Please right-click in the plot area and select Customise plot..."
+             " to adjust plot settings.",
         )
 
     @property
@@ -777,7 +796,7 @@ class PlotBase(QWidget):
                 plot_id=self.plot_id,
                 zoom_color=zoom_color or self.zoom_color,
             )
-        connect(self.zoom.evt_pick, self.evt_pressed.emit)
+        connect(self.zoom.evt_pick, self.evt_pick.emit)
         connect(self.zoom.evt_move, self.evt_move.emit)
         connect(self.zoom.evt_pressed, self.evt_pressed.emit)
         connect(self.zoom.evt_released, self.evt_released.emit)
@@ -823,7 +842,7 @@ class PlotBase(QWidget):
                 self.figure.tight_layout()
 
     def clear(self):
-        """Clear the plot and rest some of the parameters."""
+        """Clear the plot and reset some of the parameters."""
         self._clear()
         self.figure.clear()
         self.zoom = None
@@ -940,7 +959,7 @@ class PlotBase(QWidget):
 
         # add 1d plot
         self.ax.plot(
-            x, y, color=color, label=label, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style
+            x, y, color=color, label=label, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style,
         )
         if kwargs.get("spectrum_line_fill_under", False):
             self.plot_1d_add_under_curve(x, y, **kwargs)
@@ -982,7 +1001,7 @@ class PlotBase(QWidget):
             "alpha": kwargs.get("spectrum_fill_transparency", 0.25),
             "clip_on": kwargs.get("clip_on", True),
             "zorder": kwargs.get("zorder", 1),
-            "hatch": kwargs.get("spectrum_fill_hatch", None),
+            "hatch": kwargs.get("spectrum_fill_hatch"),
         }
         if ax is None:
             ax = self.ax
@@ -1080,7 +1099,7 @@ class PlotBase(QWidget):
     ):
         """Add spectrum."""
         self.ax.plot(
-            x, y, color=color, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style, label=label
+            x, y, color=color, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style, label=label,
         )
 
     def plot_1d_update_color(self, gid: str, color):
@@ -1150,7 +1169,7 @@ class PlotBase(QWidget):
                 return line
 
     def set_xy_line_limits(
-        self, y_lower_start=None, y_upper_multiplier=1.1, reset_x: bool = False, reset_y: bool = False
+        self, y_lower_start=None, y_upper_multiplier=1.1, reset_x: bool = False, reset_y: bool = False,
     ):
         """Get x/y-axis limits based on what is plotted."""
         xlimits, ylimits = [], []

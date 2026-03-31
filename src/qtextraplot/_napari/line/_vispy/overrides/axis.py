@@ -1,4 +1,5 @@
 """Improvements."""
+
 # import napari_plot._vispy.overlays.axis
 import numpy as np
 
@@ -13,7 +14,7 @@ def tick_formatter(value: float) -> str:
     if exp_value < 3:
         if abs(value) <= 1:
             return f"{value:.2G}"
-        elif abs(value) <= 1e3:
+        if abs(value) <= 1e3:
             if value.is_integer():
                 return f"{value:.0F}"
             return f"{value:.1F}"

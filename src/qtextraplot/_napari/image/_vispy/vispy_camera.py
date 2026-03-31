@@ -1,7 +1,6 @@
 """Camera model."""
 
 import numpy as np
-
 from vispy.scene import ArcballCamera, PanZoomCamera
 
 

@@ -1,8 +1,13 @@
 """Base image controls."""
 
 import qtextra.helpers as hp
-from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
-from napari._qt.layer_controls.qt_image_controls_base import AutoScaleButtons, QContrastLimitsPopup
+
+try:
+    from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
+    from napari._qt.layer_controls.qt_image_controls_base import AutoScaleButtons, QContrastLimitsPopup
+except ImportError:
+    from napari._qt.layer_controls.widgets.qt_colormap_control import QtColormapComboBox
+    from napari._qt.layer_controls.widgets.qt_contrast_limits import AutoScaleButtons, QContrastLimitsPopup
 from napari.layers import Image
 from napari.utils.colormaps import AVAILABLE_COLORMAPS
 from napari.utils.events.event_utils import connect_setattr
@@ -55,7 +60,7 @@ class QtBaseImageControls(QtLayerControls):
         self.colormap_combobox = colormap_combobox
 
         self.colorbar_label = hp.make_btn(
-            self, "", tooltip="Colorbar", object_name="colorbar", func=self.on_make_colormap
+            self, "", tooltip="Colorbar", object_name="colorbar", func=self.on_make_colormap,
         )
 
         # Create contrast_limits slider
@@ -176,12 +181,11 @@ def range_to_decimals(range_, dtype):
 
     if np.issubdtype(dtype, np.integer):
         return 0
-    else:
-        # scale precision with the log of the data range order of magnitude
-        # eg.   0 - 1   (0 order of mag)  -> 3 decimal places
-        #       0 - 10  (1 order of mag)  -> 2 decimals
-        #       0 - 100 (2 orders of mag) -> 1 decimal
-        #       ≥ 3 orders of mag -> no decimals
-        # no more than 64 decimals
-        d_range = np.subtract(*range_[::-1])
-        return min(64, max(int(3 - np.log10(d_range)), 0))
+    # scale precision with the log of the data range order of magnitude
+    # eg.   0 - 1   (0 order of mag)  -> 3 decimal places
+    #       0 - 10  (1 order of mag)  -> 2 decimals
+    #       0 - 100 (2 orders of mag) -> 1 decimal
+    #       ≥ 3 orders of mag -> no decimals
+    # no more than 64 decimals
+    d_range = np.subtract(*range_[::-1])
+    return min(64, max(int(3 - np.log10(d_range)), 0))

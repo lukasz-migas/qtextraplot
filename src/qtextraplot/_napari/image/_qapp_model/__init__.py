@@ -53,7 +53,7 @@ def init_qactions() -> None:
     app.register_actions(
         chain(
             LAYERS_ACTIONS,
-        )
+        ),
     )
 
 

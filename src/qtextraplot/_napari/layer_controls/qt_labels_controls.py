@@ -278,27 +278,24 @@ class QtLabelsControls(QtLayerControls):
 
     def _on_editable_or_visible_change(self, event=None) -> None:
         """Receive layer model editable change event & enable/disable buttons."""
-        hp.enable_with_opacity(
-            self,
-            [
-                self.pick_button,
-                self.paint_button,
-                self.fill_button,
-                self.erase_button,
-                self.brush_size_slider,
-                self.color_mode_combobox,
-                self.contour_spin_box,
-                self.contiguous_checkbox,
-                self.preserve_labels_checkbox,
-                self.selected_color_checkbox,
-                self.color_box,
-                self.blendComboBox,
-                self.opacitySlider,
-                self.selection_spin_box,
-                self.shuffle_button,
-                self.renderCombobox,
-            ],
-            self.layer.editable and self.layer.visible,
+        hp.disable_widgets(
+            self.pick_button,
+            self.paint_button,
+            self.fill_button,
+            self.erase_button,
+            self.brush_size_slider,
+            self.color_mode_combobox,
+            self.contour_spin_box,
+            self.contiguous_checkbox,
+            self.preserve_labels_checkbox,
+            self.selected_color_checkbox,
+            self.color_box,
+            self.blendComboBox,
+            self.opacitySlider,
+            self.selection_spin_box,
+            self.shuffle_button,
+            self.renderCombobox,
+            disabled=not (self.layer.editable and self.layer.visible),
         )
         super()._on_editable_or_visible_change(event)
 

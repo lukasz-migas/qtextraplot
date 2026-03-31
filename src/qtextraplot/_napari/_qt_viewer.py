@@ -18,7 +18,7 @@ class QtViewerBase(QWidget):
 
     Parameters
     ----------
-    viewer : imimspy.napari.components.ViewerModel
+    viewer : qtextraplot._napari.components.viewer_model.ViewerModel
         Napari viewer containing the rendered scene, layers, and controls.
 
     Attributes
@@ -96,7 +96,7 @@ class QtViewerBase(QWidget):
 
     @property
     def text_overlay(self):
-        """Grid lines."""
+        """Text overlay."""
         return self.overlay_to_visual[self.viewer._overlays["text"]]
 
     def _add_overlay(self, overlay: Overlay) -> None:
@@ -120,16 +120,6 @@ class QtViewerBase(QWidget):
         """Create the canvas and hook up events."""
         raise NotImplementedError("Must implement method")
 
-    def enterEvent(self, event):
-        """Emit our own event when mouse enters the canvas."""
-        self.viewer.mouse_over_canvas = True
-        super().enterEvent(event)
-
-    def leaveEvent(self, event):
-        """Emit our own event when mouse leaves the canvas."""
-        self.viewer.mouse_over_canvas = False
-        super().leaveEvent(event)
-
     def _create_widgets(self, **kwargs):
         """Create ui widgets."""
         raise NotImplementedError("Must implement method")
@@ -142,7 +132,7 @@ class QtViewerBase(QWidget):
         raise NotImplementedError("Must implement method")
 
     def _set_camera(self):
-        pass
+        """Configure the camera; override in subclasses as needed."""
 
     def _add_visuals(self) -> None:
         """Add visuals for axes, scale bar."""
@@ -156,13 +146,13 @@ class QtViewerBase(QWidget):
         """Complete initialization with post-init events."""
 
     def enterEvent(self, event):
-        """Enable status on canvas enter"""
+        """Set viewer status and mouse-over flag when pointer enters the canvas."""
         self.viewer.status = "Ready"
         self.viewer.mouse_over_canvas = True
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        """Disable status on canvas leave"""
+        """Clear viewer status and mouse-over flag when pointer leaves the canvas."""
         self.viewer.status = ""
         self.viewer.mouse_over_canvas = False
         super().leaveEvent(event)
@@ -251,7 +241,7 @@ class QtViewerBase(QWidget):
                     raise ValueError(f"screenshot size must be 2 values, got {len(size)}")
                 # Scale the requested size to account for HiDPI
                 size = tuple(int(dim / self.devicePixelRatio()) for dim in size)
-                canvas.size = size[::-1]  # invert x ad y for vispy
+                canvas.size = size[::-1]  # invert x and y for vispy
             if scale is not None:
                 # multiply canvas dimensions by the scale factor to get new size
                 canvas.size = tuple(int(dim * scale) for dim in canvas.size)

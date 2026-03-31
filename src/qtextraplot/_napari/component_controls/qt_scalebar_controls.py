@@ -38,24 +38,38 @@ class QtScaleBarControls(QtFramelessPopup):
     def make_panel(self) -> QFormLayout:
         """Make panel."""
         self.visible_checkbox = hp.make_checkbox(
-            self, "", "Show/hide scalebar", value=self.viewer.scale_bar.visible, func=self.on_change_visible
+            self,
+            "",
+            "Show/hide scalebar",
+            value=self.viewer.scale_bar.visible,
+            func=self.on_change_visible,
         )
 
         self.colored_checkbox = hp.make_checkbox(
-            self, "", "Invert color", value=self.viewer.scale_bar.colored, func=self.on_change_colored
+            self,
+            "",
+            "Invert color",
+            value=self.viewer.scale_bar.colored,
+            func=self.on_change_colored,
         )
 
         self.color_swatch = QColorSwatchEdit(
-            initial_color=self.viewer.scale_bar.color, tooltip="Click to set color of the scalebar and text."
+            initial_color=self.viewer.scale_bar.color,
+            tooltip="Click to set color of the scalebar and text.",
         )
         self.color_swatch.color_changed.connect(self.on_change_color)
 
         self.box_checkbox = hp.make_checkbox(
-            self, "", "Show/hide scalebar", value=self.viewer.scale_bar.visible, func=self.on_change_box
+            self,
+            "",
+            "Show/hide scalebar",
+            value=self.viewer.scale_bar.visible,
+            func=self.on_change_box,
         )
 
         self.box_color_swatch = QColorSwatchEdit(
-            initial_color=self.viewer.scale_bar.box_color, tooltip="Click to set background color."
+            initial_color=self.viewer.scale_bar.box_color,
+            tooltip="Click to set background color.",
         )
         self.box_color_swatch.color_changed.connect(self.on_change_box_color)
 
@@ -108,7 +122,7 @@ class QtScaleBarControls(QtFramelessPopup):
             self.viewer.scale_bar.color = color
 
     def _on_color_changed(self, _event=None):
-        """Receive layer.current_edge_color() change event and update view."""
+        """Receive layer.current_border_color() change event and update view."""
         with hp.qt_signals_blocked(self.color_swatch):
             self.color_swatch.setColor(self.viewer.scale_bar.color)
 
@@ -127,7 +141,7 @@ class QtScaleBarControls(QtFramelessPopup):
             self.viewer.scale_bar.box_color = color
 
     def _on_box_color_changed(self, _event=None):
-        """Receive layer.current_edge_color() change event and update view."""
+        """Receive layer.current_border_color() change event and update view."""
         with hp.qt_signals_blocked(self.box_color_swatch):
             self.box_color_swatch.setColor(self.viewer.scale_bar.box_color)
 
@@ -139,20 +153,17 @@ class QtScaleBarControls(QtFramelessPopup):
         """Update visibility checkbox."""
         with self.viewer.scale_bar.events.visible.blocker():
             self.visible_checkbox.setChecked(self.viewer.scale_bar.visible)
-        hp.enable_with_opacity(
-            self,
-            [
-                self.font_size_spinbox,
-                self.units_combobox,
-                self.pixel_size,
-                self.color_swatch,
-                self.box_color_swatch,
-                self.position_combobox,
-                self.ticks_checkbox,
-                self.colored_checkbox,
-                self.box_checkbox,
-            ],
-            self.viewer.scale_bar.visible,
+        hp.disable_widgets(
+            self.font_size_spinbox,
+            self.units_combobox,
+            self.pixel_size,
+            self.color_swatch,
+            self.box_color_swatch,
+            self.position_combobox,
+            self.ticks_checkbox,
+            self.colored_checkbox,
+            self.box_checkbox,
+            disabled=not self.viewer.scale_bar.visible,
         )
 
     def on_change_colored(self) -> None:
@@ -213,9 +224,9 @@ def get_value_for_unit(value: str) -> tuple[float, str]:
     """Extract unit from value."""
     if value == "" or value is None:
         return 1, UNITS_TRANSLATIONS[""]
-    elif value == "px":
+    if value == "px":
         return 1, UNITS_TRANSLATIONS[value]
-    elif "um" in value:
+    if "um" in value:
         if value[:-2] == "":
             return 1, UNITS_TRANSLATIONS["um"]
         return float(value[:-2]), UNITS_TRANSLATIONS["um"]

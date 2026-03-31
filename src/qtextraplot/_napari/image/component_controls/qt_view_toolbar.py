@@ -93,7 +93,7 @@ class QtViewToolbar(QWidget):
                     checkable=True,
                 )
                 buttons.extend(
-                    [self.tools_lasso_btn, self.tools_poly_btn, self.tools_ellipse_btn, self.tools_rectangle_btn]
+                    [self.tools_lasso_btn, self.tools_poly_btn, self.tools_ellipse_btn, self.tools_rectangle_btn],
                 )
             if self.allow_labels:
                 self.tools_new_labels_btn = toolbar_left.add_qta_tool(
@@ -119,9 +119,9 @@ class QtViewToolbar(QWidget):
             "grid_off",
             "Toggle grid view. Right-click on the button to change grid settings.",
             checkable=True,
-            checked=viewer.grid.enabled,
+            checked=self.viewer.grid.enabled,
             checked_icon_name="grid_on",
-            action="napari:toggle_grid",
+            func=self._toggle_grid_visible,
             func_menu=self.open_grid_popup,
         )
         toolbar_right.add_button(self.tools_grid_btn)
@@ -171,10 +171,13 @@ class QtViewToolbar(QWidget):
         self.tools_zoomout_btn = toolbar_right.add_qta_tool(
             "zoom_out",
             tooltip="Reset view. Hold 'Control' and double-click to reset view.",
-            func=viewer.reset_view,
+            func=self.viewer.reset_view,
         )
         self.tools_erase_btn = toolbar_right.add_qta_tool(
-            "erase", tooltip="Clear image", func=viewer.clear_canvas, hide=True
+            "erase",
+            tooltip="Clear image",
+            func=self.viewer.clear_canvas,
+            hide=True,
         )
         toolbar_right.add_spacer()
         if toolbar_right.n_items <= 1:  # exclude spacer from the count
@@ -202,11 +205,11 @@ class QtViewToolbar(QWidget):
     def connect_toolbar(self) -> None:
         """Connect events."""
         self.qt_viewer.viewer.scale_bar.events.visible.connect(
-            lambda x: self.tools_scalebar_btn.setChecked(self.qt_viewer.viewer.scale_bar.visible)
+            lambda x: self.tools_scalebar_btn.setChecked(self.qt_viewer.viewer.scale_bar.visible),
         )
 
         self.qt_viewer.viewer.grid.events.enabled.connect(
-            lambda x: self.tools_grid_btn.setChecked(self.qt_viewer.viewer.grid.enabled)
+            lambda x: self.tools_grid_btn.setChecked(self.qt_viewer.viewer.grid.enabled),
         )
 
         # try:
@@ -222,17 +225,20 @@ class QtViewToolbar(QWidget):
             self.tools_colorbar_btn.setChecked(self.qt_viewer.viewer.color_bar.visible)
             self.tools_colorbar_btn.clicked.connect(self._toggle_color_bar_visible)
             self.qt_viewer.viewer.color_bar.events.visible.connect(
-                lambda x: self.tools_colorbar_btn.setChecked(self.qt_viewer.viewer.color_bar.visible)
+                lambda x: self.tools_colorbar_btn.setChecked(self.qt_viewer.viewer.color_bar.visible),
             )
 
         self.qt_viewer.viewer.text_overlay.events.visible.connect(
-            lambda x: self.tools_text_btn.setChecked(self.qt_viewer.viewer.text_overlay.visible)
+            lambda x: self.tools_text_btn.setChecked(self.qt_viewer.viewer.text_overlay.visible),
         )
 
         if self.allow_crosshair:
             self.qt_viewer.viewer.cross_hair.events.visible.connect(
-                lambda x: self.tools_cross_btn.setChecked(self.qt_viewer.viewer.cross_hair.visible)
+                lambda x: self.tools_cross_btn.setChecked(self.qt_viewer.viewer.cross_hair.visible),
             )
+
+    def _toggle_grid_visible(self, state: bool) -> None:
+        self.qt_viewer.viewer.grid.enabled = state
 
     def _toggle_scale_bar_visible(self, state: bool) -> None:
         self.qt_viewer.viewer.scale_bar.visible = state
@@ -241,7 +247,9 @@ class QtViewToolbar(QWidget):
         self.qt_viewer.viewer.grid_lines.visible = state
 
     def _toggle_color_bar_visible(self, state: bool) -> None:
-        self.qt_viewer.viewer.color_bar.visible = state
+        for layer in self.viewer.layers:
+            if hasattr(layer, "colorbar") and hasattr(layer, "rgb") and not layer.rgb:
+                layer.colorbar.visible = state
 
     def _toggle_text_visible(self, state: bool) -> None:
         self.qt_viewer.viewer.text_overlay.visible = state

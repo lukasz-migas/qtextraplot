@@ -1,4 +1,5 @@
 """Modified canvas."""
+
 from napari_plot._vispy.canvas import VispyCanvas as _VispyCanvas
 
 

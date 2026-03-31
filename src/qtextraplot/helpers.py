@@ -8,7 +8,10 @@ from qtextra.typing import Callback
 from qtpy.QtGui import QImage, QPixmap
 
 try:
-    from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
+    try:
+        from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
+    except ImportError:
+        from napari._qt.layer_controls.widgets.qt_colormap_control import QtColormapComboBox
     from napari.utils.events.custom_types import Array
 except ImportError:
     Array = None
@@ -22,7 +25,10 @@ def make_colormap_combobox(
     label_min_width: int = 0,
 ) -> tuple[QtColormapComboBox, Qw.QHBoxLayout]:
     """Make colormap combobox."""
-    from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
+    try:
+        from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
+    except ImportError:
+        from napari._qt.layer_controls.widgets.qt_colormap_control import QtColormapComboBox
     from napari.utils.colormaps import AVAILABLE_COLORMAPS
 
     def _update_colormap(value):
@@ -58,7 +64,10 @@ def make_colormap_combobox_alone(
     default: str = "magma",
 ) -> QtColormapComboBox:
     """Make colormap combobox."""
-    from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
+    try:
+        from napari._qt.layer_controls.qt_colormap_combobox import QtColormapComboBox
+    except ImportError:
+        from napari._qt.layer_controls.widgets.qt_colormap_control import QtColormapComboBox
     from napari.utils.colormaps import AVAILABLE_COLORMAPS
 
     widget = QtColormapComboBox(parent)

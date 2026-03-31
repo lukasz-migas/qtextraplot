@@ -1,8 +1,8 @@
 def running_under_pytest() -> bool:
-    """Return True if currently running under py.test.
+    """Return True if currently running under pytest.
 
-    This function is used to do some adjustment for testing. The environment
-    variable ORIGAMI_PYTEST is defined in conftest.py.
+    Set the environment variable ``QTEXTRAPLOT_PYTEST=1`` in your
+    ``conftest.py`` to activate test-specific behaviour inside the library.
     """
     import os
 

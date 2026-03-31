@@ -4,13 +4,13 @@ import typing as ty
 from collections.abc import Iterable
 
 import numpy as np
+import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
 from napari.layers.shapes._shapes_constants import Mode
 from napari.utils.events import disconnect_events
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QButtonGroup, QCheckBox, QGridLayout
 
-import qtextra.helpers as hp
 from qtextraplot._napari.layer_controls.qt_layer_controls_base import QtLayerControls
 from qtextraplot._napari.widgets import QtModePushButton, QtModeRadioButton
 
@@ -27,7 +27,7 @@ class QtShapesControls(QtLayerControls):
         super().__init__(layer)
         self.layer.events.mode.connect(self._on_mode_change)
         self.layer.events.edge_width.connect(self._on_edge_width_change)
-        self.layer.events.current_edge_color.connect(self._on_current_edge_color_change)
+        self.layer.events.current_border_color.connect(self._on_current_border_color_change)
         self.layer.events.current_face_color.connect(self._on_current_face_color_change)
         self.layer.events.editable.connect(self._on_editable_or_visible_change)
         self.layer.text.events.visible.connect(self._on_text_visibility_change)
@@ -167,10 +167,10 @@ class QtShapesControls(QtLayerControls):
         self.face_color_swatch.color_changed.connect(self.on_change_face_color)
 
         self.edge_color_swatch = QColorSwatchEdit(
-            initial_color=self.layer.current_edge_color,
+            initial_color=self.layer.current_border_color,
             tooltip="click to set current edge color",
         )
-        self._on_current_edge_color_change()
+        self._on_current_border_color_change()
         self.edge_color_swatch.color_changed.connect(self.on_change_edge_color)
 
         text_disp_cb = QCheckBox()
@@ -200,7 +200,7 @@ class QtShapesControls(QtLayerControls):
         # update values
         self._on_opacity_change()
         # self._on_mode_change()
-        self._on_current_edge_color_change()
+        self._on_current_border_color_change()
         self._on_current_face_color_change()
         self._on_edge_width_change()
         self._on_text_visibility_change()
@@ -215,7 +215,7 @@ class QtShapesControls(QtLayerControls):
         self.layer.events.opacity.connect(self._on_opacity_change)
         self.layer.events.mode.connect(self._on_mode_change)
         self.layer.events.edge_width.connect(self._on_edge_width_change)
-        self.layer.events.current_edge_color.connect(self._on_current_edge_color_change)
+        self.layer.events.current_border_color.connect(self._on_current_border_color_change)
         self.layer.events.current_face_color.connect(self._on_current_face_color_change)
         self.layer.events.editable.connect(self._on_editable_or_visible_change)
         self.layer.text.events.visible.connect(self._on_text_visibility_change)
@@ -248,8 +248,8 @@ class QtShapesControls(QtLayerControls):
 
     def on_change_edge_color(self, color: np.ndarray) -> None:
         """Change edge color of shapes."""
-        with self.layer.events.current_edge_color.blocker():
-            self.layer.current_edge_color = color
+        with self.layer.events.current_border_color.blocker():
+            self.layer.current_border_color = color
 
     def on_change_current_edge_width(self, value: float) -> None:
         """Change edge line width of shapes on the layer model."""
@@ -271,10 +271,10 @@ class QtShapesControls(QtLayerControls):
             value = np.clip(int(value), 0, 40)
             self.current_width_slider.setValue(value)
 
-    def _on_current_edge_color_change(self, _event=None) -> None:
+    def _on_current_border_color_change(self, _event=None) -> None:
         """Receive layer model edge color change event and update color swatch."""
         with hp.qt_signals_blocked(self.edge_color_swatch):
-            self.edge_color_swatch.setColor(self.layer.current_edge_color)
+            self.edge_color_swatch.setColor(self.layer.current_border_color)
 
     def _on_current_face_color_change(self, _event=None) -> None:
         """Receive layer model face color change event and update color swatch."""
@@ -286,30 +286,27 @@ class QtShapesControls(QtLayerControls):
 
     def _on_editable_or_visible_change(self, event=None):
         """Receive layer model editable change event & enable/disable buttons."""
-        hp.enable_with_opacity(
-            self,
-            [
-                self.select_button,
-                self.direct_button,
-                self.line_button,
-                self.path_button,
-                self.rectangle_button,
-                self.ellipse_button,
-                self.polygon_button,
-                self.lasso_button,
-                self.vertex_remove_button,
-                self.vertex_insert_button,
-                self.delete_button,
-                self.move_back_button,
-                self.move_front_button,
-                self.opacitySlider,
-                self.blendComboBox,
-                self.face_color_swatch,
-                self.edge_color_swatch,
-                self.text_display_checkbox,
-                self.current_width_slider,
-            ],
-            self.layer.editable and self.layer.visible,
+        hp.disable_widgets(
+            self.select_button,
+            self.direct_button,
+            self.line_button,
+            self.path_button,
+            self.rectangle_button,
+            self.ellipse_button,
+            self.polygon_button,
+            self.lasso_button,
+            self.vertex_remove_button,
+            self.vertex_insert_button,
+            self.delete_button,
+            self.move_back_button,
+            self.move_front_button,
+            self.opacitySlider,
+            self.blendComboBox,
+            self.face_color_swatch,
+            self.edge_color_swatch,
+            self.text_display_checkbox,
+            self.current_width_slider,
+            disabled=not (self.layer.editable and self.layer.visible),
         )
         super()._on_editable_or_visible_change(event)
 

@@ -62,11 +62,10 @@ class MPLInteraction(QWidget):
         is_joint: bool = False,
         is_heatmap: bool = False,
         obj=None,
-        zoom_color=Qt.black,
+        zoom_color=Qt.GlobalColor.black,
         roi_shape: str = "rect",
     ):
-        QWidget.__init__(self)
-        self.parent = parent
+        QWidget.__init__(self, parent)
         self.axes = None
         self.canvas = None
         self.mpl_events = []
@@ -121,7 +120,7 @@ class MPLInteraction(QWidget):
     def validate_input(axes, callbacks, data_limits):
         """Validate input to ensure correct parameters are being used."""
         if not isinstance(axes, list):
-            axes = list(axes)
+            axes = [axes] if not hasattr(axes, "__iter__") else list(axes)
 
         if callbacks is None:
             callbacks = {}
@@ -290,12 +289,9 @@ class MPLInteraction(QWidget):
             elif evt.button in self.valid_buttons and self._ctrl_key:
                 self._trigger_extraction = True
             else:
-                if evt.button == MouseButton.MIDDLE:
+                if evt.button == MouseButton.MIDDLE or (evt.button == MouseButton.RIGHT and self.evt_release is None):
                     return True
-                elif evt.button == MouseButton.RIGHT and self.evt_release is None:
-                    return True
-                else:
-                    return False
+                return False
 
         # If no button pressed yet or if it was out of the axes, ignore
         if self.evt_press is None:
@@ -352,7 +348,7 @@ class MPLInteraction(QWidget):
         self.evt_press = evt
         # Is the correct button pressed within the correct axes?
         if self.ignore(evt):
-            return
+            return None
 
         self.evt_pressed.emit()
 
@@ -367,13 +363,13 @@ class MPLInteraction(QWidget):
         # dragging annotation
         if self.dragged is not None and not evt.dblclick:
             if self._is_legend or self._is_label:
-                return
+                return None
         self._button_down = True
 
         if self.evt_press.dblclick and self.is_extracting:
             x, y = evt.xdata, evt.ydata
             self.evt_ctrl_double_click.emit((x, y))
-            return
+            return None
 
         # started panning
         if evt.button == MouseButton.RIGHT:
@@ -463,7 +459,7 @@ class MPLInteraction(QWidget):
             self.evt_released.emit()
             self.evt_ctrl_released.emit((xmin, xmax, ymin, ymax))
             return
-        elif self._trigger_extraction and not self.allow_extraction:
+        if self._trigger_extraction and not self.allow_extraction:
             logger.warning("Cannot extract data at this moment...")
             self.canvas.draw()
             self.evt_released.emit()
@@ -537,7 +533,7 @@ class MPLInteraction(QWidget):
         """Specialized callback function for polygon processing."""
         x_labels, y_labels = self.get_labels()
         extract_evt = ExtractEvent(
-            self.roi_shape, 0, 0, 0, 0, x_labels=x_labels, y_labels=y_labels, polygon=self.polygon
+            self.roi_shape, 0, 0, 0, 0, x_labels=x_labels, y_labels=y_labels, polygon=self.polygon,
         )
         self._on_callback(extract_evt)
         self.polygon = Polygon()
@@ -597,7 +593,7 @@ class MPLInteraction(QWidget):
                 pen = QPen(self.color, 2 / dpi, Qt.PenStyle.DashLine)
                 painter.setPen(pen)
                 painter.drawPolygon(
-                    self.polygon.get_polygon(self.canvas.figure.get_axes()[0], dpi, self.canvas.figure.bbox.height)
+                    self.polygon.get_polygon(self.canvas.figure.get_axes()[0], dpi, self.canvas.figure.bbox.height),
                 )
 
         elif rect not in [None, "poly"]:
@@ -861,7 +857,7 @@ class ImageMPLInteraction(MPLInteraction):
         is_joint: bool = False,
         is_heatmap: bool = False,
         obj=None,
-        zoom_color=Qt.black,
+        zoom_color=Qt.GlobalColor.black,
     ):
         MPLInteraction.__init__(
             self,
@@ -928,7 +924,7 @@ class ImageMPLInteraction(MPLInteraction):
         _shape = [_ymax - _ymin, _xmax - _xmin]
         _aspect_ratio = get_aspect_ratio(_shape)
 
-        # adjust the width of the plot if the the aspect ratio is too high
+        # adjust the width of the plot if the aspect ratio is too high
         if _aspect_ratio > self._aspect_ratio:
             x_center = get_center(_xmin, _xmax)
             width = _shape[1]

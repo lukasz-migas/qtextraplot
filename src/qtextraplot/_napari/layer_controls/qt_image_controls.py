@@ -1,4 +1,6 @@
 """Image controls."""
+
+import qtextra.helpers as hp
 from napari._qt.layer_controls.qt_image_controls import PlaneNormalButtons
 from napari.layers.image._image_constants import ImageRendering, Interpolation, VolumeDepiction
 from napari.layers.image._image_key_bindings import (
@@ -10,7 +12,6 @@ from napari.layers.image._image_key_bindings import (
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QHBoxLayout
 
-import qtextra.helpers as hp
 from qtextraplot._napari.layer_controls.qt_image_controls_base import QtBaseImageControls
 
 
@@ -51,7 +52,7 @@ class QtImageControls(QtBaseImageControls):
         self.planeNormalButtons.yButton.clicked.connect(lambda x: orient_plane_normal_along_y(self.layer))
         self.planeNormalButtons.zButton.clicked.connect(lambda x: orient_plane_normal_along_z(self.layer))
         self.planeNormalButtons.obliqueButton.clicked.connect(
-            lambda x: orient_plane_normal_along_view_direction(self.layer)
+            lambda x: orient_plane_normal_along_view_direction(self.layer),
         )
 
         self.planeThicknessSlider = hp.make_double_slider_with_text(self, 1, 50)
@@ -103,25 +104,22 @@ class QtImageControls(QtBaseImageControls):
 
     def _on_editable_or_visible_change(self, event=None):
         """Receive layer model editable change event & enable/disable buttons."""
-        hp.enable_with_opacity(
-            self,
-            [
-                self.opacitySlider,
-                self.contrast_limits_slider,
-                self.autoScaleBar,
-                self.gamma_slider,
-                self.blendComboBox,
-                self.depiction_combobox,
-                self.render_combobox,
-                self.iso_threshold_slider,
-                self.attenuation_slider,
-                self.interpolation_combobox,
-                self.planeNormalButtons,
-                self.planeThicknessSlider,
-                self.colormap_combobox,
-                self.colorbar_label,
-            ],
-            self.layer.editable and self.layer.visible,
+        hp.disable_widgets(
+            self.opacitySlider,
+            self.contrast_limits_slider,
+            self.autoScaleBar,
+            self.gamma_slider,
+            self.blendComboBox,
+            self.depiction_combobox,
+            self.render_combobox,
+            self.iso_threshold_slider,
+            self.attenuation_slider,
+            self.interpolation_combobox,
+            self.planeNormalButtons,
+            self.planeThicknessSlider,
+            self.colormap_combobox,
+            self.colorbar_label,
+            disabled=not (self.layer.editable and self.layer.visible),
         )
         super()._on_editable_or_visible_change(event)
 

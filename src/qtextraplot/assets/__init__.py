@@ -28,7 +28,8 @@ update_styles(STYLES)
 update_icon_mapping(
     {
         "new_surface": "ei.star",
-        "new_labels": "fa5s.tag",
+        # "new_labels": "fa5s.tag",
+        "new_labels": "fa5s.paint-brush",
         "ndisplay_off": "ph.square",
         "ndisplay_on": "ph.cube",
         "roll": "mdi6.rotate-right-variant",
@@ -42,9 +43,14 @@ update_icon_mapping(
         "vertex_select": "mdi.map-marker-check",
         "grid": "mdi.grid",
         "layers": "fa5s.layer-group",
-        "rectangle": "ph.rectangle-bold",
-        "ellipse": "mdi6.ellipse-outline",
-        "polygon": "mdi.pentagon-outline",
+        # "rectangle": "ph.rectangle-bold"
+        "rectangle": "mdi6.vector-square",
+        # "ellipse": "mdi6.ellipse-outline",
+        "ellipse": "mdi6.vector-circle",
+        # "polygon": "mdi6.pentagon-outline",
+        "polygon": "mdi6.vector-triangle",
+        # "lasso": "mdi6.lasso",
+        "lasso": "mdi.vector-polygon",
         "zoom": "ri.zoom-in-line",
         "new_points": "mdi6.scatter-plot",
         "new_shapes": "mdi6.shape-outline",

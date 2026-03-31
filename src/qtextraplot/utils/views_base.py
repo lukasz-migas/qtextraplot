@@ -21,7 +21,7 @@ class ViewBase:
     UPDATE_STYLES = ()
     ALLOWED_PLOTS = ()
     SUPPORTED_FILE_FORMATS = ("png", "eps", "jpeg", "tiff", "raw", "ps", "pdf", "svg", "svgz")
-    PLOT_TYPE = None
+    PLOT_TYPE: str | None = None
     IS_VISPY = False
 
     # ui elements
@@ -143,19 +143,10 @@ class ViewBase:
         self._update()
 
     def set_labels(self, **kwargs):
-        """Update plot labels without triggering replot."""
-
-        def remove_keys(key):
-            """Remove key from kwargs."""
-            if key in kwargs:
-                del kwargs[key]
-
-        x_label = kwargs.pop("x_label", self._x_label)
-        y_label = kwargs.pop("y_label", self._y_label)
-
-        self._x_label = x_label
-        self._y_label = y_label
-        remove_keys("x_label"), remove_keys("y_label"), remove_keys("z_label")
+        """Update stored axis labels without triggering a replot."""
+        self._x_label = kwargs.pop("x_label", self._x_label)
+        self._y_label = kwargs.pop("y_label", self._y_label)
+        kwargs.pop("z_label", None)  # consumed here; not forwarded to the backend
 
     def set_xlim(self, x_min: float, x_max: float, repaint: bool = True):
         """Set x-axis limits in the plot area."""
@@ -172,15 +163,15 @@ class ViewBase:
         return self.figure.get_current_xlim()
 
     def get_ylim(self) -> tuple[float, float]:
-        """Get x-axis limits."""
+        """Get y-axis limits."""
         return self.figure.get_ylim()
 
     def get_current_ylim(self) -> tuple[float, float]:
-        """Get x-axis limits."""
+        """Get current y-axis limits."""
         return self.figure.get_current_ylim()
 
     def set_ylim(self, y_min: float, y_max: float, repaint: bool = True):
-        """Set x-axis limits in the plot area."""
+        """Set y-axis limits in the plot area."""
         with QMutexLocker(MUTEX):
             self.figure.on_zoom_y_axis(y_min, y_max)
             self.figure.repaint(repaint)
@@ -293,7 +284,8 @@ class ViewBase:
 
     def add_patches(self, x, y, width, height, obj_name=None, color=None, pickable: bool = True, repaint: bool = True):
         """Add rectangular patches to the plot."""
-        assert len(x) == len(y) == len(width), "Incorrect shape of the data. `x, y, width` must have the same length"
+        if not (len(x) == len(y) == len(width)):
+            raise ValueError("Incorrect shape of the data. `x`, `y` and `width` must have the same length.")
         if obj_name is None:
             obj_name = [None] * len(x)
         if color is None:
@@ -386,7 +378,9 @@ class ViewBase:
 
         if path is None:
             path = get_save_filename(
-                self.parent, "Save figure...", file_filter=build_wildcard(self.SUPPORTED_FILE_FORMATS)
+                self.parent,
+                "Save figure...",
+                file_filter=build_wildcard(self.SUPPORTED_FILE_FORMATS),
             )
 
         if path is None or path == "":

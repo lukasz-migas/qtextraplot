@@ -46,7 +46,7 @@ def get_multiplier(xmax: float, ymax: float) -> float:
 
 
 def calculate_zoom(
-    x_min: float, x_max: float, y_min: float, y_max: float, viewer, multiplier: float | None = None
+    x_min: float, x_max: float, y_min: float, y_max: float, viewer, multiplier: float | None = None,
 ) -> tuple[float, float, float]:
     """Calculate zoom for specified region."""
     # calculate min/max for y, x coordinates

@@ -34,7 +34,11 @@ class QtTextOverlayControls(QtFramelessPopup):
     def make_panel(self) -> QFormLayout:
         """Make panel."""
         self.visible_checkbox = hp.make_checkbox(
-            self, "", "Show/hide text", value=self.viewer.text_overlay.visible, func=self.on_change_visible
+            self,
+            "",
+            "Show/hide text",
+            value=self.viewer.text_overlay.visible,
+            func=self.on_change_visible,
         )
 
         self.text_edit = hp.make_line_edit(self, self.viewer.text_overlay.text, placeholder="Text...")
@@ -48,7 +52,12 @@ class QtTextOverlayControls(QtFramelessPopup):
         self.color_swatch.color_changed.connect(self.on_change_color)
 
         self.font_size_spinbox = hp.make_double_slider_with_text(
-            self, 4, 32, step_size=1, value=self.viewer.text_overlay.font_size, func=self.on_change_font_size
+            self,
+            4,
+            32,
+            step_size=1,
+            value=self.viewer.text_overlay.font_size,
+            func=self.on_change_font_size,
         )
 
         layout = hp.make_form_layout(parent=self)
@@ -70,15 +79,12 @@ class QtTextOverlayControls(QtFramelessPopup):
         """Update visibility checkbox."""
         with self.viewer.text_overlay.events.visible.blocker():
             self.visible_checkbox.setChecked(self.viewer.text_overlay.visible)
-        hp.enable_with_opacity(
-            self,
-            [
-                self.color_swatch,
-                self.text_edit,
-                self.position_combobox,
-                self.font_size_spinbox,
-            ],
-            self.viewer.text_overlay.visible,
+        hp.disable_widgets(
+            self.color_swatch,
+            self.text_edit,
+            self.position_combobox,
+            self.font_size_spinbox,
+            disabled=not self.viewer.text_overlay.visible,
         )
 
     def on_change_text(self):

@@ -13,11 +13,7 @@ def create_func(cls, name=None, doc=None, filename: str = "<string>"):
         name = camel_to_snake(cls_name)
 
     if "layer" in name:
-        raise ValueError(
-            "name {name} should not include 'layer'",
-            deferred=True,
-            name=name,
-        )
+        raise ValueError(f"name {name!r} should not include 'layer'")
 
     name = "add_" + name
 

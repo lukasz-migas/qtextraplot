@@ -38,7 +38,7 @@ def _provide_viewer_or_raise(msg: str = "", public_proxy: bool = False) -> Viewe
             "No current `Viewer` found.{msg}",
             deferred=True,
             msg=msg,
-        )
+        ),
     )
 
 
@@ -66,7 +66,7 @@ def _provide_qt_viewer_or_raise(msg: str = "") -> QtViewer:
             "No current `QtViewer` found.{msg}",
             deferred=True,
             msg=msg,
-        )
+        ),
     )
 
 
@@ -89,7 +89,7 @@ def _provide_window_or_raise(msg: str = "") -> Window:
             "No current `Window` found.{msg}",
             deferred=True,
             msg=msg,
-        )
+        ),
     )
 
 

@@ -35,7 +35,7 @@ class ImageViewMixin:
         """Make image view."""
         from qtextraplot._napari.image.wrapper import NapariImageView
 
-        return NapariImageView(
+        view = NapariImageView(
             widget,
             main_parent=self,
             disable_controls=disable_controls,
@@ -44,6 +44,14 @@ class ImageViewMixin:
             disable_new_layers=disable_new_layers,
             **kwargs,
         )
+        view.layers.events.removed.connect(self._on_remove_layer)
+        return view
+
+    def _on_remove_layer(self, event: Event) -> None:
+        """Remove layer."""
+        layer = event.value
+        if self.image_layer is layer:
+            self.image_layer = None
 
     def on_plot_image_outline(self, value: bool) -> None:
         """Plot outline."""
@@ -54,6 +62,7 @@ class ImageViewMixin:
         *,
         view_image: NapariImageView | None = None,
         transformation_map: dict[str, ty.Any] | None = None,
+        **kwargs: ty.Any,
     ) -> bool:
         """Update image or images."""
         if view_image is None:
@@ -65,10 +74,10 @@ class ImageViewMixin:
 
         # single-dataset mode
         if isinstance(image, np.ndarray):
-            if image.ndim == 3:
-                self.image_layer = view_image.plot_rgb(image)
+            if image.ndim == 2:
+                self.image_layer = view_image.plot(image, **kwargs)
             else:
-                self.image_layer = view_image.plot(image)
+                self.image_layer = view_image.plot_rgb(image, **kwargs)
         # multi-dataset mode
         else:
             layers = {}

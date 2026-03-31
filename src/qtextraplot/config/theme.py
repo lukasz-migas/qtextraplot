@@ -3,9 +3,10 @@
 import typing as ty
 
 import numpy as np
+from koyo.color import get_random_hex_color
 from psygnal._evented_model import EventedModel
-from napari._pydantic_compat import PrivateAttr
-from pydantic.color import Color
+from pydantic import PrivateAttr
+from pydantic_extra_types.color import Color
 from qtextra.config import THEMES
 from qtextra.config.config import ConfigBase
 from qtpy.QtCore import Signal
@@ -67,7 +68,7 @@ class CanvasThemes(ConfigBase):
         self.add_theme("light", CanvasTheme(**LIGHT_THEME))
 
         for theme in self.themes.values():
-            theme.events.connect(lambda _: self.evt_theme_changed.emit())
+            theme.events.connect(self._on_theme_model_changed)
 
     @property
     def integrate_canvas(self):
@@ -79,6 +80,10 @@ class CanvasThemes(ConfigBase):
         self._integrate_canvas = value
         background = THEMES.active.background if value else self.active._canvas_backup
         self.active.canvas = background
+
+    def _on_theme_model_changed(self, _event=None) -> None:
+        """Forward any field-level change on the active theme model to listeners."""
+        self.evt_theme_changed.emit()
 
     def add_theme(self, name: str, theme_data: ty.Union[CanvasTheme, ty.Dict[str, str]]):
         """Add theme."""
@@ -122,6 +127,17 @@ class CanvasThemes(ConfigBase):
         """Return color as hex."""
         color: Color = getattr(self.active, name)
         return color.as_hex()
+
+    def check_color(self, color: ty.Any) -> ty.Any:
+        """Check whether color clashes with the background color."""
+        from napari.utils.colormaps.standardize_color import transform_color
+
+        background = transform_color(self.active.canvas.as_hex())[0]
+        color = transform_color(color)[0]
+        # check whether color is too similar to background
+        if np.linalg.norm(color - background) < 0.3:  # arbitrary threshold; colors are normalised 0–1
+            return get_random_hex_color()
+        return color
 
 
 CANVAS: CanvasThemes = CanvasThemes()

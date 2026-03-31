@@ -1,4 +1,5 @@
 """Layer utilities."""
+
 from napari._vispy.layers.image import VispyImageLayer
 from napari._vispy.layers.labels import VispyLabelsLayer
 from napari._vispy.layers.points import VispyPointsLayer
