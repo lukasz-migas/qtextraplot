@@ -1,6 +1,6 @@
 """Colorbar."""
 
-from typing import Optional, Tuple
+from __future__ import annotations
 
 import numpy as np
 from napari.components.overlays import CanvasOverlay
@@ -12,7 +12,7 @@ try:
 except ImportError:
     from pydantic import validator
 
-ColorBarItem = Tuple[np.ndarray, str, Tuple[float, float]]
+ColorBarItem = tuple[np.ndarray, str, tuple[float, float]]
 
 
 class ColorBarOverlay(CanvasOverlay):
@@ -24,7 +24,7 @@ class ColorBarOverlay(CanvasOverlay):
     label_color: Array[float, (4,)] = (1.0, 1.0, 1.0, 1.0)
     label_size: int = 7
     colormap: str = "viridis"
-    data: Optional[Tuple[ColorBarItem, ...]] = None
+    data: tuple[ColorBarItem, ...] | None = None
 
     @validator("border_color", "label_color", pre=True, always=True)
     def _coerce_color(cls, v):

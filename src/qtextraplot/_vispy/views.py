@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import typing as ty
 
 import numpy as np
@@ -53,10 +54,8 @@ class _BaseVispyView(ViewBase):
     def remove_line(self, gid: str, repaint: bool = True):
         """Remove line."""
         with QMutexLocker(MUTEX):
-            try:
+            with contextlib.suppress(AttributeError):
                 self.figure.plot_1d_remove(gid)
-            except AttributeError:
-                pass
             self.figure.repaint(repaint)
 
     def update_line_color(self, gid: str, color: str, repaint: bool = True):

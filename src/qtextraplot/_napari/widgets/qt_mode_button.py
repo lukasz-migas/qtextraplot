@@ -1,5 +1,7 @@
 """Mode buttons."""
 
+from __future__ import annotations
+
 import typing as ty
 import weakref
 from enum import Enum
@@ -12,7 +14,14 @@ class QtModeRadioButton(QtImagePushButton):
     """Enum-based button."""
 
     def __init__(
-        self, layer: Layer, icon_name: str, mode: Enum, tooltip: str = "", checked: bool = False, *args, **kwargs,
+        self,
+        layer: Layer,
+        icon_name: str,
+        mode: Enum,
+        tooltip: str = "",
+        checked: bool = False,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.layer_ref = weakref.ref(layer)
@@ -51,7 +60,13 @@ class QtModePushButton(QtImagePushButton):
     """Enum-based button."""
 
     def __init__(
-        self, layer: Layer, icon_name: str, tooltip: str = "", func: ty.Optional[ty.Callable] = None, *args, **kwargs,
+        self,
+        layer: Layer,
+        icon_name: str,
+        tooltip: str = "",
+        func: ty.Callable | None = None,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.layer_ref = weakref.ref(layer)

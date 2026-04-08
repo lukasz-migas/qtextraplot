@@ -1,10 +1,12 @@
 """Base class for all mpl-based plotting functionality."""
 
+from __future__ import annotations
+
 import typing as ty
 import warnings
 from contextlib import contextmanager, suppress
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -32,13 +34,11 @@ if ty.TYPE_CHECKING:
 from loguru import logger
 
 try:
-    matplotlib.use("Qt5Agg")
-except Exception:
-    try:
-        matplotlib.use("QtAgg")
-    except Exception:
-        pass  # fall back to whatever matplotlib chooses
-matplotlib.rcParams["agg.path.chunksize"] = 10000
+    mpl.use("Qt5Agg")
+except Exception:  # noqa: BLE001
+    with suppress(Exception):
+        mpl.use("QtAgg")
+mpl.rcParams["agg.path.chunksize"] = 10000
 
 
 def make_centroid_lines(x: np.ndarray, y: np.ndarray):
@@ -68,7 +68,7 @@ class PlotBase(QWidget):
     PLOT_TYPE = None
     MPL_STYLE = "seaborn-v0_8-ticks"
 
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, *_args: ty.Any, **kwargs: ty.Any) -> None:
         super().__init__(parent=parent)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
@@ -201,7 +201,7 @@ class PlotBase(QWidget):
     ):
         """Plot confusion matrix."""
         if not sns:
-            raise ImportError("Seaborn is required for this function")
+            raise ImportError("Seaborn is required for this function")  # noqa: TRY003
         ax = self.ax
         if which == "counts":
             sns.heatmap(data=matrix, ax=ax, square=True, annot=True, fmt="d", **kwargs)
@@ -239,7 +239,7 @@ class PlotBase(QWidget):
     ):
         """Plot ROC."""
         if not sns:
-            raise ImportError("Seaborn is required for this function")
+            raise ImportError("Seaborn is required for this function")  # noqa: TRY003
         ax = self.ax
         i = 0
         colors = sns.color_palette(n_colors=len(fpr))
@@ -278,7 +278,7 @@ class PlotBase(QWidget):
     ):
         """Plot Precision-Recall."""
         if not sns:
-            raise ImportError("Seaborn is required for this function")
+            raise ImportError("Seaborn is required for this function")  # noqa: TRY003
         ax = self.ax
         i = 0
         colors = sns.color_palette(n_colors=len(precision))
@@ -301,10 +301,10 @@ class PlotBase(QWidget):
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
         self.store_plot_limits([extent], [self.ax])
 
-    def plot_violin(self, df: "pd.DataFrame", **kwargs):
+    def plot_violin(self, df: pd.DataFrame, **kwargs):
         """Plot violin plot."""
         if not sns:
-            raise ImportError("Seaborn is required for this function")
+            raise ImportError("Seaborn is required for this function")  # noqa: TRY003
 
         sns.violinplot(data=df, ax=self.ax, **kwargs)
 
@@ -312,20 +312,20 @@ class PlotBase(QWidget):
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
         self.store_plot_limits([extent], [self.ax])
 
-    def plot_boxplot(self, df: "pd.DataFrame", **kwargs):
+    def plot_boxplot(self, df: pd.DataFrame, **kwargs):
         """Plot box plot."""
         if not sns:
-            raise ImportError("Seaborn is required for this function")
+            raise ImportError("Seaborn is required for this function")  # noqa: TRY003
         sns.boxplot(data=df, ax=self.ax, **kwargs)
 
         extent = get_extent(self.ax)
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
         self.store_plot_limits([extent], [self.ax])
 
-    def plot_boxenplot(self, df: "pd.DataFrame", **kwargs):
+    def plot_boxenplot(self, df: pd.DataFrame, **kwargs):
         """Plot boxenplot plot."""
         if not sns:
-            raise ImportError("Seaborn is required for this function")
+            raise ImportError("Seaborn is required for this function")  # noqa: TRY003
 
         sns.boxenplot(data=df, ax=self.ax, **kwargs)
         extent = get_extent(self.ax)
@@ -335,10 +335,10 @@ class PlotBase(QWidget):
         # Setup extents
         self.store_plot_limits([extent], [self.ax])
 
-    def plot_stripplot(self, df: "pd.DataFrame", **kwargs):
+    def plot_stripplot(self, df: pd.DataFrame, **kwargs):
         """Plot stripplot plot."""
         if not sns:
-            raise ImportError("Seaborn is required for this function")
+            raise ImportError("Seaborn is required for this function")  # noqa: TRY003
         sns.stripplot(data=df, ax=self.ax, **kwargs)
         extent = get_extent(self.ax)
 
@@ -351,7 +351,7 @@ class PlotBase(QWidget):
     def _compute_xy_limits(
         x: ty.Union[list, np.ndarray],
         y: ty.Union[list, np.ndarray],
-        y_lower_start: ty.Optional[float] = 0,
+        y_lower_start: float | None = 0,
         y_upper_multiplier: float = 1,
         is_heatmap: bool = False,
         x_pad=None,
@@ -391,7 +391,7 @@ class PlotBase(QWidget):
     def _plot_limits_to_extent(plot_limits: ty.Sequence[float]) -> list[float]:
         """Convert internal plot limits into the public extent format."""
         if len(plot_limits) != 4:
-            raise ValueError("Plot limits must be [xmin, xmax, ymin, ymax]")
+            raise ValueError("Plot limits must be [xmin, xmax, ymin, ymax]")  # noqa: TRY003
         xmin, xmax, ymin, ymax = plot_limits
         return [xmin, ymin, xmax, ymax]
 
@@ -399,7 +399,7 @@ class PlotBase(QWidget):
     def _extent_to_plot_limits(extent: ty.Sequence[float]) -> list[float]:
         """Convert a public extent into the internal plot-limits format."""
         if len(extent) != 4:
-            raise ValueError("Extent must be [xmin, ymin, xmax, ymax]")
+            raise ValueError("Extent must be [xmin, ymin, xmax, ymax]")  # noqa: TRY003
         xmin, ymin, xmax, ymax = extent
         return [xmin, xmax, ymin, ymax]
 
@@ -417,6 +417,8 @@ class PlotBase(QWidget):
             start_x = _start_x
         if end_x is None:
             end_x = _end_x
+        if start_x == end_x:
+            end_x += 1e-6
         self.ax.set_xlim([start_x, end_x])
 
     def on_zoom_y_axis(self, start_y=None, end_y=None):
@@ -457,7 +459,7 @@ class PlotBase(QWidget):
             end_y = _end_y
         self.ax.axis([start_x, end_x, start_y, end_y])
 
-    def store_plot_limits(self, extent: list, ax: ty.Optional[list] = None):
+    def store_plot_limits(self, extent: list, ax: list | None = None):
         """Setup plot limits."""
         if ax is None:
             ax = [self.ax]
@@ -466,12 +468,12 @@ class PlotBase(QWidget):
             ax = list(ax)
 
         if len(ax) != len(extent):
-            raise ValueError("Could not store plot limits")
+            raise ValueError("Could not store plot limits")  # noqa: TRY003
 
         for _ax, _extent in zip(ax, extent):
             _ax.plot_limits = self._extent_to_plot_limits(_extent)
 
-    def set_plot_xlabel(self, xlabel: ty.Optional[str] = None, ax=None, **kwargs):
+    def set_plot_xlabel(self, xlabel: str | None = None, ax=None, **kwargs):
         """Set plot x-axis label."""
         # kwargs = ut_visuals.check_plot_settings(**kwargs)
         if ax is None:
@@ -486,7 +488,7 @@ class PlotBase(QWidget):
         )
         # self.plot_labels["xlabel"] = xlabel
 
-    def set_plot_ylabel(self, ylabel: ty.Optional[str] = None, ax=None, **kwargs):
+    def set_plot_ylabel(self, ylabel: str | None = None, ax=None, **kwargs):
         """Set plot y-axis label."""
         # kwargs = ut_visuals.check_plot_settings(**kwargs)
         if ax is None:
@@ -501,7 +503,7 @@ class PlotBase(QWidget):
         )
         # self.plot_labels["ylabel"] = ylabel
 
-    def set_plot_title(self, title: ty.Optional[str] = None, color: str = "black", loc: str = "center", **kwargs):
+    def set_plot_title(self, title: str | None = None, color: str = "black", loc: str = "center", **kwargs):
         """Set plot title."""
         if title is None:
             title = self.ax.get_title()
@@ -564,10 +566,7 @@ class PlotBase(QWidget):
     @staticmethod
     def _check_start_with(obj, start_with: str):
         """Checks whether label starts with specific string."""
-        if isinstance(obj.obj_name, str):
-            if obj.obj_name.startswith(start_with):
-                return True
-        return False
+        return bool(isinstance(obj.obj_name, str) and obj.obj_name.startswith(start_with))
 
     def _remove_existing_patch(self, name_tag: str):
         """Remove patch with specific name tag."""
@@ -582,6 +581,7 @@ class PlotBase(QWidget):
         for _i, patch in enumerate(self.patch):
             if patch.obj_name == name_tag:
                 return patch
+        return None
 
     def plot_add_patch(
         self,
@@ -628,18 +628,15 @@ class PlotBase(QWidget):
         self.patch.append(patch)
         return patch
 
-    def plot_remove_patches(self, start_with: ty.Optional[str] = None, repaint: bool = True):
+    def plot_remove_patches(self, start_with: str | None = None, repaint: bool = True):
         """Remove patch from the plot area."""
         patches = []
         for patch in self.patch:
-            if start_with is not None and hasattr(patch, "obj_name"):
-                if not self._check_start_with(patch, start_with):
-                    patches.append(patch)
-                    continue
-            try:
+            if start_with is not None and hasattr(patch, "obj_name") and not self._check_start_with(patch, start_with):
+                patches.append(patch)
+                continue
+            with suppress(Exception):
                 patch.remove()
-            except Exception:
-                pass
 
         self.patch = patches
         self.repaint(repaint)
@@ -710,7 +707,13 @@ class PlotBase(QWidget):
         self.arrows.append(arrow)
 
     def plot_add_vlines(
-        self, vlines: np.ndarray, ymin: float = 0, color: str = "k", alpha: float = 0.5, ls="--", gid: str = "vlines",
+        self,
+        vlines: np.ndarray,
+        ymin: float = 0,
+        color: str = "k",
+        alpha: float = 0.5,
+        ls="--",
+        gid: str = "vlines",
     ):
         """Add vertical lines to the axes."""
         xmax = self.get_xlim()[1]
@@ -724,11 +727,11 @@ class PlotBase(QWidget):
 
     def locked(self):
         """Let user know that the plot is locked."""
-        raise ValueError(
+        raise ValueError(  # noqa: TRY003
             "Plot modification is locked",
             "This plot is locked and you cannot use global setting updated. \n"
-             "Please right-click in the plot area and select Customise plot..."
-             " to adjust plot settings.",
+            "Please right-click in the plot area and select Customise plot..."
+            " to adjust plot settings.",
         )
 
     @property
@@ -753,7 +756,7 @@ class PlotBase(QWidget):
         is_joint: bool = False,
         obj=None,
         arrays=None,
-        zoom_color: ty.Optional[Qt.GlobalColor] = None,
+        zoom_color: Qt.GlobalColor | None = None,
         as_image: bool = False,
         **kwargs,
     ):
@@ -959,7 +962,15 @@ class PlotBase(QWidget):
 
         # add 1d plot
         self.ax.plot(
-            x, y, color=color, label=label, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style,
+            x,
+            y,
+            color=color,
+            label=label,
+            gid=gid,
+            zorder=zorder,
+            lw=line_width,
+            alpha=line_alpha,
+            ls=line_style,
         )
         if kwargs.get("spectrum_line_fill_under", False):
             self.plot_1d_add_under_curve(x, y, **kwargs)
@@ -1039,7 +1050,7 @@ class PlotBase(QWidget):
                 break
 
         if line is None:
-            raise ValueError("Could not find line to update")
+            raise ValueError("Could not find line to update")  # noqa: TRY003
 
         line.set_xdata(x)
         line.set_ydata(y)
@@ -1066,7 +1077,7 @@ class PlotBase(QWidget):
     def plot_1d_update_x_axis(
         self,
         x: np.ndarray,
-        x_label: ty.Optional[str] = None,
+        x_label: str | None = None,
         ax=None,
         gid=PlotIds.PLOT_1D_LINE_GID,
     ):
@@ -1081,7 +1092,7 @@ class PlotBase(QWidget):
                 break
 
         if line is None:
-            raise ValueError("Could not find line to update")
+            raise ValueError("Could not find line to update")  # noqa: TRY003
         line.set_xdata(x)
         self.set_plot_xlabel(x_label, ax)
 
@@ -1099,7 +1110,15 @@ class PlotBase(QWidget):
     ):
         """Add spectrum."""
         self.ax.plot(
-            x, y, color=color, gid=gid, zorder=zorder, lw=line_width, alpha=line_alpha, ls=line_style, label=label,
+            x,
+            y,
+            color=color,
+            gid=gid,
+            zorder=zorder,
+            lw=line_width,
+            alpha=line_alpha,
+            ls=line_style,
+            label=label,
         )
 
     def plot_1d_update_color(self, gid: str, color):
@@ -1108,7 +1127,7 @@ class PlotBase(QWidget):
         if line:
             line.set_color(color)
 
-    def plot_1d_update_line_width(self, line_width: float, gid: ty.Optional[str] = None):
+    def plot_1d_update_line_width(self, line_width: float, gid: str | None = None):
         """Update line width."""
         for line in self.ax.get_lines():
             if gid is not None:
@@ -1117,7 +1136,7 @@ class PlotBase(QWidget):
                     continue
             line.set_linewidth(line_width)
 
-    def plot_1d_update_line_alpha(self, line_alpha: float, gid: ty.Optional[str] = None):
+    def plot_1d_update_line_alpha(self, line_alpha: float, gid: str | None = None):
         """Update plot color."""
         for line in self.ax.get_lines():
             if gid is not None:
@@ -1126,7 +1145,7 @@ class PlotBase(QWidget):
                     continue
             line.set_alpha(line_alpha)
 
-    def plot_1d_update_line_style(self, line_style: str, gid: ty.Optional[str] = None):
+    def plot_1d_update_line_style(self, line_style: str, gid: str | None = None):
         """Update plot color."""
         for line in self.ax.get_lines():
             if gid is not None:
@@ -1167,9 +1186,14 @@ class PlotBase(QWidget):
             _gid = line.get_gid()
             if gid == _gid:
                 return line
+        return None
 
     def set_xy_line_limits(
-        self, y_lower_start=None, y_upper_multiplier=1.1, reset_x: bool = False, reset_y: bool = False,
+        self,
+        y_lower_start=None,
+        y_upper_multiplier=1.1,
+        reset_x: bool = False,
+        reset_y: bool = False,
     ):
         """Get x/y-axis limits based on what is plotted."""
         xlimits, ylimits = [], []

@@ -79,7 +79,7 @@ class TestPlotLine:
         x = np.linspace(0, 5, 20)
         y = np.ones_like(x) * 3.0
         line_plot.plot_1d(x, y)
-        xmin, xmax, ymin, ymax = line_plot.get_xy_limits()
+        xmin, xmax, _ymin, _ymax = line_plot.get_xy_limits()
         assert xmin == pytest.approx(0.0, abs=1e-3)
         assert xmax == pytest.approx(5.0, abs=1e-3)
 

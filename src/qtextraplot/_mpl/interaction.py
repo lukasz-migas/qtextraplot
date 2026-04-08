@@ -1,6 +1,7 @@
 """Interaction."""
 
-import typing as ty
+from __future__ import annotations
+
 from contextlib import suppress
 
 import matplotlib.pyplot as plt
@@ -54,10 +55,10 @@ class MPLInteraction(QWidget):
         self,
         axes,
         data_limits=None,
-        plot_id: ty.Optional[str] = None,
+        plot_id: str | None = None,
         allow_extraction: bool = True,
         allow_drag: bool = False,
-        callbacks: ty.Optional[dict] = None,
+        callbacks: dict | None = None,
         parent: QWidget = None,
         is_joint: bool = False,
         is_heatmap: bool = False,
@@ -140,7 +141,7 @@ class MPLInteraction(QWidget):
     def set_data_limits(self, data_limits):
         """Set data limits on the axes object."""
         if len(data_limits) != len(self.axes):
-            raise ValueError("Incorrect `data_limits` input")
+            raise ValueError("Incorrect `data_limits` input")  # noqa: TRY003
 
         for i, _ in enumerate(self.axes):
             self.axes[i].data_limits = data_limits[i]
@@ -229,8 +230,7 @@ class MPLInteraction(QWidget):
         from qtextra.event_loop import _app_ref
 
         app = _app_ref
-        dpi = float(app.screens()[0].physicalDotsPerInch())
-        return dpi
+        return float(app.screens()[0].physicalDotsPerInch())
 
     @property
     def is_extracting(self) -> bool:
@@ -289,9 +289,9 @@ class MPLInteraction(QWidget):
             elif evt.button in self.valid_buttons and self._ctrl_key:
                 self._trigger_extraction = True
             else:
-                if evt.button == MouseButton.MIDDLE or (evt.button == MouseButton.RIGHT and self.evt_release is None):
-                    return True
-                return False
+                return bool(
+                    evt.button == MouseButton.MIDDLE or (evt.button == MouseButton.RIGHT and self.evt_release is None),
+                )
 
         # If no button pressed yet or if it was out of the axes, ignore
         if self.evt_press is None:
@@ -325,7 +325,7 @@ class MPLInteraction(QWidget):
                 # rely = (cur_ylim[1] - ydata) / (cur_ylim[1] - cur_ylim[0])
                 new_xlim = [xdata - new_width * (1 - relx), xdata + new_width * relx]
                 if hasattr(ax, "plot_limits"):
-                    xmin, xmax, ymin, ymax = ax.plot_limits
+                    xmin, xmax, _ymin, _ymax = ax.plot_limits
                     new_xlim = [max(xmin, new_xlim[0]), min(xmax, new_xlim[1])]
 
                 ax.set_xlim(new_xlim)
@@ -361,9 +361,8 @@ class MPLInteraction(QWidget):
                 self._xy_press.append((x, y, a))
 
         # dragging annotation
-        if self.dragged is not None and not evt.dblclick:
-            if self._is_legend or self._is_label:
-                return None
+        if self.dragged is not None and not evt.dblclick and (self._is_legend or self._is_label):
+            return None
         self._button_down = True
 
         if self.evt_press.dblclick and self.is_extracting:
@@ -533,7 +532,14 @@ class MPLInteraction(QWidget):
         """Specialized callback function for polygon processing."""
         x_labels, y_labels = self.get_labels()
         extract_evt = ExtractEvent(
-            self.roi_shape, 0, 0, 0, 0, x_labels=x_labels, y_labels=y_labels, polygon=self.polygon,
+            self.roi_shape,
+            0,
+            0,
+            0,
+            0,
+            x_labels=x_labels,
+            y_labels=y_labels,
+            polygon=self.polygon,
         )
         self._on_callback(extract_evt)
         self.polygon = Polygon()
@@ -849,10 +855,10 @@ class ImageMPLInteraction(MPLInteraction):
         axes,
         arrays,
         data_limits=None,
-        plot_id: ty.Optional[str] = None,
+        plot_id: str | None = None,
         allow_extraction: bool = True,
         allow_drag: bool = True,
-        callbacks: ty.Optional[dict] = None,
+        callbacks: dict | None = None,
         parent: QWidget = None,
         is_joint: bool = False,
         is_heatmap: bool = False,

@@ -1,5 +1,7 @@
 """Base viewer."""
 
+from __future__ import annotations
+
 import typing as ty
 import warnings
 
@@ -110,7 +112,7 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
         self.tooltip.visible = event.value
 
     @property
-    def grid_lines(self) -> "GridLinesOverlay":
+    def grid_lines(self) -> GridLinesOverlay:
         return self._overlays["grid_lines"]
 
     def __hash__(self):
@@ -134,7 +136,7 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
     def _valid_theme(v):
         if not is_theme_available(v):
             themes = ", ".join(available_themes())
-            raise ValueError(f"Theme '{v}' not found; options are {themes}.")
+            raise ValueError(f"Theme '{v}' not found; options are {themes}.")  # noqa: TRY003
         return v
 
     def clear_canvas(self) -> None:

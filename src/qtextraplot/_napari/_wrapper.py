@@ -83,7 +83,7 @@ class ViewerBase(ABC):
         """Get layer list."""
         return self.viewer.layers
 
-    def get_layer(self, name: str) -> ty.Optional[Layer]:
+    def get_layer(self, name: str) -> Layer | None:
         """Get layer."""
         try:
             return self.viewer.layers[name]
@@ -96,7 +96,7 @@ class ViewerBase(ABC):
             name = name.name  # it's actually a layer
         try:
             self.viewer.layers.remove(name)
-            return True
+            return True  # noqa: TRY300
         except (ValueError, KeyError) as err:
             if not silent:
                 print(f"Failed to remove layer `{name}`\n{err}")
@@ -107,7 +107,7 @@ class ViewerBase(ABC):
         for name in names:
             self.remove_layer(name)
 
-    def try_reuse(self, name: str, cls: ty.Type[Layer], reuse: bool = True) -> ty.Optional[Layer]:
+    def try_reuse(self, name: str, cls: ty.Type[Layer], reuse: bool = True) -> Layer | None:
         """Try retrieving layer from the layer list."""
         if not reuse:
             self.remove_layer(name, silent=True)
@@ -150,13 +150,11 @@ class ViewerBase(ABC):
         if layer:
             for attr, value in kwargs.items():
                 if hasattr(layer, attr):
-                    try:
+                    with suppress(Exception):
                         setattr(layer, attr, value)
-                    except Exception as err:
-                        print(f"Failed to update attribute: {err}")
 
     @staticmethod
-    def update_image_contrast_limits(image_layer: Image, new_range: ty.Optional[ty.Tuple] = None):
+    def update_image_contrast_limits(image_layer: Image, new_range: ty.Tuple | None = None):
         """Update contrast limits for specified layer."""
         if new_range is None or len(new_range) != 2:
             new_range = image_layer._calc_data_range()

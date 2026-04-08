@@ -1,5 +1,7 @@
 """Module responsible for handling user interaction with the image."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Union
 
@@ -143,9 +145,7 @@ class ExtractEvent:
 
     def is_point(self) -> bool:
         """Checks whether it was a point."""
-        if abs(self.xmax - self.xmin) < 0.0001 and abs(self.ymax - self.ymin) < 0.0001:
-            return True
-        return False
+        return bool(abs(self.xmax - self.xmin) < 0.0001 and abs(self.ymax - self.ymin) < 0.0001)
 
     def round_point(self):
         """Slightly modify values to enable extraction."""

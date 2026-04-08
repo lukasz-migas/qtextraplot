@@ -54,7 +54,7 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
         self._key_shift = False
         self._key_alt = False
 
-    def savefig(self, path, dpi: int = 150, transparent: bool = True, **kwargs):
+    def savefig(self, path, dpi: int = 150, transparent: bool = True, **_kwargs: ty.Any) -> None:
         """Export the current canvas to an image file at *path*.
 
         Parameters
@@ -121,7 +121,13 @@ class BasePlot(SceneCanvas, BoxZoomCameraMixin):
         self.set_xy_view(*self._extents.get_xy())
 
     def _set_xy_limits(
-        self, x_min: float, x_max: float, y_min: float, y_max: float, x_pad: float = 0, y_pad: float = 0,
+        self,
+        x_min: float,
+        x_max: float,
+        y_min: float,
+        y_max: float,
+        x_pad: float = 0,
+        y_pad: float = 0,
     ):
         """Set x/y-axis limits."""
         x_min, x_max, y_min, y_max = x_min - x_pad, x_max + x_pad, y_min - y_pad, y_max + y_pad

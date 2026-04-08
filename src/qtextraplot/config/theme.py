@@ -1,5 +1,7 @@
 """Themes configuration file."""
 
+from __future__ import annotations
+
 import typing as ty
 
 import numpy as np
@@ -41,7 +43,7 @@ class CanvasTheme(EventedModel):
     axis: Color
     gridlines: Color
     label: Color
-    _canvas_backup: ty.Optional[Color] = PrivateAttr(None)
+    _canvas_backup: Color | None = PrivateAttr(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -135,7 +137,7 @@ class CanvasThemes(ConfigBase):
         background = transform_color(self.active.canvas.as_hex())[0]
         color = transform_color(color)[0]
         # check whether color is too similar to background
-        if np.linalg.norm(color - background) < 0.3:  # arbitrary threshold; colors are normalised 0–1
+        if np.linalg.norm(color - background) < 0.3:  # arbitrary threshold; colors are normalized 0-1
             return get_random_hex_color()
         return color
 

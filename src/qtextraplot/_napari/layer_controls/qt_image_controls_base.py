@@ -60,7 +60,11 @@ class QtBaseImageControls(QtLayerControls):
         self.colormap_combobox = colormap_combobox
 
         self.colorbar_label = hp.make_btn(
-            self, "", tooltip="Colorbar", object_name="colorbar", func=self.on_make_colormap,
+            self,
+            "",
+            tooltip="Colorbar",
+            object_name="colorbar",
+            func=self.on_make_colormap,
         )
 
         # Create contrast_limits slider

@@ -8,19 +8,19 @@ from pathlib import Path
 
 import numpy as np
 from koyo.secret import get_short_hash
+from koyo.system import is_installed
 from qtpy.QtCore import QMutexLocker, QRectF
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QApplication, QGraphicsItem, QGraphicsRectItem, QWidget
 
 from qtextraplot.utils.views_base import MUTEX, ViewBase
 
-try:
-    import pyqtgraph as pg
-except ImportError:  # pragma: no cover
-    raise ImportError("please install pyqtgraph using 'pip install pyqtgraph'") from None
-
 if ty.TYPE_CHECKING:
     from qtpy.QtGui import QPen
+
+if not is_installed("pyqtgraph"):
+    raise ImportError("please install pyqtgraph using 'pip install pyqtgraph'")  # noqa: TRY003
+import pyqtgraph as pg
 
 
 def _mk_pen(color: ty.Any = "w", width: float = 1.0, style: str | None = None) -> QPen:
@@ -211,7 +211,7 @@ class PyQtGraphCanvas(pg.PlotWidget):
         gid = gid or self._base_gid
         item = self._plot_items.get(gid)
         if item is None:
-            raise AttributeError(f"No line registered for gid={gid!r}")
+            raise AttributeError(f"No line registered for gid={gid!r}")  # noqa: TRY003
         item.setData(np.asarray(x), np.asarray(y))
         if color is not None or width is not None:
             pen = item.opts.get("pen", _mk_pen())
@@ -302,7 +302,7 @@ class PyQtGraphCanvas(pg.PlotWidget):
         gid = gid or self._scatter_gid
         item = self._plot_items.get(gid)
         if item is None:
-            raise AttributeError(f"No scatter registered for gid={gid!r}")
+            raise AttributeError(f"No scatter registered for gid={gid!r}")  # noqa: TRY003
         item.setData(x=np.asarray(x), y=np.asarray(y), size=kwargs.get("size", item.opts.get("size", 5)))
 
     def imshow(self, image: np.ndarray, *, gid: str | None = None, auto_levels: bool = True, **kwargs: ty.Any):
@@ -533,7 +533,14 @@ class _BasePyQtGraphView(ViewBase):
         self.figure.repaint(repaint)
 
     def add_line(
-        self, x, y, color: str = "r", gid: str = "gid", zorder: int = 5, repaint: bool = True, label: str = "",
+        self,
+        x,
+        y,
+        color: str = "r",
+        gid: str = "gid",
+        zorder: int = 5,
+        repaint: bool = True,
+        label: str = "",
     ):
         """Add line."""
         del label
@@ -699,7 +706,14 @@ class ViewPyQtGraphCanvas(_BasePyQtGraphView):
             self._store_item_state(gid, "image", image=image_array, **plot_kwargs)
 
     def add_line(
-        self, x, y, color: str = "r", gid: str = "gid", zorder: int = 5, repaint: bool = True, label: str = "",
+        self,
+        x,
+        y,
+        color: str = "r",
+        gid: str = "gid",
+        zorder: int = 5,
+        repaint: bool = True,
+        label: str = "",
     ):
         """Add a secondary line."""
         del label
@@ -858,7 +872,11 @@ class ViewPyQtGraphImage(_BasePyQtGraphView):
     PLOT_TYPE = "image"
 
     def plot(
-        self, image: np.ndarray, repaint: bool = True, forced_kwargs: dict | None = None, **kwargs: ty.Any,
+        self,
+        image: np.ndarray,
+        repaint: bool = True,
+        forced_kwargs: dict | None = None,
+        **kwargs: ty.Any,
     ) -> None:
         """Plot image data."""
         del forced_kwargs
