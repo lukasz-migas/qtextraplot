@@ -239,6 +239,22 @@ class ViewMplLine(ViewBase):
             self.figure.tight(tight)
             self.figure.repaint(repaint)
 
+    def plot_calibration(
+        self,
+        y_true: np.ndarray,
+        y_probas: np.ndarray,
+        classes: list[str],
+        repaint: bool = True,
+        tight: bool = True,
+        **kwargs,
+    ):
+        """Plot confusion matrix."""
+        with QMutexLocker(MUTEX):
+            self.figure.clear()
+            self.figure.plot_calibration(y_true, y_probas, classes, **kwargs)
+            self.figure.tight(tight)
+            self.figure.repaint(repaint)
+
     def plot_violin(self, df: pd.DataFrame, repaint: bool = True, tight: bool = True, **kwargs):
         """Plot violin plot."""
         with QMutexLocker(MUTEX):

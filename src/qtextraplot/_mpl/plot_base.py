@@ -259,7 +259,7 @@ class PlotBase(QWidget):
         ax.set_xlabel("False Positive Rate", fontsize=text_fontsize)
         ax.set_ylabel("True Positive Rate", fontsize=text_fontsize)
         ax.tick_params(labelsize=text_fontsize)
-        ax.legend(loc="lower right", fontsize=text_fontsize)
+        ax.legend(loc="lower right", fontsize=text_fontsize, frameon=False)
 
         extent = get_extent(self.ax)
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
@@ -295,8 +295,41 @@ class PlotBase(QWidget):
         ax.set_xlabel("Recall")
         ax.set_ylabel("Precision")
         ax.tick_params(labelsize=text_fontsize)
-        ax.legend(loc="best", fontsize=text_fontsize)
+        ax.legend(loc="lower left", fontsize=text_fontsize, frameon=False)
 
+        extent = get_extent(self.ax)
+        self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
+        self.store_plot_limits([extent], [self.ax])
+
+    def plot_calibration(
+        self,
+        y_true: np.ndarray,
+        y_probas: np.ndarray,
+        classes: list[str],
+        title: str = "Calibration Curve",
+        title_fontsize="large",
+        text_fontsize="medium",
+        **kwargs,
+    ):
+        """Plot calibration curve."""
+        try:
+            from sklearn.calibration import calibration_curve
+        except ImportError:
+            raise ImportError("sklearn is required for this function") from None  # noqa: TRY003
+
+        ax = self.ax
+        for i, cls_name in enumerate(classes):
+            y_bin = (y_true == i).astype(int)
+            prob_cls = y_probas[:, i] if y_probas.ndim == 2 else y_probas
+            fraction_pos, mean_pred = calibration_curve(y_bin, prob_cls, n_bins=10, strategy="uniform")
+            ax.plot(mean_pred, fraction_pos, label=cls_name)
+        ax.set_xlim([0.0, 1.05])
+        ax.set_ylim([0.0, 1.05])
+        ax.set_xlabel("Predicted Probability")
+        ax.set_ylabel("True Probability")
+        ax.set_title(title, fontsize=title_fontsize)
+        ax.tick_params(labelsize=text_fontsize)
+        ax.legend(loc="best", fontsize=text_fontsize, frameon=False)
         extent = get_extent(self.ax)
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
         self.store_plot_limits([extent], [self.ax])

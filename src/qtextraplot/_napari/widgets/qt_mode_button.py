@@ -30,7 +30,7 @@ class QtModeRadioButton(QtImagePushButton):
         self.setCheckable(True)
         self.setChecked(checked)
         self.setProperty("mode", icon_name)
-        self.set_medium()
+        self.set_qta_size_preset("medium")
         self.mode = mode
         if mode is not None:
             self.toggled.connect(self._set_mode)
@@ -72,7 +72,7 @@ class QtModePushButton(QtImagePushButton):
         self.layer_ref = weakref.ref(layer)
         self.set_qta(icon_name)
         self.setToolTip(tooltip or icon_name)
-        self.set_medium()
+        self.set_qta_size_preset("medium")
         if func is not None:
             self.clicked.connect(func)
 
