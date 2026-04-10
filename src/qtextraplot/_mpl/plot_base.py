@@ -240,7 +240,7 @@ class PlotBase(QWidget):
         """Plot ROC."""
         if not sns:
             raise ImportError("Seaborn is required for this function")  # noqa: TRY003
-        ax = self.ax
+        ax = self.get_ax(height=0.8)
         i = 0
         colors = sns.color_palette(n_colors=len(fpr))
         for key in fpr:
@@ -253,7 +253,7 @@ class PlotBase(QWidget):
                 i += 1
 
         ax.set_title(title, fontsize=title_fontsize)
-        ax.plot([0, 1], [0, 1], "k--", lw=2)
+        ax.plot([0, 1.1], [0, 1.1], "k--", lw=2)
         ax.set_xlim([-0.05, 1.0])
         ax.set_ylim([0.0, 1.05])
         ax.set_xlabel("False Positive Rate", fontsize=text_fontsize)
@@ -772,9 +772,16 @@ class PlotBase(QWidget):
         """Get axes."""
         with plt.style.context(self.MPL_STYLE):
             if self._ax is None:
-                self._ax = self.figure.add_axes([0.1, 0.15, 0.87, 0.82])  # left, bottom, width, height
-                # self._ax = self.figure.subplots()
+                self._ax = self.get_ax(0.1, 0.15, 0.87, 0.82)
             return self._ax
+
+    def get_ax(self, left: float = 0.1, bottom: float = 0.15, width: float = 0.87, height: float = 0.82):
+        """Create ax."""
+        with plt.style.context(self.MPL_STYLE):
+            if self._ax is not None:
+                warnings.warn("Overriding existing ax.", UserWarning, stacklevel=2)
+            self._ax = self.figure.add_axes([left, bottom, width, height])
+        return self._ax
 
     def __repr__(self):
         return f"Plot: {self.plot_name} | Window name: {self.window_name}"
