@@ -95,8 +95,7 @@ class VispyCamera:
             # in 2D, we arbitrarily choose 0.0 as the center in z
             center = (*tuple(self._view.camera.center[:2]), 0.0)
         # switch from VisPy xyz ordering to NumPy prc ordering
-        center = center[::-1]
-        return center
+        return center[::-1]
 
     @center.setter
     def center(self, center):
@@ -117,8 +116,7 @@ class VispyCamera:
             scale = self._view.camera.scale_factor
         else:
             scale = np.array([self._view.camera.rect.width, self._view.camera.rect.height])
-        zoom = np.min(canvas_size / scale)
-        return zoom
+        return np.min(canvas_size / scale)
 
     @zoom.setter
     def zoom(self, zoom):

@@ -186,6 +186,7 @@ extend-ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["D", "S"]
 "setup.py" = ["D"]
+"examples/*.py" = ["INP001", "D", "S"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 # Disallow all relative imports.
@@ -233,6 +234,7 @@ pretty = true
 # https://coverage.readthedocs.io/en/6.4/config.html
 [tool.coverage.run]
 source = ["src"]
+relative_files = true
 omit = [
     "**/*_version.py"
 ]

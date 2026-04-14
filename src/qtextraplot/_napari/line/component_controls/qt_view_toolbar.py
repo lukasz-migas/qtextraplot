@@ -167,7 +167,10 @@ class QtViewRightToolbar(QtMiniToolbar):
             func_menu=self.on_open_save_figure,
         )
         self.tools_zoomout_btn = self.add_qta_tool(
-            "zoom_out", tooltip="Zoom-out", func=viewer.reset_view, func_menu=self.on_open_camera_config,
+            "zoom_out",
+            tooltip="Zoom-out",
+            func=viewer.reset_view,
+            func_menu=self.on_open_camera_config,
         )
         self.tools_erase_btn = self.add_qta_tool("erase", tooltip="Clear image", func=viewer.clear_canvas)
         self.tools_erase_btn.hide()

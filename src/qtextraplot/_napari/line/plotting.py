@@ -39,6 +39,6 @@ def update_attributes(layer, throw_exception: bool = True, **kwargs):
     for attr, value in kwargs.items():
         try:
             setattr(layer, attr, value)
-        except (AttributeError, ValueError) as err:
+        except (AttributeError, ValueError):
             if throw_exception:
-                raise err
+                raise

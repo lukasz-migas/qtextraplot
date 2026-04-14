@@ -175,7 +175,7 @@ class NapariImageView(ViewerBase):
         **kwargs: ty.Any,
     ) -> Image:
         """Add image layer."""
-        layer: ty.Optional[Image] = self.try_reuse(name, Image, reuse=reuse)
+        layer: Image | None = self.try_reuse(name, Image, reuse=reuse)
         if layer:
             layer.data = array
             if contrast_limits is not None:

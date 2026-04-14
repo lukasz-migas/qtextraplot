@@ -1,5 +1,7 @@
 """Mode buttons."""
 
+from __future__ import annotations
+
 import typing as ty
 import weakref
 from enum import Enum
@@ -12,7 +14,14 @@ class QtModeRadioButton(QtImagePushButton):
     """Enum-based button."""
 
     def __init__(
-        self, layer: Layer, icon_name: str, mode: Enum, tooltip: str = "", checked: bool = False, *args, **kwargs,
+        self,
+        layer: Layer,
+        icon_name: str,
+        mode: Enum,
+        tooltip: str = "",
+        checked: bool = False,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.layer_ref = weakref.ref(layer)
@@ -21,7 +30,7 @@ class QtModeRadioButton(QtImagePushButton):
         self.setCheckable(True)
         self.setChecked(checked)
         self.setProperty("mode", icon_name)
-        self.set_medium()
+        self.set_qta_size_preset("medium")
         self.mode = mode
         if mode is not None:
             self.toggled.connect(self._set_mode)
@@ -51,13 +60,19 @@ class QtModePushButton(QtImagePushButton):
     """Enum-based button."""
 
     def __init__(
-        self, layer: Layer, icon_name: str, tooltip: str = "", func: ty.Optional[ty.Callable] = None, *args, **kwargs,
+        self,
+        layer: Layer,
+        icon_name: str,
+        tooltip: str = "",
+        func: ty.Callable | None = None,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.layer_ref = weakref.ref(layer)
         self.set_qta(icon_name)
         self.setToolTip(tooltip or icon_name)
-        self.set_medium()
+        self.set_qta_size_preset("medium")
         if func is not None:
             self.clicked.connect(func)
 

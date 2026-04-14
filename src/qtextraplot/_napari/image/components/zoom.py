@@ -1,6 +1,5 @@
 """Zoom-box."""
 
-
 from napari.components.overlays.base import SceneOverlay
 
 

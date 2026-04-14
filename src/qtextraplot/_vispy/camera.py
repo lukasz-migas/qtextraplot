@@ -120,9 +120,7 @@ class BoxZoomCamera(PanZoomCamera):
         x, y, _, _ = center
         if x < limit_rect.left or x > limit_rect.right:
             return False
-        if y < limit_rect.bottom or y > limit_rect.top:
-            return False
-        return True
+        return not (y < limit_rect.bottom or y > limit_rect.top)
 
     @property
     def extent(self):
@@ -146,10 +144,7 @@ class BoxZoomCamera(PanZoomCamera):
 
     @rect.setter
     def rect(self, args):
-        if isinstance(args, tuple):
-            rect = Rect(*args)
-        else:
-            rect = Rect(args)
+        rect = Rect(*args) if isinstance(args, tuple) else Rect(args)
 
         # ensure user never goes outside of allowed limits
         rect = self._check_zoom_limit(rect)
@@ -180,7 +175,8 @@ class BoxZoomCamera(PanZoomCamera):
 
         def _zoom_callback():
             self._on_callback_key(
-                ExtractEvent(self.roi_shape, self.rect.left, self.rect.right, self.rect.bottom, self.rect.top), "ZOOM",
+                ExtractEvent(self.roi_shape, self.rect.left, self.rect.right, self.rect.bottom, self.rect.top),
+                "ZOOM",
             )
 
         def _event_callback(xy_values):
@@ -268,12 +264,12 @@ class BoxZoomCamera(PanZoomCamera):
             # add point to polygon but prevent the user from zooming-in
             if self.roi_shape == "poly" and self.lock:
                 self.events.zoom_box_show(event=event, show=True, roi_shape=self.roi_shape)
-                if event.press_event.button in [1]:
+                if event.press_event.button == 1:
                     x1, y1, _, _ = self._transform.imap(np.asarray(event.pos[:2]))
                     self.polygon.add_point(*round_to_half(x1, y1))
                 return
             self.events.zoom_box_show(event=event, show=False, roi_shape=self.roi_shape)  # changed
-            if event.press_event.button not in [1]:
+            if event.press_event.button != 1:
                 return
             event.handled = event.button in [1, 2]
 
@@ -285,7 +281,11 @@ class BoxZoomCamera(PanZoomCamera):
             if self._is_1d:
                 y0, _ = self.y_extent
 
-            if (self._key_control and self.allow_extraction) or (self._key_shift and self.allow_extraction) or (self._key_alt and self.allow_extraction):
+            if (
+                (self._key_control and self.allow_extraction)
+                or (self._key_shift and self.allow_extraction)
+                or (self._key_alt and self.allow_extraction)
+            ):
                 _event_callback((x0, x1, y0, y1))
             else:
                 if x1 - x0 <= 0.00001 or y1 - y0 <= 0.00001:
@@ -311,7 +311,8 @@ class BoxZoomCamera(PanZoomCamera):
         self.events.zoom_box_show(event=event, show=False, roi_shape=self.roi_shape)
         super().reset()
         self._on_callback_key(
-            ExtractEvent("rect", self.rect.left, self.rect.right, self.rect.bottom, self.rect.top), "ZOOM",
+            ExtractEvent("rect", self.rect.left, self.rect.right, self.rect.bottom, self.rect.top),
+            "ZOOM",
         )
         self.events.zoom(event=event)
 
@@ -344,8 +345,7 @@ class BoxZoomCamera(PanZoomCamera):
         """float: Scale from canvas pixels to world pixels."""
         canvas_size = np.min(self.canvas.size)
         scale = np.min([self.rect.width, self.rect.height])
-        zoom = canvas_size / scale
-        return zoom
+        return canvas_size / scale
 
     @zoom_value.setter
     def zoom_value(self, zoom):
@@ -381,7 +381,11 @@ class BoxZoomCameraMixin:
         self._zoom_roi.visible = False
         # main ellipse
         self._zoom_ellipse = Ellipse(
-            (0, 0), parent=self.view.scene, color=color, border_color=border_color, border_width=4,
+            (0, 0),
+            parent=self.view.scene,
+            color=color,
+            border_color=border_color,
+            border_width=4,
         )
         self._zoom_ellipse.visible = False
 

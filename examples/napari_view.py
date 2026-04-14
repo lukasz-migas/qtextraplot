@@ -5,10 +5,11 @@ from __future__ import annotations
 import sys
 
 import numpy as np
+from qtextra.config import THEMES
 from qtpy.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from qtextraplot._napari import NapariImageView
-from qtextra.config import THEMES
+
 
 def main() -> int:
     """Run the example application."""

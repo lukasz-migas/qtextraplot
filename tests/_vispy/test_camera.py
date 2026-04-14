@@ -57,7 +57,7 @@ class TestBoxZoomCameraExtents:
     def test_extent_property(self, camera):
         camera.set_extents(1, 9, 2, 8)
         camera.simple_zoom(1, 9, 2, 8)
-        left, right, bottom, top = camera.extent
+        left, right, _bottom, _top = camera.extent
         assert left == pytest.approx(1, abs=0.1)
         assert right == pytest.approx(9, abs=0.1)
 

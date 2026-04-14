@@ -59,6 +59,7 @@ class ViewBase:
 
     @property
     def is_vispy(self) -> bool:
+        """Return boolean to indicate whether vispy is enabled."""
         return self.IS_VISPY
 
     def unregister(self):
@@ -207,9 +208,9 @@ class ViewBase:
         x: float,
         y: float,
         width: float,
-        height: ty.Optional[float] = None,
+        height: float | None = None,
         color="r",
-        obj_name: ty.Optional[str] = None,
+        obj_name: str | None = None,
         pickable: bool = True,
         repaint: bool = True,
     ):
@@ -221,11 +222,11 @@ class ViewBase:
     def update_patch(
         self,
         obj_name: str,
-        color: ty.Optional[str] = None,
-        x: ty.Optional[float] = None,
-        y: ty.Optional[float] = None,
-        width: ty.Optional[float] = None,
-        height: ty.Optional[float] = None,
+        color: str | None = None,
+        x: float | None = None,
+        y: float | None = None,
+        width: float | None = None,
+        height: float | None = None,
         repaint: bool = True,
     ):
         """Update patch."""
@@ -249,8 +250,8 @@ class ViewBase:
         obj_name: str,
         x: float,
         y: float,
-        width: ty.Optional[float] = None,
-        height: ty.Optional[float] = None,
+        width: float | None = None,
+        height: float | None = None,
         repaint: bool = True,
     ):
         """Move rectangular patch to new position - usually used to indicate region of interest."""
@@ -269,9 +270,9 @@ class ViewBase:
         x: float,
         y: float,
         width: float,
-        height: ty.Optional[float],
+        height: float | None,
         color="r",
-        obj_name: ty.Optional[str] = None,
+        obj_name: str | None = None,
         pickable: bool = True,
         repaint: bool = True,
     ):
@@ -285,7 +286,9 @@ class ViewBase:
     def add_patches(self, x, y, width, height, obj_name=None, color=None, pickable: bool = True, repaint: bool = True):
         """Add rectangular patches to the plot."""
         if not (len(x) == len(y) == len(width)):
-            raise ValueError("Incorrect shape of the data. `x`, `y` and `width` must have the same length.")
+            raise ValueError(  # noqa: TRY003
+                "Incorrect shape of the data. `x`, `y` and `width` must have the same length.",
+            )
         if obj_name is None:
             obj_name = [None] * len(x)
         if color is None:
@@ -294,7 +297,7 @@ class ViewBase:
             self.figure.plot_add_patch(_x, _y, _width, _height, obj_name=_obj_name, color=_color, pickable=pickable)
         self.figure.repaint(repaint)
 
-    def remove_patches(self, start_with: ty.Optional[str] = None, repaint: bool = True):
+    def remove_patches(self, start_with: str | None = None, repaint: bool = True):
         """Remove rectangular patches from the plot.
 
         Parameters

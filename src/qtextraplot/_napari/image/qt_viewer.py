@@ -180,7 +180,12 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
     ):
         """Capture a screenshot of the Vispy canvas."""
         return Window._screenshot(
-            self, size=size, scale=scale, flash=flash, canvas_only=canvas_only, fit_to_data_extent=fit_to_data_extent,
+            self,
+            size=size,
+            scale=scale,
+            flash=flash,
+            canvas_only=canvas_only,
+            fit_to_data_extent=fit_to_data_extent,
         )
 
     def clipboard(

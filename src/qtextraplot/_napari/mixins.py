@@ -12,6 +12,7 @@ from qtpy.QtWidgets import QWidget
 if ty.TYPE_CHECKING:
     from napari.layers import Image
 
+    from qtextraplot._napari.image.component_controls.qt_view_toolbar import QtViewToolbar
     from qtextraplot._napari.image.wrapper import NapariImageView
     from qtextraplot._napari.line.wrapper import NapariLineView
     from qtextraplot._napari.line.wrapper import Viewer as LineViewer
@@ -46,6 +47,11 @@ class ImageViewMixin:
         )
         view.layers.events.removed.connect(self._on_remove_layer)
         return view
+
+    @property
+    def viewerToolbar(self) -> QtViewToolbar:
+        """Viewer toolbar."""
+        return self.view_image.widget.viewerToolbar
 
     def _on_remove_layer(self, event: Event) -> None:
         """Remove layer."""
@@ -118,6 +124,11 @@ class LineViewMixin:
             lock_to_bottom=lock_to_bottom,
             **kwargs,
         )
+
+    @property
+    def viewerToolbar(self) -> QtViewToolbar:
+        """Viewer toolbar."""
+        return self.view_image.widget.viewerToolbar
 
     def on_yaxis_zoom(self, viewer: LineViewer, event: Event) -> ty.Generator:
         """Zoom y-axis of the current tab."""
