@@ -34,6 +34,11 @@ class ViewerBase(ABC):
         """Get camera."""
         return self.widget.view.camera
 
+    @property
+    def vispy_camera(self):
+        """Get camera."""
+        return self.widget.canvas.camera._view.camera
+
     def _clear(self, _evt=None) -> None:  # noqa: B027
         """Clear canvas."""
 
