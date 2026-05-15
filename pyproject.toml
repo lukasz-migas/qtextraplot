@@ -181,6 +181,7 @@ extend-ignore = [
     "D205", # 1 blank line required between summary line and description
     "S606",
     "S607",
+    "COM812"
 ]
 
 [tool.ruff.lint.per-file-ignores]
