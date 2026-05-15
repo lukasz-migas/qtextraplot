@@ -1,6 +1,6 @@
 """Tests for reusable colorbar widgets."""
 
-from qtextraplot.widgets import ColorbarStackItem, QtColorbarRangeSlider, QtColorbarStack
+from qtextraplot.widgets import ColorbarStackItem, QtColorbarRangeSlider, QtColorbarStack, QtFloatingColorbarWidget
 from qtextraplot.widgets.colorbar import _format_overflow_percent, _format_percent
 
 
@@ -54,3 +54,69 @@ def test_colorbar_stack_replaces_items(qtbot) -> None:
 
     stack.set_items([])
     assert stack.widgets == ()
+
+
+def test_colorbar_size_presets_change_row_height(qtbot) -> None:
+    small = QtColorbarRangeSlider(size_preset="small")
+    medium = QtColorbarRangeSlider(size_preset="medium")
+    large = QtColorbarRangeSlider(size_preset="large")
+    for widget in (small, medium, large):
+        qtbot.addWidget(widget)
+
+    assert small.slider.maximumHeight() < medium.slider.maximumHeight() < large.slider.maximumHeight()
+    assert medium.slider.maximumHeight() <= 40
+
+
+def test_colorbar_row_keeps_label_from_squashing_bar(qtbot) -> None:
+    widget = QtColorbarRangeSlider(label="703.5724 m/z +/- 21.3 ppm", size_preset="medium")
+    qtbot.addWidget(widget)
+
+    assert widget._label.width() <= 185
+    assert widget.slider.minimumWidth() >= 280
+    assert widget.layout().spacing() <= 3
+
+
+def test_colorbar_stack_size_preset_propagates(qtbot) -> None:
+    stack = QtColorbarStack(size_preset="small")
+    qtbot.addWidget(stack)
+    stack.set_items([ColorbarStackItem(label="A", data_range=(0.0, 1.0), colorbar="red")])
+
+    assert stack.widgets[0]._size_preset == "small"
+    stack.set_size_preset("large")
+    assert stack.widgets[0]._size_preset == "large"
+
+
+def test_floating_colorbar_collapses_and_expands(qtbot) -> None:
+    widget = QtFloatingColorbarWidget(title="Images")
+    qtbot.addWidget(widget)
+    widget.set_items([ColorbarStackItem(label="A", data_range=(0.0, 1.0), colorbar="red")])
+
+    with qtbot.waitSignal(widget.collapsedChanged, timeout=1000) as blocker:
+        widget.set_collapsed(True)
+
+    assert blocker.args == [True]
+    assert widget.is_collapsed()
+    assert widget.stack.isHidden()
+
+    widget.toggle_collapsed()
+    assert not widget.is_collapsed()
+    assert not widget.stack.isHidden()
+
+
+def test_floating_colorbar_resizes_height_but_preserves_width(qtbot) -> None:
+    widget = QtFloatingColorbarWidget(title="Images")
+    qtbot.addWidget(widget)
+    widget.resize(760, 200)
+
+    widget.set_items(
+        [
+            ColorbarStackItem(label="A", data_range=(0.0, 1.0), colorbar="red"),
+            ColorbarStackItem(label="B", data_range=(0.0, 1.0), colorbar="blue"),
+        ],
+    )
+    height_with_two_rows = widget.height()
+
+    widget.set_items([ColorbarStackItem(label="A", data_range=(0.0, 1.0), colorbar="red")])
+
+    assert widget.width() == 760
+    assert widget.height() < height_with_two_rows

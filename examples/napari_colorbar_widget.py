@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import sys
-import typing as ty
 
 import numpy as np
 from napari.layers import Image
-from napari.utils.colormaps import Colormap
 from qtextra.config import THEMES
-from qtpy.QtWidgets import QApplication, QFrame, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QApplication, QVBoxLayout, QWidget
 
-from qtextraplot._napari import NapariImageView
-from qtextraplot.widgets import ColorbarStackItem, QtColorbarStack
+from qtextraplot.napari import NapariImageView, QtNapariImageColorbarWidget
 
 
 def make_signal(shape: tuple[int, int], center: tuple[float, float], width: float) -> np.ndarray:
@@ -26,42 +23,35 @@ def make_signal(shape: tuple[int, int], center: tuple[float, float], width: floa
     return signal / np.nanmax(signal)
 
 
-def transparent_low_colormap(colormap: Colormap, active: bool) -> Colormap:
-    """Return a colormap with optional transparent low values."""
-    low_color = [0.0, 0.0, 0.0, 0.0] if active else None
-    return colormap.copy(update={"low_color": low_color})
-
-
 class ColorbarCanvasExample(QWidget):
     """Napari canvas with an externally managed colorbar overlay."""
 
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("qtextraplot napari colorbar widget")
-        self._base_colormaps: dict[Image, Colormap] = {}
+        self._dynamic_layer: Image | None = None
 
         self.view = NapariImageView(self, add_toolbars=True, add_dims=False)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.view.widget)
 
-        self.colorbar_panel = QFrame(self)
-        self.colorbar_panel.setObjectName("floatingColorbarPanel")
-        self.colorbar_panel.setStyleSheet(
-            "QFrame#floatingColorbarPanel { background: rgba(0, 0, 0, 180); border-radius: 4px; }",
+        self._add_layers()
+        self.colorbar_panel = QtNapariImageColorbarWidget(
+            self.view.viewer,
+            self,
+            title="Image colorbars",
+            size_preset="medium",
         )
-        panel_layout = QVBoxLayout(self.colorbar_panel)
-        panel_layout.setContentsMargins(8, 8, 8, 8)
-        self.colorbar_stack = QtColorbarStack(self.colorbar_panel)
-        panel_layout.addWidget(self.colorbar_stack)
         self.colorbar_panel.raise_()
 
-        self._add_layers()
-        self._configure_colorbars()
+        self._schedule_layer_list_demo()
 
     def resizeEvent(self, event) -> None:
         """Keep the colorbar panel hovering above the canvas."""
         super().resizeEvent(event)
+        if not hasattr(self, "colorbar_panel"):
+            return
         width = min(760, max(320, self.width() - 32))
         self.colorbar_panel.setGeometry(16, 16, width, self.colorbar_panel.sizeHint().height())
 
@@ -74,48 +64,41 @@ class ColorbarCanvasExample(QWidget):
         ]
 
         self.layers: list[Image] = []
-        for name, colormap, data in layers:
+        for index, (name, colormap, data) in enumerate(layers):
+            selected_min = 0.3 if index else 0.5
+            selected_max = 1.0 / (2.8 if index != 1 else 2.0)
             layer = self.view.add_image(
                 data,
                 name=name,
                 colormap=colormap,
                 blending="additive",
-                contrast_limits=(0.0, 1.0),
                 keep_auto_contrast=False,
             )
-            self._base_colormaps[layer] = layer.colormap
+            layer.contrast_limits_range = (0.0, 1.0)
+            layer.contrast_limits = (selected_min * selected_max, selected_max)
             self.layers.append(layer)
 
-    def _configure_colorbars(self) -> None:
-        items = []
-        for index, layer in enumerate(self.layers):
-            selected_min = 0.3 if index else 0.5
-            selected_max = 1.0 / (2.8 if index != 1 else 2.0)
-            items.append(
-                ColorbarStackItem(
-                    label=layer.name,
-                    data_range=(0.0, 1.0),
-                    limits=(selected_min * selected_max, selected_max),
-                    colorbar=self._base_colormaps[layer].colorbar,
-                ),
-            )
+    def _schedule_layer_list_demo(self) -> None:
+        pass
+        # QTimer.singleShot(1200, self._add_dynamic_layer)
+        # QTimer.singleShot(3200, self._remove_dynamic_layer)
 
-        self.colorbar_stack.set_items(items)
-        for layer, widget in zip(self.layers, self.colorbar_stack.widgets, strict=True):
-            widget.limitsChanged.connect(
-                ty.cast(
-                    ty.Callable[[tuple[float, float]], None],
-                    lambda limits, layer=layer: self._on_limits_changed(layer, limits),
-                ),
-            )
-            self._on_limits_changed(layer, widget.value())
+    def _add_dynamic_layer(self) -> None:
+        data = make_signal((256, 256), (0.42, -0.35), 0.1)
+        self._dynamic_layer = self.view.add_image(
+            data,
+            name="Dynamic 780.5912 m/z +/- 18.8 ppm",
+            colormap="yellow",
+            blending="additive",
+            keep_auto_contrast=False,
+        )
+        self._dynamic_layer.contrast_limits_range = (0.0, 1.0)
+        self._dynamic_layer.contrast_limits = (0.15, 0.45)
 
-    def _on_limits_changed(self, layer: Image, limits: tuple[float, float]) -> None:
-        """Apply externally managed limits to a napari image layer."""
-        layer.contrast_limits = limits
-        data_min = float(layer.contrast_limits_range[0])
-        active = float(limits[0]) > data_min
-        layer.colormap = transparent_low_colormap(self._base_colormaps[layer], active)
+    def _remove_dynamic_layer(self) -> None:
+        if self._dynamic_layer is not None and self._dynamic_layer in self.view.viewer.layers:
+            self.view.viewer.layers.remove(self._dynamic_layer)
+            self._dynamic_layer = None
 
 
 def main() -> int:

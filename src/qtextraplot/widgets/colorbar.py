@@ -8,13 +8,94 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
 import numpy as np
-from qtpy.QtCore import QPointF, QRectF, QSignalBlocker, Qt, Signal
+from qtpy.QtCore import QEvent, QPoint, QPointF, QRectF, QSignalBlocker, Qt, Signal
 from qtpy.QtGui import QBrush, QColor, QImage, QLinearGradient, QPainter, QPen, QPixmap
-from qtpy.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QToolButton, QVBoxLayout, QWidget
 from superqt.sliders import QDoubleRangeSlider
 
 ColorbarInput = np.ndarray | QImage | QPixmap | str | tuple[float, ...] | list[float] | None
 RangeTuple = tuple[float, float]
+ColorbarSizePreset = ty.Literal["small", "medium", "large"]
+
+
+@dataclass(frozen=True)
+class _ColorbarSizeConfig:
+    slider_height: int
+    bar_height: float
+    bar_top: float
+    label_gap: int
+    font_size: int
+    checker_square: int
+    handle_dark_width: int
+    handle_light_width: int
+    handle_extra: float
+    label_width: int
+    bar_min_width: int
+    overflow_min_width: int
+    spacing: int
+
+
+_SIZE_PRESETS: dict[ColorbarSizePreset, _ColorbarSizeConfig] = {
+    "small": _ColorbarSizeConfig(
+        slider_height=32,
+        bar_height=9.0,
+        bar_top=4.0,
+        label_gap=4,
+        font_size=8,
+        checker_square=5,
+        handle_dark_width=3,
+        handle_light_width=2,
+        handle_extra=2.0,
+        label_width=140,
+        bar_min_width=200,
+        overflow_min_width=32,
+        spacing=2,
+    ),
+    "medium": _ColorbarSizeConfig(
+        slider_height=40,
+        bar_height=13.0,
+        bar_top=5.0,
+        label_gap=5,
+        font_size=9,
+        checker_square=7,
+        handle_dark_width=4,
+        handle_light_width=3,
+        handle_extra=3.0,
+        label_width=185,
+        bar_min_width=280,
+        overflow_min_width=40,
+        spacing=3,
+    ),
+    "large": _ColorbarSizeConfig(
+        slider_height=50,
+        bar_height=17.0,
+        bar_top=7.0,
+        label_gap=6,
+        font_size=11,
+        checker_square=9,
+        handle_dark_width=5,
+        handle_light_width=4,
+        handle_extra=4.0,
+        label_width=230,
+        bar_min_width=360,
+        overflow_min_width=48,
+        spacing=4,
+    ),
+}
+
+
+def _get_size_config(size_preset: ColorbarSizePreset) -> _ColorbarSizeConfig:
+    try:
+        return _SIZE_PRESETS[size_preset]
+    except KeyError as exc:
+        msg = f"Unknown colorbar size preset: {size_preset}"
+        raise ValueError(msg) from exc
+
+
+def _event_global_pos(event: ty.Any) -> QPoint:
+    if hasattr(event, "globalPosition"):
+        return event.globalPosition().toPoint()
+    return event.globalPos()
 
 
 @dataclass(frozen=True)
@@ -131,15 +212,17 @@ def _colorbar_to_stops(colorbar: ColorbarInput) -> list[tuple[float, QColor]]:
 class _ColorbarSliderBar(QDoubleRangeSlider):
     detailRequested = Signal()
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, size_preset: ColorbarSizePreset = "medium") -> None:
         super().__init__(Qt.Orientation.Horizontal, parent)
         self.setMouseTracking(True)
-        self.setMinimumHeight(52)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setBarVisible(False)
         self._color_stops = _colorbar_to_stops(None)
         self._minimum_label = "0%"
         self._maximum_label = "100%"
+        self._size_preset: ColorbarSizePreset = "medium"
+        self._size_config = _get_size_config("medium")
+        self.set_size_preset(size_preset)
 
     def set_colorbar(self, colorbar: ColorbarInput) -> None:
         """Set the colorbar preview used to paint the slider."""
@@ -150,6 +233,19 @@ class _ColorbarSliderBar(QDoubleRangeSlider):
         """Set the labels painted below the handles."""
         self._minimum_label = minimum
         self._maximum_label = maximum
+        self.update()
+
+    def set_size_preset(self, size_preset: ColorbarSizePreset) -> None:
+        """Set the size preset used to paint the slider."""
+        self._size_preset = size_preset
+        self._size_config = _get_size_config(size_preset)
+        font = self.font()
+        font.setPointSize(self._size_config.font_size)
+        self.setFont(font)
+        self.setMinimumHeight(self._size_config.slider_height)
+        self.setMaximumHeight(self._size_config.slider_height)
+        self.setMinimumWidth(self._size_config.bar_min_width)
+        self.updateGeometry()
         self.update()
 
     def mousePressEvent(self, event) -> None:
@@ -192,9 +288,9 @@ class _ColorbarSliderBar(QDoubleRangeSlider):
         contents = self.contentsRect()
         return QRectF(
             float(contents.left() + 8),
-            float(contents.top() + 8),
+            float(contents.top() + self._size_config.bar_top),
             float(max(1, contents.width() - 16)),
-            18.0,
+            self._size_config.bar_height,
         )
 
     def _value_to_x(self, value: float, rect: QRectF) -> float:
@@ -209,7 +305,7 @@ class _ColorbarSliderBar(QDoubleRangeSlider):
     def _draw_checkerboard(self, painter: QPainter, rect: QRectF) -> None:
         if rect.width() <= 0.0 or rect.height() <= 0.0:
             return
-        square = 7
+        square = self._size_config.checker_square
         light = QColor("#b7b7b7")
         dark = QColor("#595959")
         left = math.floor(rect.left())
@@ -240,17 +336,23 @@ class _ColorbarSliderBar(QDoubleRangeSlider):
         painter.drawRect(rect)
 
     def _draw_handles(self, painter: QPainter, minimum_x: float, maximum_x: float, rect: QRectF) -> None:
-        painter.setPen(QPen(QColor("#202020"), 5))
+        painter.setPen(QPen(QColor("#202020"), self._size_config.handle_dark_width))
         for x in (minimum_x, maximum_x):
-            painter.drawLine(QPointF(x, rect.top() - 4.0), QPointF(x, rect.bottom() + 4.0))
-        painter.setPen(QPen(QColor("#ffffff"), 3))
+            painter.drawLine(
+                QPointF(x, rect.top() - self._size_config.handle_extra),
+                QPointF(x, rect.bottom() + self._size_config.handle_extra),
+            )
+        painter.setPen(QPen(QColor("#ffffff"), self._size_config.handle_light_width))
         for x in (minimum_x, maximum_x):
-            painter.drawLine(QPointF(x, rect.top() - 4.0), QPointF(x, rect.bottom() + 4.0))
+            painter.drawLine(
+                QPointF(x, rect.top() - self._size_config.handle_extra),
+                QPointF(x, rect.bottom() + self._size_config.handle_extra),
+            )
 
     def _draw_percent_labels(self, painter: QPainter, minimum_x: float, maximum_x: float, rect: QRectF) -> None:
         painter.setPen(QPen(QColor("#f0f0f0"), 1))
         font_metrics = painter.fontMetrics()
-        y = int(rect.bottom() + font_metrics.ascent() + 8)
+        y = int(rect.bottom() + font_metrics.ascent() + self._size_config.label_gap)
         self._draw_centered_text(painter, self._minimum_label, minimum_x, y)
         self._draw_centered_text(painter, self._maximum_label, maximum_x, y)
 
@@ -271,25 +373,35 @@ class QtColorbarRangeSlider(QWidget):
     rangeChanged = Signal(tuple)
     detailRequested = Signal()
 
-    def __init__(self, parent: QWidget | None = None, label: str = "", colorbar: ColorbarInput = None) -> None:
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        label: str = "",
+        colorbar: ColorbarInput = None,
+        size_preset: ColorbarSizePreset = "medium",
+    ) -> None:
         super().__init__(parent)
         self._data_range: RangeTuple = (0.0, 1.0)
+        self._size_preset: ColorbarSizePreset = size_preset
         self._label = QLabel(label, self)
         self._label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
+        self._label.setToolTip(label)
+        self._label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._label.setVisible(bool(label))
 
-        self._slider = _ColorbarSliderBar(self)
+        self._slider = _ColorbarSliderBar(self, size_preset=size_preset)
         self._slider.valueChanged.connect(self._on_slider_value_changed)
         self._slider.rangeChanged.connect(self._on_slider_range_changed)
         self._slider.detailRequested.connect(self.detailRequested.emit)
 
         self._overflow_label = QLabel("", self)
         self._overflow_label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
+        self._overflow_label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._overflow_label.setMinimumWidth(44)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
+        layout.setSpacing(_get_size_config(size_preset).spacing)
         layout.addWidget(self._label)
         layout.addWidget(self._slider, stretch=1)
         layout.addWidget(self._overflow_label)
@@ -298,6 +410,7 @@ class QtColorbarRangeSlider(QWidget):
         self.set_colorbar(colorbar)
         self.set_data_range(self._data_range)
         self.set_limits(self._data_range)
+        self.set_size_preset(size_preset)
 
     @property
     def slider(self) -> QDoubleRangeSlider:
@@ -307,7 +420,22 @@ class QtColorbarRangeSlider(QWidget):
     def set_label(self, text: str) -> None:
         """Set the left-hand label text."""
         self._label.setText(text)
+        self._label.setToolTip(text)
         self._label.setVisible(bool(text))
+
+    def set_size_preset(self, size_preset: ColorbarSizePreset) -> None:
+        """Set the row size preset."""
+        self._size_preset = size_preset
+        config = _get_size_config(size_preset)
+        self.layout().setSpacing(config.spacing)
+        for label in (self._label, self._overflow_label):
+            font = label.font()
+            font.setPointSize(config.font_size)
+            label.setFont(font)
+        self._label.setFixedWidth(config.label_width)
+        self._overflow_label.setFixedWidth(config.overflow_min_width)
+        self._slider.set_size_preset(size_preset)
+        self.updateGeometry()
 
     def set_data_range(self, value: RangeTuple) -> None:
         """Set the full data range represented by the colorbar."""
@@ -382,9 +510,10 @@ class QtColorbarRangeSlider(QWidget):
 class QtColorbarStack(QWidget):
     """Vertical stack of colorbar range sliders."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, size_preset: ColorbarSizePreset = "medium") -> None:
         super().__init__(parent)
         self._widgets: list[QtColorbarRangeSlider] = []
+        self._size_preset: ColorbarSizePreset = size_preset
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(2)
@@ -399,12 +528,26 @@ class QtColorbarStack(QWidget):
         self._clear()
         for item in items:
             stack_item = self._coerce_item(item)
-            widget = QtColorbarRangeSlider(self, label=stack_item.label, colorbar=stack_item.colorbar)
+            widget = QtColorbarRangeSlider(
+                self,
+                label=stack_item.label,
+                colorbar=stack_item.colorbar,
+                size_preset=self._size_preset,
+            )
             widget.set_data_range(stack_item.data_range)
             widget.set_limits(stack_item.limits if stack_item.limits is not None else stack_item.data_range)
             self._widgets.append(widget)
             self._layout.addWidget(widget)
         self._layout.addStretch(1)
+        self._layout.invalidate()
+        self.updateGeometry()
+
+    def set_size_preset(self, size_preset: ColorbarSizePreset) -> None:
+        """Set the size preset for every row."""
+        self._size_preset = size_preset
+        for widget in self._widgets:
+            widget.set_size_preset(size_preset)
+        self.updateGeometry()
 
     def _clear(self) -> None:
         while self._layout.count():
@@ -425,4 +568,143 @@ class QtColorbarStack(QWidget):
         )
 
 
-__all__ = ["ColorbarStackItem", "QtColorbarRangeSlider", "QtColorbarStack"]
+class QtFloatingColorbarWidget(QFrame):
+    """Floating, draggable, collapsible colorbar stack."""
+
+    collapsedChanged = Signal(bool)
+
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        title: str = "Colorbars",
+        size_preset: ColorbarSizePreset = "medium",
+    ) -> None:
+        super().__init__(parent)
+        self._size_preset: ColorbarSizePreset = size_preset
+        self._drag_offset: QPoint | None = None
+        self._drag_widgets: set[QWidget] = set()
+        self.setObjectName("floatingColorbarWidget")
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setStyleSheet(
+            "QFrame#floatingColorbarWidget { background: rgba(0, 0, 0, 180); border-radius: 4px; }",
+        )
+
+        self._title_label = QLabel(title, self)
+        self._title_label.setObjectName("floatingColorbarTitle")
+        self._title_label.setStyleSheet("QLabel#floatingColorbarTitle { color: white; font-weight: bold; }")
+        self._drag_label = QLabel("move", self)
+        self._drag_label.setStyleSheet("QLabel { color: #d0d0d0; }")
+        self._drag_label.setCursor(Qt.CursorShape.SizeAllCursor)
+        self._collapse_button = QToolButton(self)
+        self._collapse_button.setAutoRaise(True)
+        self._collapse_button.setText("-")
+        self._collapse_button.setToolTip("Collapse colorbars")
+        self._collapse_button.clicked.connect(self.toggle_collapsed)
+
+        self._header = QWidget(self)
+        self._header.setCursor(Qt.CursorShape.SizeAllCursor)
+        header_layout = QHBoxLayout(self._header)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(6)
+        header_layout.addWidget(self._title_label, stretch=1)
+        header_layout.addWidget(self._drag_label)
+        header_layout.addWidget(self._collapse_button)
+
+        self.stack = QtColorbarStack(self, size_preset=size_preset)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(4)
+        layout.addWidget(self._header)
+        layout.addWidget(self.stack)
+
+        self._install_drag_filter(self._header, self._title_label, self._drag_label)
+        self.set_size_preset(size_preset)
+
+    def set_items(self, items: Iterable[ColorbarStackItem | Mapping[str, ty.Any]]) -> None:
+        """Replace the colorbar rows."""
+        self.stack.set_items(items)
+        self.resize_to_content()
+
+    def set_title(self, title: str) -> None:
+        """Set the floating widget title."""
+        self._title_label.setText(title)
+
+    def set_size_preset(self, size_preset: ColorbarSizePreset) -> None:
+        """Set the colorbar size preset."""
+        self._size_preset = size_preset
+        config = _get_size_config(size_preset)
+        for label in (self._title_label, self._drag_label):
+            font = label.font()
+            font.setPointSize(config.font_size)
+            label.setFont(font)
+        self.stack.set_size_preset(size_preset)
+        self.resize_to_content()
+
+    def set_collapsed(self, collapsed: bool) -> None:
+        """Collapse or expand the colorbar rows."""
+        if self.stack.isHidden() == collapsed:
+            return
+        self.stack.setVisible(not collapsed)
+        self._collapse_button.setText("+" if collapsed else "-")
+        self._collapse_button.setToolTip("Expand colorbars" if collapsed else "Collapse colorbars")
+        self.resize_to_content()
+        self.collapsedChanged.emit(collapsed)
+
+    def toggle_collapsed(self) -> None:
+        """Toggle the collapsed state."""
+        self.set_collapsed(not self.stack.isHidden())
+
+    def is_collapsed(self) -> bool:
+        """Return whether the widget is collapsed."""
+        return self.stack.isHidden()
+
+    def resize_to_content(self, *, preserve_width: bool = True) -> None:
+        """Resize height to content while preserving the current width."""
+        self.stack.updateGeometry()
+        self.layout().invalidate()
+        self.layout().activate()
+        hint = self.sizeHint()
+        width = self.width() if preserve_width and self.width() > 0 else hint.width()
+        width = max(width, hint.width())
+        self.setMinimumWidth(hint.width())
+        self.resize(width, hint.height())
+
+    def eventFilter(self, watched: ty.Any, event: ty.Any) -> bool:
+        """Handle header dragging."""
+        if watched in self._drag_widgets:
+            if event.type() == QEvent.Type.MouseButtonPress and event.button() == Qt.MouseButton.LeftButton:
+                self._drag_offset = self.mapFromGlobal(_event_global_pos(event))
+                return True
+            if event.type() == QEvent.Type.MouseMove and self._drag_offset is not None:
+                self._move_to_global(_event_global_pos(event))
+                return True
+            if event.type() == QEvent.Type.MouseButtonRelease:
+                self._drag_offset = None
+                return True
+        return super().eventFilter(watched, event)
+
+    def _install_drag_filter(self, *widgets: QWidget) -> None:
+        for widget in widgets:
+            widget.installEventFilter(self)
+            self._drag_widgets.add(widget)
+
+    def _move_to_global(self, global_pos: QPoint) -> None:
+        if self._drag_offset is None:
+            return
+        parent = self.parentWidget()
+        if parent is None:
+            self.move(global_pos - self._drag_offset)
+            return
+        target = parent.mapFromGlobal(global_pos) - self._drag_offset
+        x = max(0, min(target.x(), max(0, parent.width() - self.width())))
+        y = max(0, min(target.y(), max(0, parent.height() - self.height())))
+        self.move(x, y)
+
+
+__all__ = [
+    "ColorbarSizePreset",
+    "ColorbarStackItem",
+    "QtColorbarRangeSlider",
+    "QtColorbarStack",
+    "QtFloatingColorbarWidget",
+]
