@@ -41,7 +41,7 @@ class ColorbarCanvasExample(QWidget):
             self.view.viewer,
             self,
             title="Image colorbars",
-            size_preset="medium",
+            size_preset="small",
         )
         self.colorbar_panel.raise_()
 

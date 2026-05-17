@@ -26,6 +26,18 @@ def test_colorbar_range_slider_updates_labels(qtbot) -> None:
     assert not widget.grab().isNull()
 
 
+def test_colorbar_range_slider_sizes_overflow_label_to_text(qtbot) -> None:
+    widget = QtColorbarRangeSlider(size_preset="medium")
+    qtbot.addWidget(widget)
+
+    widget.set_data_range((0.0, 1250.0))
+    widget.set_limits((10.0, 100.0))
+
+    expected_width = widget._overflow_label.fontMetrics().horizontalAdvance("1250%")
+    assert widget._overflow_label.text() == "1250%"
+    assert widget._overflow_label.width() >= expected_width
+
+
 def test_colorbar_range_slider_emits_limits_changed(qtbot) -> None:
     widget = QtColorbarRangeSlider()
     qtbot.addWidget(widget)
@@ -120,3 +132,17 @@ def test_floating_colorbar_resizes_height_but_preserves_width(qtbot) -> None:
 
     assert widget.width() == 760
     assert widget.height() < height_with_two_rows
+
+
+def test_floating_colorbar_keeps_visible_empty_body_after_rows_removed(qtbot) -> None:
+    widget = QtFloatingColorbarWidget(title="Images")
+    qtbot.addWidget(widget)
+    widget.resize(760, 200)
+    widget.set_items([ColorbarStackItem(label="A", data_range=(0.0, 1.0), colorbar="red")])
+    height_with_one_row = widget.height()
+
+    widget.set_items([])
+
+    assert widget.width() == 760
+    assert widget.height() == height_with_one_row
+    assert widget.sizeHint().height() == height_with_one_row

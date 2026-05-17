@@ -46,8 +46,12 @@ def test_napari_colorbar_tracks_added_and_removed_image_layers(qtbot) -> None:
     assert widget.height() < height_with_two_rows
     assert widget.widget_for_layer(second) is None
 
+    height_with_one_row = widget.height()
     viewer.layers.remove(image)
     assert widget.stack.widgets == ()
+    assert widget.width() == 760
+    assert widget.height() == height_with_one_row
+    assert widget.sizeHint().height() == height_with_one_row
 
     image.contrast_limits = (0.0, 1.0)
     row.set_limits((0.2, 0.4))

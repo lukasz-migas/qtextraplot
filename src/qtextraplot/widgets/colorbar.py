@@ -8,7 +8,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
 import numpy as np
-from qtpy.QtCore import QEvent, QPoint, QPointF, QRectF, QSignalBlocker, Qt, Signal
+from qtpy.QtCore import QEvent, QPoint, QPointF, QRectF, QSignalBlocker, QSize, Qt, Signal
 from qtpy.QtGui import QBrush, QColor, QImage, QLinearGradient, QPainter, QPen, QPixmap
 from qtpy.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QToolButton, QVBoxLayout, QWidget
 from superqt.sliders import QDoubleRangeSlider
@@ -433,7 +433,7 @@ class QtColorbarRangeSlider(QWidget):
             font.setPointSize(config.font_size)
             label.setFont(font)
         self._label.setFixedWidth(config.label_width)
-        self._overflow_label.setFixedWidth(config.overflow_min_width)
+        self._update_overflow_label_width()
         self._slider.set_size_preset(size_preset)
         self.updateGeometry()
 
@@ -505,6 +505,16 @@ class QtColorbarRangeSlider(QWidget):
         data_max = self._data_range[1]
         self._slider.set_percent_labels(_format_percent(low, high), "100%")
         self._overflow_label.setText(_format_overflow_percent(data_max, high))
+        self._update_overflow_label_width()
+
+    def _update_overflow_label_width(self) -> None:
+        config = _get_size_config(self._size_preset)
+        text = self._overflow_label.text()
+        width = config.overflow_min_width
+        if text:
+            width = max(width, self._overflow_label.fontMetrics().horizontalAdvance(text) + 8)
+        self._overflow_label.setFixedWidth(width)
+        self._overflow_label.updateGeometry()
 
 
 class QtColorbarStack(QWidget):
@@ -538,7 +548,6 @@ class QtColorbarStack(QWidget):
             widget.set_limits(stack_item.limits if stack_item.limits is not None else stack_item.data_range)
             self._widgets.append(widget)
             self._layout.addWidget(widget)
-        self._layout.addStretch(1)
         self._layout.invalidate()
         self.updateGeometry()
 
@@ -566,6 +575,25 @@ class QtColorbarStack(QWidget):
             limits=ty.cast(RangeTuple | None, item.get("limits")),
             colorbar=ty.cast(ColorbarInput, item.get("colorbar")),
         )
+
+    def _rows_size_hint(self, *, empty_rows: int = 0) -> QSize:
+        width = 0
+        height = 0
+        spacing = self._layout.spacing()
+        row_count = len(self._widgets)
+        if row_count == 0 and empty_rows > 0:
+            config = _get_size_config(self._size_preset)
+            width = config.label_width + config.bar_min_width + config.overflow_min_width + (2 * config.spacing)
+            height = config.slider_height * empty_rows
+            return QSize(width, height)
+
+        for widget in self._widgets:
+            hint = widget.sizeHint()
+            width = max(width, hint.width())
+            height += hint.height()
+        if row_count > 1:
+            height += (row_count - 1) * spacing
+        return QSize(width, height)
 
 
 class QtFloatingColorbarWidget(QFrame):
@@ -658,12 +686,18 @@ class QtFloatingColorbarWidget(QFrame):
         """Return whether the widget is collapsed."""
         return self.stack.isHidden()
 
+    def sizeHint(self) -> QSize:
+        """Return the preferred floating panel size."""
+        if not hasattr(self, "stack"):
+            return super().sizeHint()
+        return self._content_size_hint()
+
     def resize_to_content(self, *, preserve_width: bool = True) -> None:
         """Resize height to content while preserving the current width."""
         self.stack.updateGeometry()
         self.layout().invalidate()
         self.layout().activate()
-        hint = self.sizeHint()
+        hint = self._content_size_hint()
         width = self.width() if preserve_width and self.width() > 0 else hint.width()
         width = max(width, hint.width())
         self.setMinimumWidth(hint.width())
@@ -699,6 +733,20 @@ class QtFloatingColorbarWidget(QFrame):
         x = max(0, min(target.x(), max(0, parent.width() - self.width())))
         y = max(0, min(target.y(), max(0, parent.height() - self.height())))
         self.move(x, y)
+
+    def _content_size_hint(self) -> QSize:
+        layout = ty.cast(QVBoxLayout, self.layout())
+        margins = layout.contentsMargins()
+        width = self._header.sizeHint().width()
+        height = self._header.sizeHint().height()
+        if not self.stack.isHidden():
+            row_hint = self.stack._rows_size_hint(empty_rows=1)
+            width = max(width, row_hint.width())
+            if row_hint.height() > 0:
+                height += layout.spacing() + row_hint.height()
+        width += margins.left() + margins.right()
+        height += margins.top() + margins.bottom()
+        return QSize(width, height)
 
 
 __all__ = [
