@@ -128,7 +128,7 @@ class QtViewToolbar(QWidget):
         if self.allow_crosshair:
             self.tools_cross_btn = toolbar_right.add_qta_tool(
                 "crosshair",
-                tooltip="Show/hide crosshair",
+                tooltip="Show/hide crosshair. Right-click on the button to change crosshair settings.",
                 checkable=True,
                 check=self.viewer.cross_hair.visible,
                 func=self._toggle_crosshair_visible,
@@ -136,7 +136,7 @@ class QtViewToolbar(QWidget):
             )
         self.tools_text_btn = toolbar_right.add_qta_tool(
             "text",
-            tooltip="Show/hide text label",
+            tooltip="Show/hide text label. Right-click on the button to change text settings.",
             check=self.viewer.text_overlay.visible,
             func=self._toggle_text_visible,
             func_menu=self.on_open_text_config,
@@ -151,20 +151,20 @@ class QtViewToolbar(QWidget):
         )
         self.tools_colorbar_btn = toolbar_right.add_qta_tool(
             "colorbar",
-            tooltip="Show/hide colorbar",
+            tooltip="Show/hide colorbar. Right-click on the button to change colorbar settings.",
             checkable=True,
             func=self._toggle_color_bar_visible,
             func_menu=self.on_open_colorbar_config,
         )
         self.tools_clip_btn = toolbar_right.add_qta_tool(
             "screenshot",
-            tooltip="Copy figure to clipboard",
+            tooltip="Copy figure to clipboard. Right-click on the button to open export settings.",
             func=self.on_copy_to_clipboard,
             func_menu=self.on_open_save_figure,
         )
         self.tools_save_btn = toolbar_right.add_qta_tool(
             "save",
-            tooltip="Save figure",
+            tooltip="Save figure. Right-click on the button to open export settings.",
             func=self.on_save_figure,
             func_menu=self.on_open_save_figure,
         )
