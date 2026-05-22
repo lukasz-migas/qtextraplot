@@ -884,6 +884,8 @@ class PlotBase(QWidget):
                 warnings.simplefilter("ignore", category=UserWarning)
                 self.figure.tight_layout()
 
+    tight_layout = tight
+
     def clear(self):
         """Clear the plot and reset some of the parameters."""
         self._clear()

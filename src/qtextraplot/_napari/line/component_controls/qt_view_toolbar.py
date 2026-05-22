@@ -140,7 +140,7 @@ class QtViewRightToolbar(QtMiniToolbar):
         )
         self.tools_text_btn = self.add_qta_tool(
             "text",
-            tooltip="Show/hide text label",
+            tooltip="Show/hide text label. Right-click on the button to change text settings.",
             checkable=True,
             check=viewer.text_overlay.visible,
             func=self._toggle_text_visible,
@@ -148,31 +148,35 @@ class QtViewRightToolbar(QtMiniToolbar):
         )
         self.tools_axes_btn = self.add_qta_tool(
             "axes_label",
-            tooltip="Show axes controls",
+            tooltip="Show axes controls. Right-click on the button to change axes settings.",
             checkable=True,
             check=viewer.axis.visible,
             func=self._toggle_axes_visible,
             func_menu=self.on_open_axes_config,
         )
-        self.tools_save_btn = self.add_qta_tool(
-            "save",
-            tooltip="Save figure",
-            func=qt_viewer.on_save_figure,
-            func_menu=self.on_open_save_figure,
-        )
         self.tools_clip_btn = self.add_qta_tool(
             "screenshot",
-            tooltip="Copy figure to clipboard",
+            tooltip="Copy figure to clipboard. Right-click on the button to open export settings.",
             func=self.on_clipboard,
+            func_menu=self.on_open_save_figure,
+        )
+        self.tools_save_btn = self.add_qta_tool(
+            "save",
+            tooltip="Save figure. Right-click on the button to open export settings.",
+            func=qt_viewer.on_save_figure,
             func_menu=self.on_open_save_figure,
         )
         self.tools_zoomout_btn = self.add_qta_tool(
             "zoom_out",
-            tooltip="Zoom-out",
+            tooltip="Zoom-out. Right-click on the button to open camera settings.",
             func=viewer.reset_view,
             func_menu=self.on_open_camera_config,
         )
-        self.tools_erase_btn = self.add_qta_tool("erase", tooltip="Clear image", func=viewer.clear_canvas)
+        self.tools_erase_btn = self.add_qta_tool(
+            "erase",
+            tooltip="Clear image",
+            func=viewer.clear_canvas,
+        )
         self.tools_erase_btn.hide()
         self.add_spacer()
 
