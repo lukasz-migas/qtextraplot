@@ -47,7 +47,7 @@ class QtCrosshairControls(QtFramelessPopup):
             func=self.on_change_auto_hide,
         )
 
-        self.position_x_spin = hp.make_int_spin_box(
+        self.position_x_spin = hp.make_double_spin_box(
             self,
             0,
             100_000,
@@ -55,7 +55,7 @@ class QtCrosshairControls(QtFramelessPopup):
             func=self.on_change_position,
         )
 
-        self.position_y_spin = hp.make_int_spin_box(
+        self.position_y_spin = hp.make_double_spin_box(
             self,
             0,
             100_000,
