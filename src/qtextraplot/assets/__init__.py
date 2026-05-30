@@ -54,6 +54,7 @@ update_icon_mapping(
         "zoom": "ri.zoom-in-line",
         "new_points": "mdi6.scatter-plot",
         "new_shapes": "mdi6.shape-outline",
+        "legend": "mdi.map-legend",
     },
     key="qtextraplot",
 )
