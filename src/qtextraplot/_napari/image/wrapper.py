@@ -15,6 +15,13 @@ from qtpy.QtWidgets import QWidget
 
 from qtextraplot._napari._wrapper import ViewerBase
 from qtextraplot._napari.components.overlays.color_bar import ColorBarItem
+from qtextraplot._napari.components.overlays.legend import (
+    ColorLike as LegendColorLike,
+)
+from qtextraplot._napari.components.overlays.legend import (
+    LegendInput,
+    LegendOverlay,
+)
 from qtextraplot._napari.components.overlays.object_outlines import (
     ColorLike,
     ObjectOutlinesOverlay,
@@ -260,6 +267,92 @@ class NapariImageView(ViewerBase):
     def clear_object_outlines(self, name: str | None = None) -> None:
         """Clear one or all object outline overlays."""
         self.viewer.clear_object_outlines(name=name)
+
+    def set_legend(
+        self,
+        entries: LegendInput,
+        *,
+        name: str = "Legend",
+        visible: bool = True,
+        position: str = "top_right",
+        text_color: LegendColorLike = "white",
+        font_size: float = 10.0,
+        marker_size: float = 10.0,
+        row_spacing: float = 4.0,
+        padding: float = 6.0,
+        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
+        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        border_width: float = 1.0,
+    ) -> LegendOverlay:
+        """Set a canvas legend overlay."""
+        return self.viewer.set_legend(
+            entries,
+            name=name,
+            visible=visible,
+            position=position,
+            text_color=text_color,
+            font_size=font_size,
+            marker_size=marker_size,
+            row_spacing=row_spacing,
+            padding=padding,
+            background_color=background_color,
+            border_color=border_color,
+            border_width=border_width,
+        )
+
+    def clear_legend(self, name: str = "Legend") -> None:
+        """Clear a named canvas legend overlay."""
+        self.viewer.clear_legend(name=name)
+
+    def refresh_legend_from_source(self, name: str = "Legend") -> LegendOverlay | None:
+        """Refresh a point-derived legend from its source layer."""
+        return self.viewer.refresh_legend_from_source(name=name)
+
+    def set_legend_auto_sync(self, name: str = "Legend", enabled: bool = True) -> LegendOverlay | None:
+        """Enable or disable live refresh for a point-derived legend."""
+        return self.viewer.set_legend_auto_sync(name=name, enabled=enabled)
+
+    def set_legend_from_points(
+        self,
+        layer: Points | str,
+        *,
+        label_property: str = "label",
+        name: str = "Legend",
+        color_source: str = "face",
+        marker_source: str = "symbol",
+        group_by_style: bool = True,
+        sync: bool = False,
+        visible: bool = True,
+        position: str = "top_right",
+        text_color: LegendColorLike = "white",
+        font_size: float = 10.0,
+        marker_size: float = 10.0,
+        row_spacing: float = 4.0,
+        padding: float = 6.0,
+        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
+        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        border_width: float = 1.0,
+    ) -> LegendOverlay:
+        """Set a canvas legend overlay from a Points layer."""
+        return self.viewer.set_legend_from_points(
+            layer,
+            label_property=label_property,
+            name=name,
+            color_source=color_source,
+            marker_source=marker_source,
+            group_by_style=group_by_style,
+            sync=sync,
+            visible=visible,
+            position=position,
+            text_color=text_color,
+            font_size=font_size,
+            marker_size=marker_size,
+            row_spacing=row_spacing,
+            padding=padding,
+            background_color=background_color,
+            border_color=border_color,
+            border_width=border_width,
+        )
 
     def add_image_mask(
         self,
