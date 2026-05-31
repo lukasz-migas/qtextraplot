@@ -13,6 +13,7 @@ vispy = pytest.importorskip("vispy", reason="vispy is not installed")
 from napari._vispy.utils.visual import overlay_to_visual  # noqa: E402
 from qtpy.QtWidgets import QWidget  # noqa: E402
 
+from qtextraplot._napari._constants import CanvasPosition  # noqa: E402
 from qtextraplot._napari._vispy import register_vispy_overlays  # noqa: E402
 from qtextraplot._napari._vispy.overlays.legend import VispyLegendOverlay, legend_layout_size  # noqa: E402
 from qtextraplot._napari.component_controls.qt_legend_controls import QtLegendControls  # noqa: E402
@@ -58,7 +59,7 @@ def test_legend_overlay_accepts_sequence_of_entries():
     )
 
     assert overlay.visible
-    assert str(overlay.position) == "bottom_left"
+    assert overlay.position == CanvasPosition.BOTTOM_LEFT
     assert [entry.label for entry in overlay.entries] == ["cell", "nucleus"]
     np.testing.assert_allclose(overlay.entries[0].color, [0, 1, 1, 1])
 
