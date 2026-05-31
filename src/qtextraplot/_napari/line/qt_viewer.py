@@ -13,7 +13,7 @@ from napari.utils.key_bindings import KeymapHandler
 from napari_plot._qt._qapp_model import init_qactions, reset_default_keymap
 from napari_plot._qt.qt_main_window import Window, _QtMainWindow
 from napari_plot._qt.qt_viewer import QtViewer as _QtViewer
-from napari_plot._vispy.overlays import register_vispy_overlays
+from napari_plot._vispy.overlays import register_vispy_overlays as register_napari_plot_vispy_overlays
 from qtpy.QtCore import QCoreApplication, QEvent, Qt
 from qtpy.QtWidgets import QWidget
 
@@ -26,6 +26,7 @@ from qtextraplot._napari._qt_viewer_utils import (
     show_controls_dialog,
     toggle_controls_dialog,
 )
+from qtextraplot._napari._vispy import register_vispy_overlays as register_qtextraplot_vispy_overlays
 from qtextraplot._napari.layer_controls.qt_layer_controls_container import QtLayerControlsContainer
 from qtextraplot._napari.line._vispy.canvas import VispyCanvas
 from qtextraplot._napari.line.component_controls.qt_view_toolbar import QtViewLeftToolbar, QtViewRightToolbar
@@ -33,10 +34,11 @@ from qtextraplot._napari.line.layer_controls.qt_layer_buttons import QtLayerButt
 from qtextraplot.config import CANVAS, CanvasThemes
 
 if ty.TYPE_CHECKING:
-    from napari_plot.viewer import Viewer
+    from qtextraplot._napari.line.components.viewer_model import Viewer
 
 reset_default_keymap()
-register_vispy_overlays()
+register_napari_plot_vispy_overlays()
+register_qtextraplot_vispy_overlays()
 
 
 def as_array(name: str, canvas: CanvasThemes) -> np.ndarray:
@@ -60,6 +62,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         add_toolbars: bool = True,
         allow_extraction: bool = True,
         allow_tools: bool = False,
+        allow_legend: bool = True,
         connect_theme: bool = True,
         **kwargs: ty.Any,
     ):
@@ -118,6 +121,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
             add_toolbars=add_toolbars,
             allow_extraction=allow_extraction,
             allow_tools=allow_tools,
+            allow_legend=allow_legend,
             **kwargs,
         )
 

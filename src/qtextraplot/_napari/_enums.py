@@ -10,4 +10,4 @@ except ImportError:
     LineViewer = None
 
 
-ViewerType = ty.Union[LineViewer, ImageViewer] if LineViewer is None else ImageViewer
+ViewerType = ImageViewer if LineViewer is None else ty.Union[ImageViewer, LineViewer]
