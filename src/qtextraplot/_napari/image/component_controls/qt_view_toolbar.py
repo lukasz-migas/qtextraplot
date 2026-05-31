@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from contextlib import suppress
 
+import qtextra.helpers as hp
+from napari.utils.events import disconnect_events
 from napari.utils.events.event import EmitterGroup, Event
 from qtextra.helpers import make_radio_btn_group
 from qtextra.widgets.qt_toolbar_mini import QtMiniToolbar
@@ -39,6 +41,10 @@ class QtViewToolbar(QWidget):
         self.allow_masks = kwargs.pop("allow_masks", False)
         self.allow_labels = kwargs.pop("allow_labels", False)
         self.allow_crosshair = kwargs.pop("allow_crosshair", True)
+        self.allow_object_outlines = kwargs.pop("allow_object_outlines", True)
+        self.allow_legend = kwargs.pop("allow_legend", True)
+        self._connected_object_outline_overlays = []
+        self._connected_legend_overlays = []
 
         self.events = EmitterGroup(
             auto_connect=False,
@@ -134,6 +140,32 @@ class QtViewToolbar(QWidget):
                 func=self._toggle_crosshair_visible,
                 func_menu=self.on_open_crosshair_config,
             )
+        if self.allow_object_outlines:
+            self.tools_object_outlines_btn = toolbar_right.add_qta_tool(
+                "polygon",
+                tooltip="Show/hide object outlines. Right-click on the button to change object outline settings.",
+                checkable=True,
+                check=self.viewer.object_outlines_visible,
+                func=self._toggle_object_outlines_visible,
+                func_menu=self.on_open_object_outline_config,
+            )
+            self.viewer._overlays.events.added.connect(self._refresh_object_outline_event_connections)
+            self.viewer._overlays.events.removed.connect(self._refresh_object_outline_event_connections)
+            self.viewer._overlays.events.changed.connect(self._refresh_object_outline_event_connections)
+            self._refresh_object_outline_event_connections()
+        if self.allow_legend:
+            self.tools_legend_btn = toolbar_right.add_qta_tool(
+                "legend",
+                tooltip="Show/hide legend. Right-click on the button to change legend settings.",
+                checkable=True,
+                check=self.viewer.legend_visible,
+                func=self._toggle_legend_visible,
+                func_menu=self.on_open_legend_config,
+            )
+            self.viewer._overlays.events.added.connect(self._refresh_legend_event_connections)
+            self.viewer._overlays.events.removed.connect(self._refresh_legend_event_connections)
+            self.viewer._overlays.events.changed.connect(self._refresh_legend_event_connections)
+            self._refresh_legend_event_connections()
         self.tools_text_btn = toolbar_right.add_qta_tool(
             "text",
             tooltip="Show/hide text label. Right-click on the button to change text settings.",
@@ -236,6 +268,10 @@ class QtViewToolbar(QWidget):
             self.qt_viewer.viewer.cross_hair.events.visible.connect(
                 lambda x: self.tools_cross_btn.setChecked(self.qt_viewer.viewer.cross_hair.visible),
             )
+        if self.allow_object_outlines:
+            self._refresh_object_outline_event_connections()
+        if self.allow_legend:
+            self._refresh_legend_event_connections()
 
     def _toggle_grid_visible(self, state: bool) -> None:
         self.qt_viewer.viewer.grid.enabled = state
@@ -257,11 +293,65 @@ class QtViewToolbar(QWidget):
     def _toggle_crosshair_visible(self, state: bool) -> None:
         self.qt_viewer.viewer.cross_hair.visible = state
 
+    def _toggle_object_outlines_visible(self, state: bool) -> None:
+        self.qt_viewer.viewer.set_object_outlines_visible(state)
+        self._sync_object_outlines_button()
+
+    def _toggle_legend_visible(self, state: bool) -> None:
+        self.qt_viewer.viewer.set_legend_visible(state)
+        self._sync_legend_button()
+
+    def _sync_object_outlines_button(self, _event=None) -> None:
+        if not self.allow_object_outlines:
+            return
+        with hp.qt_signals_blocked(self.tools_object_outlines_btn):
+            self.tools_object_outlines_btn.setChecked(self.qt_viewer.viewer.object_outlines_visible)
+
+    def _sync_legend_button(self, _event=None) -> None:
+        if not self.allow_legend:
+            return
+        with hp.qt_signals_blocked(self.tools_legend_btn):
+            self.tools_legend_btn.setChecked(self.qt_viewer.viewer.legend_visible)
+
+    def _refresh_object_outline_event_connections(self, _event=None) -> None:
+        if not self.allow_object_outlines:
+            return
+        for overlay in self._connected_object_outline_overlays:
+            disconnect_events(overlay.events, self)
+        self._connected_object_outline_overlays = list(self.qt_viewer.viewer.object_outline_overlays().values())
+        for overlay in self._connected_object_outline_overlays:
+            overlay.events.visible.connect(self._sync_object_outlines_button)
+        self._sync_object_outlines_button()
+
+    def _refresh_legend_event_connections(self, _event=None) -> None:
+        if not self.allow_legend:
+            return
+        for overlay in self._connected_legend_overlays:
+            disconnect_events(overlay.events, self)
+        self._connected_legend_overlays = list(self.qt_viewer.viewer.legend_overlays().values())
+        for overlay in self._connected_legend_overlays:
+            overlay.events.visible.connect(self._sync_legend_button)
+        self._sync_legend_button()
+
     def on_open_crosshair_config(self) -> None:
         """Open text config."""
         from qtextraplot._napari.component_controls.qt_crosshair_controls import QtCrosshairControls
 
         dlg = QtCrosshairControls(self.viewer, self.qt_viewer)
+        dlg.show_left_of_mouse()
+
+    def on_open_object_outline_config(self) -> None:
+        """Open object outline config."""
+        from qtextraplot._napari.component_controls.qt_object_outline_controls import QtObjectOutlineControls
+
+        dlg = QtObjectOutlineControls(self.viewer, self.qt_viewer)
+        dlg.show_left_of_mouse()
+
+    def on_open_legend_config(self) -> None:
+        """Open legend config."""
+        from qtextraplot._napari.component_controls.qt_legend_controls import QtLegendControls
+
+        dlg = QtLegendControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_text_config(self) -> None:
