@@ -1,7 +1,33 @@
+"""Utilities."""
+
 from functools import lru_cache
 
 from qtpy.QtCore import QPoint, QSize, Qt
 from qtpy.QtGui import QPainter, QPen, QPixmap
+
+
+@lru_cache(maxsize=2)
+def get_font_for_os() -> str:
+    """Get a font that supports unicode characters."""
+    from koyo.system import IS_LINUX, IS_MAC, IS_WIN
+    from vispy.util.fonts import list_fonts
+
+    fonts = list_fonts()
+    if IS_WIN:
+        font = "Segoe UI"
+        alt_font = "Calibri"
+    elif IS_MAC:
+        font = alt_font = "Helvetica"
+    elif IS_LINUX:
+        font = "DejaVu Sans"
+        alt_font = "Liberation Sans"
+    else:
+        font = alt_font = "DejaVu Sans"
+    if font not in fonts:
+        font = alt_font
+    if font not in fonts:
+        font = "OpenSans"
+    return font
 
 
 @lru_cache(maxsize=64)
@@ -12,7 +38,7 @@ def crosshair_pixmap():
     size = 25
 
     pixmap = QPixmap(QSize(size, size))
-    pixmap.fill(Qt.transparent)
+    pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
 
     # Base measures

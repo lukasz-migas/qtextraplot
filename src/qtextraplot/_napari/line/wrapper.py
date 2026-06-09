@@ -13,6 +13,7 @@ from napari_plot.layers.base import update_layer_attributes
 from qtpy.QtCore import QMutex
 from qtpy.QtWidgets import QWidget
 
+from qtextraplot._napari._utilities import get_font_for_os
 from qtextraplot._napari._wrapper import ViewerBase
 from qtextraplot._napari.components.overlays.legend import (
     ColorLike as LegendColorLike,
@@ -28,27 +29,6 @@ MUTEX = QMutex()
 
 LINE_NAME, CENTROID_NAME, SCATTER_NAME, REGION_NAME = "Line", "Centroids", "Scatter", "Region"
 EXTRACT_NAME = "Extract mask"
-
-
-def get_font_for_os() -> str:
-    """Get a font that supports unicode characters."""
-    from koyo.system import IS_LINUX, IS_MAC, IS_WIN
-    from vispy.util.fonts import list_fonts
-
-    fonts = list_fonts()
-    if IS_WIN:
-        font = "Segoe UI"
-        alt_font = "Calibri"
-    elif IS_MAC:
-        font = alt_font = "Helvetica"
-    elif IS_LINUX:
-        font = "DejaVu Sans"
-        alt_font = "Liberation Sans"
-    if font not in fonts:
-        font = alt_font
-    if font not in fonts:
-        font = "OpenSans"
-    return font
 
 
 class NapariLineView(ViewerBase):
