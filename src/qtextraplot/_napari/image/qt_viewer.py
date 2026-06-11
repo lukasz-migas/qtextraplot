@@ -117,6 +117,8 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
 
         self._set_layout(add_dims=add_dims, add_toolbars=add_toolbars, **kwargs)
 
+        self.viewerToolbar.connect_toolbar()
+
     @property
     def text_overlay(self):
         """Return text overlay."""
