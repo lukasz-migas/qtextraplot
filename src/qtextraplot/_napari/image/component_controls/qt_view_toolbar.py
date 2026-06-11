@@ -244,15 +244,6 @@ class QtViewToolbar(QWidget):
             lambda x: self.tools_grid_btn.setChecked(self.qt_viewer.viewer.grid.enabled),
         )
 
-        # try:
-        #     self.tools_grid_btn.setChecked(self.qt_viewer.viewer.grid_lines.visible)
-        #     self.tools_grid_btn.clicked.connect(self._toggle_grid_lines_visible)
-        #     self.qt_viewer.viewer.grid_lines.events.visible.connect(
-        #         lambda x: self.tools_grid_btn.setChecked(self.qt_viewer.viewer.grid_lines.visible)
-        #     )
-        # except KeyError:
-        #     pass
-
         with suppress(KeyError):
             self.tools_colorbar_btn.setChecked(self.qt_viewer.viewer.color_bar.visible)
             self.tools_colorbar_btn.clicked.connect(self._toggle_color_bar_visible)

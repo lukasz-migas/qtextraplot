@@ -6,15 +6,21 @@ import typing as ty
 
 import numpy as np
 from koyo.secret import get_short_hash
+from napari.layers import Points
 from napari.utils.events import Event
 from napari_plot.layers import Centroids, InfLine, Line, Region, Scatter, Shapes
 from napari_plot.layers.base import update_layer_attributes
-from napari_plot.viewer import ViewerModel as Viewer
 from qtpy.QtCore import QMutex
 from qtpy.QtWidgets import QWidget
 
+from qtextraplot._napari._utilities import get_font_for_os
 from qtextraplot._napari._wrapper import ViewerBase
+from qtextraplot._napari.components.overlays.legend import (
+    ColorLike as LegendColorLike,
+)
+from qtextraplot._napari.components.overlays.legend import LegendInput, LegendOverlay
 from qtextraplot._napari.line._vispy.overrides.axis import tick_formatter
+from qtextraplot._napari.line.components.viewer_model import LEGEND_OVERLAY_NAME, Viewer
 from qtextraplot._napari.line.config import Config
 from qtextraplot._napari.line.qt_viewer import QtViewer, as_array
 from qtextraplot.config import CANVAS
@@ -23,27 +29,6 @@ MUTEX = QMutex()
 
 LINE_NAME, CENTROID_NAME, SCATTER_NAME, REGION_NAME = "Line", "Centroids", "Scatter", "Region"
 EXTRACT_NAME = "Extract mask"
-
-
-def get_font_for_os() -> str:
-    """Get a font that supports unicode characters."""
-    from koyo.system import IS_LINUX, IS_MAC, IS_WIN
-    from vispy.util.fonts import list_fonts
-
-    fonts = list_fonts()
-    if IS_WIN:
-        font = "Segoe UI"
-        alt_font = "Calibri"
-    elif IS_MAC:
-        font = alt_font = "Helvetica"
-    elif IS_LINUX:
-        font = "DejaVu Sans"
-        alt_font = "Liberation Sans"
-    if font not in fonts:
-        font = alt_font
-    if font not in fonts:
-        font = "OpenSans"
-    return font
 
 
 class NapariLineView(ViewerBase):
@@ -93,6 +78,7 @@ class NapariLineView(ViewerBase):
             add_toolbars=kwargs.pop("add_toolbars", True),
             allow_extraction=kwargs.pop("allow_extraction", True),
             allow_tools=kwargs.pop("allow_tools", False),
+            allow_legend=kwargs.pop("allow_legend", True),
             connect_theme=kwargs.pop("connect_theme", True),
         )
         font = get_font_for_os()
@@ -127,6 +113,128 @@ class NapariLineView(ViewerBase):
     def _clear(self, _evt: ty.Any = None) -> None:
         """Clear canvas."""
         self._clear_tracked_layers("line_layer", "region_layer")
+
+    def set_legend(
+        self,
+        entries: LegendInput,
+        *,
+        name: str = LEGEND_OVERLAY_NAME,
+        visible: bool = True,
+        position: str = "top_right",
+        text_color: LegendColorLike = "white",
+        font_size: float = 10.0,
+        marker_size: float = 10.0,
+        row_spacing: float = 4.0,
+        padding: float = 6.0,
+        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
+        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        border_width: float = 1.0,
+    ) -> LegendOverlay:
+        """Set a canvas legend overlay."""
+        return self.viewer.set_legend(
+            entries,
+            name=name,
+            visible=visible,
+            position=position,
+            text_color=text_color,
+            font_size=font_size,
+            marker_size=marker_size,
+            row_spacing=row_spacing,
+            padding=padding,
+            background_color=background_color,
+            border_color=border_color,
+            border_width=border_width,
+        )
+
+    def clear_legend(self, name: str = LEGEND_OVERLAY_NAME) -> None:
+        """Clear a named canvas legend overlay."""
+        self.viewer.clear_legend(name=name)
+
+    def set_legend_visible(self, visible: bool) -> None:
+        """Set visibility of all canvas legend overlays."""
+        self.viewer.set_legend_visible(visible)
+
+    def refresh_legend_from_layers(self, name: str = LEGEND_OVERLAY_NAME) -> LegendOverlay | None:
+        """Refresh a layer-derived legend from visible supported layers."""
+        return self.viewer.refresh_legend_from_layers(name=name)
+
+    def set_legend_auto_sync(self, name: str = LEGEND_OVERLAY_NAME, enabled: bool = True) -> LegendOverlay | None:
+        """Enable or disable live refresh for a legend overlay."""
+        return self.viewer.set_legend_auto_sync(name=name, enabled=enabled)
+
+    def set_legend_from_layers(
+        self,
+        *,
+        name: str = LEGEND_OVERLAY_NAME,
+        sync: bool = True,
+        visible: bool = True,
+        position: str = "top_right",
+        text_color: LegendColorLike = "white",
+        font_size: float = 10.0,
+        marker_size: float = 10.0,
+        row_spacing: float = 4.0,
+        padding: float = 6.0,
+        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
+        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        border_width: float = 1.0,
+    ) -> LegendOverlay:
+        """Set a canvas legend overlay from visible supported layers."""
+        return self.viewer.set_legend_from_layers(
+            name=name,
+            sync=sync,
+            visible=visible,
+            position=position,
+            text_color=text_color,
+            font_size=font_size,
+            marker_size=marker_size,
+            row_spacing=row_spacing,
+            padding=padding,
+            background_color=background_color,
+            border_color=border_color,
+            border_width=border_width,
+        )
+
+    def set_legend_from_points(
+        self,
+        layer: Points | str,
+        *,
+        label_property: str = "label",
+        name: str = LEGEND_OVERLAY_NAME,
+        color_source: str = "face",
+        marker_source: str = "symbol",
+        group_by_style: bool = True,
+        sync: bool = False,
+        visible: bool = True,
+        position: str = "top_right",
+        text_color: LegendColorLike = "white",
+        font_size: float = 10.0,
+        marker_size: float = 10.0,
+        row_spacing: float = 4.0,
+        padding: float = 6.0,
+        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
+        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        border_width: float = 1.0,
+    ) -> LegendOverlay:
+        """Set a canvas legend overlay from a Points layer."""
+        return self.viewer.set_legend_from_points(
+            layer,
+            label_property=label_property,
+            name=name,
+            color_source=color_source,
+            marker_source=marker_source,
+            group_by_style=group_by_style,
+            sync=sync,
+            visible=visible,
+            position=position,
+            text_color=text_color,
+            font_size=font_size,
+            marker_size=marker_size,
+            row_spacing=row_spacing,
+            padding=padding,
+            background_color=background_color,
+            border_color=border_color,
+            border_width=border_width,
+        )
 
     def plot(
         self,
@@ -189,7 +297,7 @@ class NapariLineView(ViewerBase):
             try:
                 update_layer_attributes(layer, False, data=xy, color=color, **kwargs)
                 layer.visible = kwargs.get("visible", True)
-            except Exception:
+            except (AttributeError, TypeError, ValueError):
                 self.remove_layer(layer)
                 layer = None
         if layer is None:
@@ -273,9 +381,10 @@ class NapariLineView(ViewerBase):
                 layer = self.viewer.add_region((window, "vertical"), name=name, color=color, **kwargs)
             # set editable flag
             layer.editable = editable
-            return layer
         except TypeError:
             return None
+        else:
+            return layer
 
     def add_regions(
         self,

@@ -3,7 +3,8 @@
 import typing as ty
 from weakref import ref
 
-from napari.utils.events import Event
+import qtextra.helpers as hp
+from napari.utils.events import Event, disconnect_events
 from napari_plot._qt.qt_toolbar import create_tools_menu
 from napari_plot.components.dragtool import DragMode
 from qtextra.helpers import make_radio_btn_group, show_menu
@@ -14,6 +15,7 @@ if ty.TYPE_CHECKING:
     from napari_plot.viewer import Viewer
     from vispy.scene import Grid
 
+    from qtextraplot._napari.components.overlays.legend import LegendOverlay
     from qtextraplot._napari.line.qt_viewer import QtViewer
 
 
@@ -118,6 +120,8 @@ class QtViewRightToolbar(QtMiniToolbar):
         self.ref_qt_viewer: ty.Callable[[], QtViewer] = ref(qt_viewer)  # type: ignore[assignment]
         self.ref_viewer: ty.Callable[[], Viewer] = ref(viewer)
         self.ref_view: ty.Callable[[], Grid] = ref(view)
+        self.allow_legend = _kwargs.get("allow_legend", True)
+        self._connected_legend_overlays: list[LegendOverlay] = []
 
         self.layers_btn = self.add_qta_tool(
             "layers",
@@ -138,6 +142,19 @@ class QtViewRightToolbar(QtMiniToolbar):
             check=viewer.grid_lines.visible,
             func=self._toggle_grid_lines_visible,
         )
+        if self.allow_legend:
+            self.tools_legend_btn = self.add_qta_tool(
+                "legend",
+                tooltip="Show/hide legend. Right-click on the button to change legend settings.",
+                checkable=True,
+                check=viewer.legend_visible,
+                func=self._toggle_legend_visible,
+                func_menu=self.on_open_legend_config,
+            )
+            viewer._overlays.events.added.connect(self._refresh_legend_event_connections)
+            viewer._overlays.events.removed.connect(self._refresh_legend_event_connections)
+            viewer._overlays.events.changed.connect(self._refresh_legend_event_connections)
+            self._refresh_legend_event_connections()
         self.tools_text_btn = self.add_qta_tool(
             "text",
             tooltip="Show/hide text label. Right-click on the button to change text settings.",
@@ -194,9 +211,31 @@ class QtViewRightToolbar(QtMiniToolbar):
         self.ref_qt_viewer().viewer.axis.events.visible.connect(
             lambda x: self.tools_axes_btn.setChecked(self.ref_qt_viewer().viewer.axis.visible),
         )
+        if self.allow_legend:
+            self._refresh_legend_event_connections()
 
     def _toggle_grid_lines_visible(self, state: bool) -> None:
         self.ref_qt_viewer().viewer.grid_lines.visible = state
+
+    def _toggle_legend_visible(self, state: bool) -> None:
+        self.ref_qt_viewer().viewer.set_legend_visible(state)
+        self._sync_legend_button()
+
+    def _sync_legend_button(self, _event=None) -> None:
+        if not self.allow_legend:
+            return
+        with hp.qt_signals_blocked(self.tools_legend_btn):
+            self.tools_legend_btn.setChecked(self.ref_qt_viewer().viewer.legend_visible)
+
+    def _refresh_legend_event_connections(self, _event=None) -> None:
+        if not self.allow_legend:
+            return
+        for overlay in self._connected_legend_overlays:
+            disconnect_events(overlay.events, self)
+        self._connected_legend_overlays = list(self.ref_qt_viewer().viewer.legend_overlays().values())
+        for overlay in self._connected_legend_overlays:
+            overlay.events.visible.connect(self._sync_legend_button)
+        self._sync_legend_button()
 
     def _toggle_text_visible(self, state: bool) -> None:
         self.ref_qt_viewer().viewer.text_overlay.visible = state
@@ -207,6 +246,13 @@ class QtViewRightToolbar(QtMiniToolbar):
 
         dlg = QtTextOverlayControls(self.ref_viewer(), self.ref_qt_viewer())
         dlg.show_left_of_mouse()
+
+    def on_open_legend_config(self) -> None:
+        """Open legend config."""
+        from qtextraplot._napari.component_controls.qt_legend_controls import QtLegendControls
+
+        dlg = QtLegendControls(self.ref_viewer(), self.ref_qt_viewer())
+        dlg.show_left_of_widget(self.tools_legend_btn)
 
     def _toggle_axes_visible(self, state: bool) -> None:
         self.ref_qt_viewer().viewer.axis.visible = state

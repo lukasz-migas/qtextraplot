@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import typing as ty
 
+import matplotlib.pyplot as plt
 import numpy as np
 from koyo.secret import get_short_hash
 from qtpy.QtCore import QMutexLocker
@@ -26,6 +27,10 @@ class ViewMplLine(ViewBase):
         self.PLOT_ID = get_short_hash()
         self.figure = PlotBase(parent, *args, main_parent=self.main_parent, **kwargs)
         self.figure.evt_unregister.connect(self.unregister)
+
+        # copy methods
+        self.ax_v_split = self.figure.ax_v_split
+        self.ax_h_split = self.figure.ax_h_split
 
     @property
     def widget(self) -> PlotBase:
@@ -292,6 +297,12 @@ class ViewMplLine(ViewBase):
         with QMutexLocker(MUTEX):
             self.figure.set_plot_title(title, **kwargs)
             self.figure.tight(tight)
+            self.figure.repaint(repaint)
+
+    def setup_ax(self, ax: plt.Axes | list[plt.Axes], repaint: bool = True) -> None:
+        """Add axes plotted outside of this module."""
+        with QMutexLocker(MUTEX):
+            self.figure.setup_ax(ax)
             self.figure.repaint(repaint)
 
     def add_line(
