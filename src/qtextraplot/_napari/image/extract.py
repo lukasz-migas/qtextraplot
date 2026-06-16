@@ -136,7 +136,11 @@ class ImageMaskROIExtractPopupBase(QtFramelessTool):
         event : qtpy.QtCore.QEvent
             Event from the Qt context.
         """
-        self.ref_viewer().widget.canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_press, event)
+        canvas = self.ref_viewer().widget.canvas
+        if hasattr(canvas, "_backend"):
+            canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_press, event)
+        else:
+            canvas._scene_canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_press, event)
         event.accept()
 
     def keyReleaseEvent(self, event):
@@ -147,7 +151,11 @@ class ImageMaskROIExtractPopupBase(QtFramelessTool):
         event : qtpy.QtCore.QEvent
             Event from the Qt context.
         """
-        self.ref_viewer().widget.canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_release, event)
+        canvas = self.ref_viewer().widget.canvas
+        if hasattr(canvas, "_backend"):
+            canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_release, event)
+        else:
+            canvas._scene_canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_release, event)
         event.accept()
 
 
