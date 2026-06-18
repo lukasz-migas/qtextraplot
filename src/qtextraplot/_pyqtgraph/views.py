@@ -4,15 +4,17 @@ from __future__ import annotations
 
 import typing as ty
 from dataclasses import dataclass
+from numbers import Real
 from pathlib import Path
 
 import numpy as np
 from koyo.secret import get_short_hash
 from koyo.system import is_installed
-from qtpy.QtCore import QMutexLocker, QRectF
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QApplication, QGraphicsItem, QGraphicsRectItem, QWidget
+from qtpy.QtCore import QMutexLocker, QPoint, QRect, QRectF, Qt, Signal
+from qtpy.QtGui import QCloseEvent, QColor, QMouseEvent, QWheelEvent
+from qtpy.QtWidgets import QApplication, QGraphicsItem, QGraphicsRectItem, QRubberBand, QWidget
 
+from qtextraplot.config import CANVAS
 from qtextraplot.utils.views_base import MUTEX, ViewBase
 
 if ty.TYPE_CHECKING:
@@ -46,6 +48,34 @@ def _mk_brush(color: ty.Any = None):
     if color is None:
         return pg.mkBrush(0, 0, 0, 0)
     return pg.mkBrush(color)
+
+
+def _is_single_color(color: ty.Any) -> bool:
+    """Return whether ``color`` describes one color rather than a color sequence."""
+    if isinstance(color, (str, QColor)):
+        return True
+    return (
+        isinstance(color, (tuple, np.ndarray))
+        and len(color) in (3, 4)
+        and all(isinstance(value, Real) for value in color)
+    )
+
+
+def _expand_colors(color: ty.Any, size: int) -> list[ty.Any]:
+    """Expand a scalar color or validate a sequence of per-item colors."""
+    if _is_single_color(color):
+        return [color] * size
+    colors = list(color)
+    if len(colors) == 1:
+        return colors * size
+    if len(colors) != size:
+        raise ValueError(f"Expected one color or {size} colors, received {len(colors)}.")  # noqa: TRY003
+    return colors
+
+
+def _normalize_marker(marker: str) -> str:
+    """Translate common Matplotlib marker codes to PyQtGraph symbols."""
+    return {"^": "t1", "D": "d"}.get(marker, marker)
 
 
 def _coerce_image(image: np.ndarray) -> np.ndarray:
@@ -90,11 +120,30 @@ class RectPatchAdapter:
         self.item.setRect(QRectF(rect.x(), rect.y(), rect.width(), height))
 
 
+@dataclass(frozen=True)
+class LegendEntry:
+    """Describe one backend-independent plot legend entry."""
+
+    label: str
+    color: ty.Any
+    marker: str = "o"
+    size: float = 8.0
+
+
 class PyQtGraphCanvas(pg.PlotWidget):
     """Reusable pyqtgraph canvas with qtextraplot-style methods."""
 
+    evt_wheel = Signal()
+    evt_released = Signal()
+    evt_range_changed = Signal(tuple)
+    evt_ctrl_changed = Signal(bool)
+    evt_ctrl_released = Signal(tuple)
+    evt_ctrl_double_click = Signal(tuple)
+
     def __init__(self, parent: QWidget | None = None, *, title: str = "", x_label: str = "", y_label: str = ""):
         super().__init__(parent=parent, background=None)
+        # PlotWidget exports PlotItem methods onto the instance, which would shadow this class's clear method.
+        self.__dict__.pop("clear", None)
         self._ax = self.getPlotItem()
         self._title = title
         self._base_gid = "__base__"
@@ -103,6 +152,9 @@ class PyQtGraphCanvas(pg.PlotWidget):
         self._plot_items: dict[str, ty.Any] = {}
         self._annotation_items: dict[str, ty.Any] = {}
         self._patch_items: dict[str, RectPatchAdapter] = {}
+        self._legend: pg.LegendItem | None = None
+        self._ctrl_origin: QPoint | None = None
+        self._ctrl_selector = QRubberBand(QRubberBand.Shape.Rectangle, self)
         self.showGrid(x=True, y=True, alpha=0.15)
         self.setMenuEnabled(False)
         self.setClipToView(True)
@@ -110,6 +162,97 @@ class PyQtGraphCanvas(pg.PlotWidget):
         self._ax.setTitle(title)
         self._ax.setLabel("bottom", x_label)
         self._ax.setLabel("left", y_label)
+        self.getViewBox().sigRangeChanged.connect(self._on_range_changed)
+        CANVAS.evt_theme_changed.connect(self.update_theme)
+        self.update_theme()
+
+    def _on_range_changed(self, *_args: ty.Any) -> None:
+        """Emit the current visible bounds after a range change."""
+        self.evt_range_changed.emit(self.get_xy_limits())
+
+    def _map_to_data(self, position: QPoint) -> tuple[float, float]:
+        """Map a widget position to plot coordinates."""
+        point = self.getViewBox().mapSceneToView(self.mapToScene(position))
+        return float(point.x()), float(point.y())
+
+    def update_theme(self) -> None:
+        """Apply the active qtextraplot canvas theme."""
+        background = CANVAS.as_hex("canvas")
+        axis = CANVAS.as_hex("axis")
+        self.setBackground(background)
+        for name in ("bottom", "left"):
+            axis_item = self._ax.getAxis(name)
+            axis_item.setPen(axis)
+            axis_item.setTextPen(axis)
+
+    def set_legend(self, entries: ty.Sequence[LegendEntry], *, offset: tuple[int, int] = (-10, 10)) -> None:
+        """Replace the plot legend with the supplied entries."""
+        if self._legend is not None:
+            self._legend.scene().removeItem(self._legend)
+        self._legend = self._ax.addLegend(offset=offset)
+        for entry in entries:
+            item = pg.ScatterPlotItem(
+                x=[],
+                y=[],
+                pen=pg.mkPen(entry.color),
+                brush=pg.mkBrush(entry.color),
+                symbol=_normalize_marker(entry.marker),
+                size=entry.size,
+            )
+            self._legend.addItem(item, entry.label)
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Start Ctrl-drag selection or delegate normal interaction."""
+        if event.button() == Qt.MouseButton.LeftButton and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self._ctrl_origin = event.position().toPoint()
+            self._ctrl_selector.setGeometry(QRect(self._ctrl_origin, self._ctrl_origin))
+            self._ctrl_selector.show()
+            self.evt_ctrl_changed.emit(True)
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        """Update the Ctrl-drag selection rectangle."""
+        if self._ctrl_origin is not None:
+            self._ctrl_selector.setGeometry(QRect(self._ctrl_origin, event.position().toPoint()).normalized())
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        """Finish selection and notify listeners after other releases."""
+        if self._ctrl_origin is not None:
+            end = event.position().toPoint()
+            x0, y0 = self._map_to_data(self._ctrl_origin)
+            x1, y1 = self._map_to_data(end)
+            self._ctrl_origin = None
+            self._ctrl_selector.hide()
+            self.evt_ctrl_released.emit((min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1)))
+            self.evt_ctrl_changed.emit(False)
+            self.evt_released.emit()
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+        self.evt_released.emit()
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
+        """Emit Ctrl-double-click coordinates or delegate normal interaction."""
+        if event.button() == Qt.MouseButton.LeftButton and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.evt_ctrl_double_click.emit(self._map_to_data(event.position().toPoint()))
+            event.accept()
+            return
+        super().mouseDoubleClickEvent(event)
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        """Perform wheel interaction and notify listeners."""
+        super().wheelEvent(event)
+        self.evt_wheel.emit()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Disconnect global theme callbacks before closing."""
+        CANVAS.evt_theme_changed.disconnect(self.update_theme)
+        super().closeEvent(event)
 
     @property
     def x_axis(self):
@@ -129,10 +272,11 @@ class PyQtGraphCanvas(pg.PlotWidget):
 
     def clear(self) -> None:
         """Remove all data and annotations."""
-        super().clear()
+        self._ax.clear()
         self._plot_items.clear()
         self._annotation_items.clear()
         self._patch_items.clear()
+        self._legend = None
         self._ax.setTitle(self._title)
 
     def copy_to_clipboard(self) -> None:
@@ -229,6 +373,11 @@ class PyQtGraphCanvas(pg.PlotWidget):
         zorder: int = 0,
     ):
         """Add another line to the plot."""
+        item = self._plot_items.get(gid)
+        if isinstance(item, pg.PlotDataItem):
+            item.setData(x=np.asarray(x), y=np.asarray(y), pen=_mk_pen(color, width))
+            item.setZValue(zorder)
+            return item
         item = pg.PlotDataItem(x=np.asarray(x), y=np.asarray(y), pen=_mk_pen(color, width))
         item.setZValue(zorder)
         return self._add_or_replace_item(self._plot_items, gid, item)
@@ -287,14 +436,20 @@ class PyQtGraphCanvas(pg.PlotWidget):
     ):
         """Plot scatter data."""
         gid = gid or self._scatter_gid
-        item = pg.ScatterPlotItem(
-            x=np.asarray(x),
-            y=np.asarray(y),
-            pen=_mk_pen(color, kwargs.get("width", 1.0)),
-            brush=_mk_brush(color),
-            size=size,
-            symbol=marker,
-        )
+        colors = _expand_colors(color, len(x))
+        options = {
+            "x": np.asarray(x),
+            "y": np.asarray(y),
+            "pen": [pg.mkPen(value, width=kwargs.get("width", 1.0)) for value in colors],
+            "brush": [pg.mkBrush(value) for value in colors],
+            "size": size,
+            "symbol": _normalize_marker(marker),
+        }
+        item = self._plot_items.get(gid)
+        if isinstance(item, pg.ScatterPlotItem):
+            item.setData(**options)
+            return item
+        item = pg.ScatterPlotItem(**options)
         return self._add_or_replace_item(self._plot_items, gid, item)
 
     def update_scatter(self, x: np.ndarray, y: np.ndarray, *, gid: str | None = None, **kwargs: ty.Any) -> None:
@@ -358,7 +513,12 @@ class PyQtGraphCanvas(pg.PlotWidget):
 
     def plot_add_vlines(self, vlines: ty.Iterable[float], gid: str = "vlines", color: ty.Any = "w"):
         """Add multiple vertical lines."""
-        items = [pg.InfiniteLine(pos=x, angle=90, movable=False, pen=_mk_pen(color, 1.0)) for x in vlines]
+        positions = list(vlines)
+        colors = _expand_colors(color, len(positions))
+        items = [
+            pg.InfiniteLine(pos=x, angle=90, movable=False, pen=_mk_pen(line_color, 1.0))
+            for x, line_color in zip(positions, colors, strict=True)
+        ]
         for item in self._annotation_items.pop(gid, []):
             self._ax.removeItem(item)
         self._annotation_items[gid] = items
@@ -769,7 +929,9 @@ class ViewPyQtGraphCanvas(_BasePyQtGraphView):
     def clear(self) -> None:
         """Clear the canvas and stored item state."""
         self._items_state.clear()
-        super().clear()
+        self._data.clear()
+        self.figure.clear()
+        self.figure.PLOT_TYPE = None
 
     def reset(self):
         """Rebuild the full mixed canvas from stored item state."""

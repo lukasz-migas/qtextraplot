@@ -45,7 +45,7 @@ class QtViewLeftToolbar(QtMiniToolbar):
                 "zoom",
                 tooltip="Click here to enable default zoom interaction",
                 checkable=True,
-                func=lambda _: setattr(self.ref_viewer().drag_tool, "active", DragMode.BOX),
+                func=lambda _: setattr(self.ref_viewer().drag_tool, "active", DragMode.AUTO),
                 check=True,
             )
             self.tools_select_box = self.add_qta_tool(

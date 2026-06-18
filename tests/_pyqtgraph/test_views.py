@@ -4,11 +4,20 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from qtpy.QtCore import QPoint, Qt
 from qtpy.QtWidgets import QWidget
+
+from qtextraplot.config import CANVAS
 
 pg = pytest.importorskip("pyqtgraph")
 
-from qtextraplot._pyqtgraph import ViewPyQtGraphCanvas, ViewPyQtGraphImage, ViewPyQtGraphLine, ViewPyQtGraphScatter
+from qtextraplot._pyqtgraph import (  # noqa: E402
+    LegendEntry,
+    ViewPyQtGraphCanvas,
+    ViewPyQtGraphImage,
+    ViewPyQtGraphLine,
+    ViewPyQtGraphScatter,
+)
 
 
 def test_line_view_supports_lines_and_annotations(qtbot):
@@ -88,3 +97,89 @@ def test_universal_canvas_supports_mixed_items_and_reset(qtbot):
 
     assert {"signal", "points", "image"} <= set(view.figure._plot_items)
     assert {"cursor", "baseline"} <= set(view.figure._annotation_items)
+
+    view.clear()
+
+    assert not view.figure._plot_items
+    assert not view.figure._annotation_items
+
+
+def test_universal_canvas_reuses_items_and_supports_per_point_colors(qtbot):
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = ViewPyQtGraphCanvas(parent)
+    qtbot.addWidget(view.widget)
+
+    view.plot(np.arange(3), np.arange(3), gid="signal")
+    line = view.figure._plot_items["signal"]
+    view.plot(np.arange(4), np.arange(4), gid="signal")
+    view.scatter(np.arange(3), np.arange(3), gid="points", color=["red", "green", "blue"])
+    scatter = view.figure._plot_items["points"]
+    view.scatter(np.arange(2), np.arange(2), gid="points", color=["cyan", "magenta"], marker="^")
+
+    assert view.figure._plot_items["signal"] is line
+    assert view.figure._plot_items["points"] is scatter
+    assert scatter.opts["symbol"] == "t1"
+    assert [point.brush().color().name() for point in scatter.points()] == ["#00ffff", "#ff00ff"]
+
+
+def test_canvas_supports_legend_and_colored_vertical_lines(qtbot):
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = ViewPyQtGraphCanvas(parent)
+    qtbot.addWidget(view.widget)
+
+    view.figure.set_legend([LegendEntry("selected", "blue"), LegendEntry("user", "black", marker="^")])
+    view.add_vlines([1.0, 2.0], gid="isotopes", color=["gray", "black"])
+
+    assert view.figure._legend is not None
+    assert len(view.figure._legend.items) == 2
+    lines = view.figure._annotation_items["isotopes"]
+    assert [line.pen.color().name() for line in lines] == ["#808080", "#000000"]
+
+
+def test_canvas_emits_ctrl_selection_and_double_click(qtbot):
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = ViewPyQtGraphCanvas(parent)
+    qtbot.addWidget(view.widget)
+    view.widget.resize(400, 300)
+    view.widget.show()
+    view.plot(np.arange(10), np.arange(10))
+    start, end = QPoint(100, 100), QPoint(200, 180)
+    selections: list[tuple[float, float, float, float]] = []
+    clicks: list[tuple[float, float]] = []
+    states: list[bool] = []
+    view.figure.evt_ctrl_released.connect(selections.append)
+    view.figure.evt_ctrl_double_click.connect(clicks.append)
+    view.figure.evt_ctrl_changed.connect(states.append)
+
+    viewport = view.figure.viewport()
+    qtbot.mousePress(viewport, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.ControlModifier, pos=start)
+    qtbot.mouseMove(viewport, end)
+    qtbot.mouseRelease(viewport, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.ControlModifier, pos=end)
+    qtbot.mouseDClick(viewport, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.ControlModifier, pos=end)
+
+    assert states == [True, False]
+    assert len(selections) == 1
+    assert selections[0][0] < selections[0][1]
+    assert selections[0][2] < selections[0][3]
+    assert clicks == [pytest.approx(view.figure._map_to_data(end))]
+
+
+def test_canvas_emits_range_changes_and_updates_theme(qtbot):
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = ViewPyQtGraphCanvas(parent)
+    qtbot.addWidget(view.widget)
+    ranges: list[tuple[float, float, float, float]] = []
+    view.figure.evt_range_changed.connect(ranges.append)
+    previous_theme = CANVAS.theme
+
+    try:
+        view.set_xlim(1.0, 2.0)
+        CANVAS.theme = "dark"
+        assert ranges
+        assert view.figure.backgroundBrush().color().name() == "#000000"
+    finally:
+        CANVAS.theme = previous_theme
