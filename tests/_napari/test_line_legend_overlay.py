@@ -10,6 +10,7 @@ import pytest
 napari = pytest.importorskip("napari", reason="napari is not installed")
 pytest.importorskip("napari_plot", reason="napari-plot is not installed")
 
+from qtpy.QtCore import QPoint, Qt  # noqa: E402
 from qtpy.QtWidgets import QWidget  # noqa: E402
 
 from qtextraplot._napari.components.overlays.legend import LegendOverlay  # noqa: E402
@@ -164,3 +165,45 @@ def test_line_view_exposes_legend_api() -> None:
     assert hasattr(NapariLineView, "set_legend_from_layers")
     assert hasattr(NapariLineView, "refresh_legend_from_layers")
     assert hasattr(NapariLineView, "clear_legend")
+
+
+def test_line_view_reuses_scatter_and_applies_per_point_colors(qtbot) -> None:
+    """Scatter updates should retain the layer and propagate point colors."""
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = NapariLineView(parent, add_toolbars=False)
+    qtbot.addWidget(view.widget)
+
+    layer = view.add_scatter([1.0, 2.0], [3.0, 4.0], name="points", color=["red", "blue"], symbol="o")
+    updated = view.add_scatter([2.0], [5.0], name="points", color=["green"], symbol="s")
+
+    assert updated is layer
+    np.testing.assert_allclose(layer.face_color, [[0.0, 0.5019608, 0.0, 1.0]])
+    np.testing.assert_allclose(layer.border_color, [[0.0, 0.5019608, 0.0, 1.0]])
+    assert layer.symbol.tolist() == ["square"]
+
+
+def test_line_view_forwards_modified_double_clicks(qtbot) -> None:
+    """Ctrl-double-click should reach viewer callbacks with world coordinates."""
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = NapariLineView(parent, add_toolbars=False)
+    qtbot.addWidget(view.widget)
+    view.widget.resize(400, 300)
+    view.widget.show()
+    received: list[tuple[float, ...]] = []
+
+    def on_double_click(_viewer: object, event: object) -> None:
+        """Record the callback's world coordinate."""
+        received.append(tuple(event.position))  # type: ignore[attr-defined]
+
+    view.viewer.mouse_double_click_callbacks.append(on_double_click)
+
+    qtbot.mouseDClick(
+        view.widget.canvas.native,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.ControlModifier,
+        pos=QPoint(200, 150),
+    )
+
+    assert len(received) == 1

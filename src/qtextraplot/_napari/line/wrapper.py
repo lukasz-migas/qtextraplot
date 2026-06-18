@@ -290,23 +290,24 @@ class NapariLineView(ViewerBase):
     ) -> Scatter:
         """Add scatter points."""
         layer = self.try_reuse(name, Scatter, reuse=reuse)
-        color = kwargs.pop("color", as_array("scatter", CANVAS))
+        color = kwargs.pop("color", None)
+        if color is not None:
+            kwargs.setdefault("face_color", color)
+            kwargs.setdefault("border_color", color)
+        else:
+            kwargs.setdefault("face_color", as_array("scatter", CANVAS))
+            kwargs.setdefault("border_color", kwargs["face_color"])
         if xy is None and x is not None and y is not None:
             xy = np.c_[y, x]
         if layer:
             try:
-                update_layer_attributes(layer, False, data=xy, color=color, **kwargs)
+                update_layer_attributes(layer, False, data=xy, **kwargs)
                 layer.visible = kwargs.get("visible", True)
             except (AttributeError, TypeError, ValueError):
                 self.remove_layer(layer)
                 layer = None
         if layer is None:
-            layer = self.viewer.add_scatter(
-                xy,
-                name=name,
-                # color=color,
-                **kwargs,
-            )
+            layer = self.viewer.add_scatter(xy, name=name, **kwargs)
         return layer
 
     def add_inf_line(

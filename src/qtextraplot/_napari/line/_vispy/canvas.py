@@ -20,9 +20,7 @@ class VispyCanvas(_VispyCanvas):
         self.viewer._overlays.events.changed.connect(self._on_overlay_changed)
 
     def _on_mouse_double_click(self, event) -> None:
-        """Process mouse double click event."""
-        if event.modifiers:
-            return
+        """Process mouse double-click events, including modified clicks."""
         super()._on_mouse_double_click(event)
 
     def _on_overlay_added(self, event) -> None:
