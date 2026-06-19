@@ -17,7 +17,7 @@ class QtModeRadioButton(QtImagePushButton):
         self,
         layer: Layer,
         icon_name: str,
-        mode: Enum,
+        mode: Enum | str,
         tooltip: str = "",
         checked: bool = False,
         *args,
@@ -31,7 +31,7 @@ class QtModeRadioButton(QtImagePushButton):
         self.setChecked(checked)
         self.setProperty("mode", icon_name)
         self.set_qta_size_preset("medium")
-        self.mode = mode
+        self.mode = mode.value if isinstance(mode, Enum) and isinstance(mode.value, str) else str(mode)
         if mode is not None:
             self.toggled.connect(self._set_mode)
 

@@ -7,12 +7,15 @@ from weakref import ref
 
 import qtextra.helpers as hp
 from loguru import logger
-from napari._qt.layer_controls.qt_labels_controls import QtLabelsControls
-from napari._qt.layer_controls.qt_shapes_controls import QtShapesControls
 from napari.utils.events import Event, EventEmitter, disconnect_events
 from qtextra.widgets.qt_dialog import QtFramelessTool
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QVBoxLayout, QWidget
+
+from qtextraplot._napari.layer_controls.qt_layer_bound_controls import (
+    QtLayerBoundLabelsControls,
+    QtLayerBoundShapesControls,
+)
 
 if ty.TYPE_CHECKING:
     from napari.layers import Labels, Shapes
@@ -193,9 +196,9 @@ class ImageLabelsROIExtractPopup(ImageMaskROIExtractPopupBase):
         if events and hasattr(events, "labels_cancel"):
             events.labels_cancel()
 
-    def _make_layer_controls(self) -> QtLabelsControls:
+    def _make_layer_controls(self) -> QtLayerBoundLabelsControls:
         """Actually make layer controls."""
-        return QtLabelsControls(self.layer)
+        return QtLayerBoundLabelsControls(self.layer)
 
 
 class ImageShapesROIExtractPopup(ImageMaskROIExtractPopupBase):
@@ -231,6 +234,6 @@ class ImageShapesROIExtractPopup(ImageMaskROIExtractPopupBase):
         if events and hasattr(events, "shapes_cancel"):
             events.shapes_cancel()
 
-    def _make_layer_controls(self) -> QtShapesControls:
+    def _make_layer_controls(self) -> QtLayerBoundShapesControls:
         """Actually make layer controls."""
-        return QtShapesControls(self.layer)
+        return QtLayerBoundShapesControls(self.layer)

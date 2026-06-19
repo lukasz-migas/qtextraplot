@@ -77,6 +77,8 @@ class ImageViewMixin:
         # update image
         if image is None:
             return False
+        if "name" not in kwargs:
+            kwargs["name"] = "Ion image"
 
         # single-dataset mode
         if isinstance(image, np.ndarray):
