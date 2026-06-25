@@ -270,6 +270,6 @@ ignore = [
     "examples/**/*",
     "MANIFEST.in",
     "CLAUDE.md",
-    ".claude/*",
+    "justfile",
     "scratch/**/*",
 ]
