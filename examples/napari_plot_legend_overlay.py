@@ -59,7 +59,6 @@ def main() -> int:
         position="top_right",
         font_size=10,
         marker_size=12,
-        background_color=(0.0, 0.0, 0.0, 0.65),
     )
 
     window.resize(900, 500)

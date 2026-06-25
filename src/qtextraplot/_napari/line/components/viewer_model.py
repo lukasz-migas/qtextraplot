@@ -12,9 +12,9 @@ from napari_plot.layers import Centroids, Line, Scatter
 from napari_plot.viewer import ViewerModel as _ViewerModel
 
 from qtextraplot._napari.components.overlays.legend import (
-    ColorLike as LegendColorLike,
-)
-from qtextraplot._napari.components.overlays.legend import (
+    DEFAULT_LEGEND_BACKGROUND_COLOR,
+    DEFAULT_LEGEND_BORDER_COLOR,
+    DEFAULT_LEGEND_TEXT_COLOR,
     LegendEntry,
     LegendInput,
     LegendOverlay,
@@ -139,13 +139,13 @@ class Viewer(_ViewerModel):
         name: str = LEGEND_OVERLAY_NAME,
         visible: bool = True,
         position: str = "top_right",
-        text_color: LegendColorLike = "white",
+        text_color: ty.Any = DEFAULT_LEGEND_TEXT_COLOR,
         font_size: float = 10.0,
         marker_size: float = 10.0,
         row_spacing: float = 4.0,
         padding: float = 6.0,
-        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
-        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        background_color: ty.Any = DEFAULT_LEGEND_BACKGROUND_COLOR,
+        border_color: ty.Any = DEFAULT_LEGEND_BORDER_COLOR,
         border_width: float = 1.0,
     ) -> LegendOverlay:
         """Set a named canvas legend overlay."""
@@ -184,13 +184,13 @@ class Viewer(_ViewerModel):
         sync: bool = True,
         visible: bool = True,
         position: str = "top_right",
-        text_color: LegendColorLike = "white",
+        text_color: ty.Any = DEFAULT_LEGEND_TEXT_COLOR,
         font_size: float = 10.0,
         marker_size: float = 10.0,
         row_spacing: float = 4.0,
         padding: float = 6.0,
-        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
-        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        background_color: ty.Any = DEFAULT_LEGEND_BACKGROUND_COLOR,
+        border_color: ty.Any = DEFAULT_LEGEND_BORDER_COLOR,
         border_width: float = 1.0,
     ) -> LegendOverlay:
         """Create a named legend overlay from visible supported plot layers."""
@@ -285,13 +285,13 @@ class Viewer(_ViewerModel):
         sync: bool = False,
         visible: bool = True,
         position: str = "top_right",
-        text_color: LegendColorLike = "white",
+        text_color: ty.Any = DEFAULT_LEGEND_TEXT_COLOR,
         font_size: float = 10.0,
         marker_size: float = 10.0,
         row_spacing: float = 4.0,
         padding: float = 6.0,
-        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
-        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        background_color: ty.Any = DEFAULT_LEGEND_BACKGROUND_COLOR,
+        border_color: ty.Any = DEFAULT_LEGEND_BORDER_COLOR,
         border_width: float = 1.0,
     ) -> LegendOverlay:
         """Create a named legend overlay from a Points layer."""

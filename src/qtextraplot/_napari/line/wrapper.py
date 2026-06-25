@@ -16,9 +16,12 @@ from qtpy.QtWidgets import QWidget
 from qtextraplot._napari._utilities import get_font_for_os
 from qtextraplot._napari._wrapper import ViewerBase
 from qtextraplot._napari.components.overlays.legend import (
-    ColorLike as LegendColorLike,
+    DEFAULT_LEGEND_BACKGROUND_COLOR,
+    DEFAULT_LEGEND_BORDER_COLOR,
+    DEFAULT_LEGEND_TEXT_COLOR,
+    LegendInput,
+    LegendOverlay,
 )
-from qtextraplot._napari.components.overlays.legend import LegendInput, LegendOverlay
 from qtextraplot._napari.line._vispy.overrides.axis import tick_formatter
 from qtextraplot._napari.line.components.viewer_model import LEGEND_OVERLAY_NAME, Viewer
 from qtextraplot._napari.line.config import Config
@@ -121,13 +124,13 @@ class NapariLineView(ViewerBase):
         name: str = LEGEND_OVERLAY_NAME,
         visible: bool = True,
         position: str = "top_right",
-        text_color: LegendColorLike = "white",
+        text_color: ty.Any = DEFAULT_LEGEND_TEXT_COLOR,
         font_size: float = 10.0,
         marker_size: float = 10.0,
         row_spacing: float = 4.0,
         padding: float = 6.0,
-        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
-        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        background_color: ty.Any = DEFAULT_LEGEND_BACKGROUND_COLOR,
+        border_color: ty.Any = DEFAULT_LEGEND_BORDER_COLOR,
         border_width: float = 1.0,
     ) -> LegendOverlay:
         """Set a canvas legend overlay."""
@@ -169,13 +172,13 @@ class NapariLineView(ViewerBase):
         sync: bool = True,
         visible: bool = True,
         position: str = "top_right",
-        text_color: LegendColorLike = "white",
+        text_color: ty.Any = DEFAULT_LEGEND_TEXT_COLOR,
         font_size: float = 10.0,
         marker_size: float = 10.0,
         row_spacing: float = 4.0,
         padding: float = 6.0,
-        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
-        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        background_color: ty.Any = DEFAULT_LEGEND_BACKGROUND_COLOR,
+        border_color: ty.Any = DEFAULT_LEGEND_BORDER_COLOR,
         border_width: float = 1.0,
     ) -> LegendOverlay:
         """Set a canvas legend overlay from visible supported layers."""
@@ -206,13 +209,13 @@ class NapariLineView(ViewerBase):
         sync: bool = False,
         visible: bool = True,
         position: str = "top_right",
-        text_color: LegendColorLike = "white",
+        text_color: ty.Any = DEFAULT_LEGEND_TEXT_COLOR,
         font_size: float = 10.0,
         marker_size: float = 10.0,
         row_spacing: float = 4.0,
         padding: float = 6.0,
-        background_color: LegendColorLike = (0.0, 0.0, 0.0, 0.65),
-        border_color: LegendColorLike = (1.0, 1.0, 1.0, 0.8),
+        background_color: ty.Any = DEFAULT_LEGEND_BACKGROUND_COLOR,
+        border_color: ty.Any = DEFAULT_LEGEND_BORDER_COLOR,
         border_width: float = 1.0,
     ) -> LegendOverlay:
         """Set a canvas legend overlay from a Points layer."""
