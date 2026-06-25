@@ -249,6 +249,10 @@ QWidget[emphasized="true"] QtModePushButton[mode="delete_shape"]:pressed {
   background-color: {{ error }};
 }
 
+QtModePushButton {
+  padding: 0px;
+}
+
 /* ------------------------------------------------------ */
 
 QFrame#empty_controls_widget {
