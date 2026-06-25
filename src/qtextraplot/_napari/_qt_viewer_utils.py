@@ -96,6 +96,19 @@ def toggle_controls_dialog(widget, opener: ty.Callable[[], None]) -> None:
     widget._layers_controls_dialog.setVisible(not widget._layers_controls_dialog.isVisible())
 
 
+def forward_key_event_to_canvas(
+    canvas: ty.Any,
+    event: QEvent,
+    event_type: ty.Literal["key_press", "key_release"],
+) -> None:
+    """Forward a Qt key event to a napari Vispy canvas."""
+    qt_event = event.native if getattr(event, "native", None) is not None else event
+    scene_canvas = canvas._scene_canvas
+    scene_event = getattr(scene_canvas.events, event_type)
+    scene_canvas._backend._keyEvent(scene_event, qt_event)
+    event.accept()
+
+
 def copy_screenshot_to_clipboard(
     screenshot: ty.Callable[..., ty.Any],
     *,

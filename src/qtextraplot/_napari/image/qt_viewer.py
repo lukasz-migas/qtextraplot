@@ -22,6 +22,7 @@ from qtextraplot._napari._qt_viewer_utils import (
     calc_status_from_cursor,
     cleanup_qt_viewer,
     copy_screenshot_to_clipboard,
+    forward_key_event_to_canvas,
     set_mouse_over_status,
     show_controls_dialog,
     toggle_controls_dialog,
@@ -282,3 +283,11 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         """Emit our own event when mouse leaves the canvas."""
         set_mouse_over_status(self.viewer, False)
         super().leaveEvent(event)
+
+    def keyPressEvent(self, event: QEvent) -> None:
+        """Called whenever a key is pressed."""
+        forward_key_event_to_canvas(self.canvas, event, "key_press")
+
+    def keyReleaseEvent(self, event: QEvent) -> None:
+        """Called whenever a key is released."""
+        forward_key_event_to_canvas(self.canvas, event, "key_release")

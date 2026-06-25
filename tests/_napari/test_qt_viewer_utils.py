@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing as ty
 from types import SimpleNamespace
 
 from qtpy.QtWidgets import QWidget
@@ -9,6 +10,7 @@ from qtpy.QtWidgets import QWidget
 from qtextraplot._napari._qt_viewer_utils import (
     QtViewerInstanceTracker,
     calc_status_from_cursor,
+    forward_key_event_to_canvas,
     set_mouse_over_status,
     show_controls_dialog,
     toggle_controls_dialog,
@@ -16,7 +18,7 @@ from qtextraplot._napari._qt_viewer_utils import (
 
 
 class _TrackedWidget(QtViewerInstanceTracker, QWidget):
-    _instances = []
+    _instances: ty.ClassVar[list[QWidget]] = []
     _instance_index = -1
 
 
@@ -40,6 +42,30 @@ class _FakeDialog:
 
     def setVisible(self, visible):
         self.visible = visible
+
+
+class _FakeKeyEvent:
+    def __init__(self) -> None:
+        self.accepted = False
+
+    def accept(self) -> None:
+        self.accepted = True
+
+
+class _FakeSceneBackend:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def _keyEvent(self, event_type, event) -> None:
+        self.calls.append((event_type, event))
+
+
+class _FakeCanvas:
+    def __init__(self) -> None:
+        self._scene_canvas = SimpleNamespace(
+            _backend=_FakeSceneBackend(),
+            events=SimpleNamespace(key_press=object(), key_release=object()),
+        )
 
 
 def test_instance_tracker_tracks_current_widget(qtbot):
@@ -120,3 +146,13 @@ def test_toggle_controls_dialog_opens_then_toggles_visibility():
 
     toggle_controls_dialog(widget, lambda: None)
     assert widget._layers_controls_dialog.visible is False
+
+
+def test_forward_key_event_to_canvas_forwards_to_scene_backend() -> None:
+    canvas = _FakeCanvas()
+    event = _FakeKeyEvent()
+
+    forward_key_event_to_canvas(canvas, event, "key_press")
+
+    assert event.accepted is True
+    assert canvas._scene_canvas._backend.calls == [(canvas._scene_canvas.events.key_press, event)]

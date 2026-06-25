@@ -22,6 +22,7 @@ from qtextraplot._napari._qt_viewer_utils import (
     calc_status_from_cursor,
     cleanup_qt_viewer,
     copy_screenshot_to_clipboard,
+    forward_key_event_to_canvas,
     set_mouse_over_status,
     show_controls_dialog,
     toggle_controls_dialog,
@@ -301,7 +302,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
             disconnect=lambda: CANVAS.evt_theme_changed.disconnect(self.toggle_theme),
         )
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QEvent) -> None:
         """Called whenever a key is pressed.
 
         Parameters
@@ -309,12 +310,9 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         event : qtpy.QtCore.QEvent
             Event from the Qt context.
         """
-        if hasattr(event, "native"):
-            event = event.native
-        self.canvas._scene_canvas._backend._keyEvent(self.canvas._scene_canvas.events.key_press, event)
-        event.accept()
+        forward_key_event_to_canvas(self.canvas, event, "key_press")
 
-    def keyReleaseEvent(self, event):
+    def keyReleaseEvent(self, event: QEvent) -> None:
         """Called whenever a key is released.
 
         Parameters
@@ -322,7 +320,4 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         event : qtpy.QtCore.QEvent
             Event from the Qt context.
         """
-        if hasattr(event, "native"):
-            event = event.native
-        self.canvas._scene_canvas._backend._keyEvent(self.canvas._scene_canvas.events.key_release, event)
-        event.accept()
+        forward_key_event_to_canvas(self.canvas, event, "key_release")

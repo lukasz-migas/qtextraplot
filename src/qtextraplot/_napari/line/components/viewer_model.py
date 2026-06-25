@@ -380,3 +380,7 @@ __all__ = [
     "legend_entries_from_layers",
     "legend_entry_from_layer",
 ]
+
+
+# Import for side effects after Viewer is defined.
+from qtextraplot._napari.line.components import _viewer_key_bindings as _viewer_key_bindings  # noqa: E402

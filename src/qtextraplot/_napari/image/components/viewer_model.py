@@ -354,3 +354,7 @@ class Viewer(_ViewerModel):
         corner = extent[0]
         empty_labels = np.zeros(image.data.shape, dtype=np.uint8)
         return self.add_labels(empty_labels, translate=np.array(corner), scale=scale, name=name)
+
+
+# Import for side effects after Viewer is defined.
+from qtextraplot._napari.image.components import _viewer_key_bindings as _viewer_key_bindings  # noqa: E402
