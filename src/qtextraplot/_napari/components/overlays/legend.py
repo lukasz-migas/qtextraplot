@@ -205,8 +205,8 @@ class LegendOverlay(CanvasOverlay):
     marker_size: float = 10.0
     row_spacing: float = 4.0
     padding: float = 6.0
-    background_color: Array[float, (4,)] = (0.0, 0.0, 0.0, 0.65)
-    border_color: Array[float, (4,)] = (1.0, 1.0, 1.0, 0.8)
+    background_color: Array[float, (4,)] = (0.0, 0.0, 0.0, 0.0)
+    border_color: Array[float, (4,)] = (1.0, 1.0, 1.0, 0.0)
     border_width: float = 1.0
     source_layer: str | None = None
     label_property: str = "label"
