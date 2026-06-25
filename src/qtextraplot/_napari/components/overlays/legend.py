@@ -32,6 +32,10 @@ LEGEND_PADDING_ERROR = "Legend padding must be non-negative."
 LEGEND_BORDER_ERROR = "Legend border width must be non-negative."
 LABEL_PROPERTY_ERROR = "Points legend label property must exist on the layer."
 
+DEFAULT_LEGEND_TEXT_COLOR = (0.0, 0.0, 0.0, 1.0)
+DEFAULT_LEGEND_BACKGROUND_COLOR = (1.0, 1.0, 1.0, 0.0)
+DEFAULT_LEGEND_BORDER_COLOR = (1.0, 1.0, 1.0, 0.0)
+
 
 def _coerce_single_color(value: ColorLike) -> np.ndarray:
     colors = transform_color(value)
@@ -200,13 +204,13 @@ class LegendOverlay(CanvasOverlay):
 
     position: CanvasPosition | ty.Any = CanvasPosition.TOP_RIGHT
     entries: tuple[LegendEntry, ...] = ()
-    text_color: Array[float, (4,)] = (1.0, 1.0, 1.0, 1.0)
+    text_color: Array[float, (4,)] = DEFAULT_LEGEND_TEXT_COLOR
     font_size: float = 10.0
     marker_size: float = 10.0
     row_spacing: float = 4.0
     padding: float = 6.0
-    background_color: Array[float, (4,)] = (0.0, 0.0, 0.0, 0.65)
-    border_color: Array[float, (4,)] = (1.0, 1.0, 1.0, 0.8)
+    background_color: Array[float, (4,)] = DEFAULT_LEGEND_BACKGROUND_COLOR
+    border_color: Array[float, (4,)] = DEFAULT_LEGEND_BORDER_COLOR
     border_width: float = 1.0
     source_layer: str | None = None
     label_property: str = "label"

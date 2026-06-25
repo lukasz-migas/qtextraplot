@@ -125,6 +125,14 @@ class PlotBase(QWidget):
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
         self.store_plot_limits([extent], [self.ax])
 
+    def setup_ax(self, ax: plt.Axes | list[plt.Axes]) -> None:
+        """Add axes plotted outside of this module."""
+        if isinstance(ax, plt.Axes):
+            ax = [ax]
+        extent = [get_extent(ax_) for ax_ in ax]
+        self.setup_new_zoom(ax, data_limits=extent, allow_extraction=False)
+        self.store_plot_limits(extent, ax)
+
     def plot_precision_recall_fscore_support(
         self,
         scores: dict,
@@ -589,9 +597,10 @@ class PlotBase(QWidget):
     def on_reset_zoom(self, repaint: bool = True):
         """Reset plot zoom."""
         try:
-            start_x, end_x, start_y, end_y = self.get_plot_limits()
-            self.ax.set_xlim(start_x, end_x)
-            self.ax.set_ylim(start_y, end_y)
+            for ax in self.figure.axes:
+                start_x, end_x, start_y, end_y = self.get_plot_limits(ax=ax)
+                ax.set_xlim(start_x, end_x)
+                ax.set_ylim(start_y, end_y)
             self.repaint(repaint)
         except AttributeError:
             pass
@@ -782,6 +791,20 @@ class PlotBase(QWidget):
                 warnings.warn("Overriding existing ax.", UserWarning, stacklevel=2)
             self._ax = self.figure.add_axes([left, bottom, width, height])
         return self._ax
+
+    def ax_h_split(self, n_cols: int) -> list[plt.Axes]:
+        """Get split axes."""
+        axes = []
+        for col in range(1, n_cols + 1):
+            axes.append(self.figure.add_subplot(1, n_cols, col))
+        return axes
+
+    def ax_v_split(self, n_rows: int) -> list[plt.Axes]:
+        """Get split axes."""
+        axes = []
+        for row in range(1, n_rows + 1):
+            axes.append(self.figure.add_subplot(n_rows, 1, row))
+        return axes
 
     def __repr__(self):
         return f"Plot: {self.plot_name} | Window name: {self.window_name}"

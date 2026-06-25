@@ -2,6 +2,7 @@
 
 import typing as ty
 
+from qtextra.helpers import add_flash_animation
 from qtextra.widgets.qt_toolbar_mini import QtMiniToolbar
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QHBoxLayout, QWidget
@@ -17,6 +18,7 @@ class MplToolbar(QWidget):
         super().__init__(parent=parent)
         # create instance
         toolbar = QtMiniToolbar(self, Qt.Orientation.Vertical)
+        self.view = view
 
         # view reset/clear
         self.tools_erase_btn = toolbar.insert_qta_tool("erase", tooltip="Clear image", func=view.clear)
@@ -25,7 +27,7 @@ class MplToolbar(QWidget):
         self.tools_clip_btn = toolbar.insert_qta_tool(
             "screenshot",
             tooltip="Copy figure to clipboard",
-            func=view.copy_to_clipboard,
+            func=self.on_copy_to_clipboard,
         )
         self.tools_save_btn = toolbar.insert_qta_tool(
             "save",
@@ -37,3 +39,8 @@ class MplToolbar(QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(toolbar)
+
+    def on_copy_to_clipboard(self):
+        """Copy figure to clipboard."""
+        add_flash_animation(self.view.widget)
+        self.view.copy_to_clipboard()

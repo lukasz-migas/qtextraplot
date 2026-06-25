@@ -34,7 +34,7 @@ dependencies = [
     "qtpy",
     "koyo>=0.3.5",
     "numpy",
-    "qtextra",
+    "qtextra>=0.2.0",
 ]
 
 # extras
@@ -270,6 +270,6 @@ ignore = [
     "examples/**/*",
     "MANIFEST.in",
     "CLAUDE.md",
-    ".claude/*",
+    "justfile",
     "scratch/**/*",
 ]

@@ -7,12 +7,15 @@ from weakref import ref
 
 import qtextra.helpers as hp
 from loguru import logger
-from napari._qt.layer_controls.qt_labels_controls import QtLabelsControls
-from napari._qt.layer_controls.qt_shapes_controls import QtShapesControls
 from napari.utils.events import Event, EventEmitter, disconnect_events
 from qtextra.widgets.qt_dialog import QtFramelessTool
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QVBoxLayout, QWidget
+
+from qtextraplot._napari.layer_controls.qt_layer_bound_controls import (
+    QtLayerBoundLabelsControls,
+    QtLayerBoundShapesControls,
+)
 
 if ty.TYPE_CHECKING:
     from napari.layers import Labels, Shapes
@@ -136,7 +139,11 @@ class ImageMaskROIExtractPopupBase(QtFramelessTool):
         event : qtpy.QtCore.QEvent
             Event from the Qt context.
         """
-        self.ref_viewer().widget.canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_press, event)
+        canvas = self.ref_viewer().widget.canvas
+        if hasattr(canvas, "_backend"):
+            canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_press, event)
+        else:
+            canvas._scene_canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_press, event)
         event.accept()
 
     def keyReleaseEvent(self, event):
@@ -147,7 +154,11 @@ class ImageMaskROIExtractPopupBase(QtFramelessTool):
         event : qtpy.QtCore.QEvent
             Event from the Qt context.
         """
-        self.ref_viewer().widget.canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_release, event)
+        canvas = self.ref_viewer().widget.canvas
+        if hasattr(canvas, "_backend"):
+            canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_release, event)
+        else:
+            canvas._scene_canvas._backend._keyEvent(self.ref_viewer().widget.canvas.events.key_release, event)
         event.accept()
 
 
@@ -185,9 +196,9 @@ class ImageLabelsROIExtractPopup(ImageMaskROIExtractPopupBase):
         if events and hasattr(events, "labels_cancel"):
             events.labels_cancel()
 
-    def _make_layer_controls(self) -> QtLabelsControls:
+    def _make_layer_controls(self) -> QtLayerBoundLabelsControls:
         """Actually make layer controls."""
-        return QtLabelsControls(self.layer)
+        return QtLayerBoundLabelsControls(self.layer)
 
 
 class ImageShapesROIExtractPopup(ImageMaskROIExtractPopupBase):
@@ -223,6 +234,6 @@ class ImageShapesROIExtractPopup(ImageMaskROIExtractPopupBase):
         if events and hasattr(events, "shapes_cancel"):
             events.shapes_cancel()
 
-    def _make_layer_controls(self) -> QtShapesControls:
+    def _make_layer_controls(self) -> QtLayerBoundShapesControls:
         """Actually make layer controls."""
-        return QtShapesControls(self.layer)
+        return QtLayerBoundShapesControls(self.layer)

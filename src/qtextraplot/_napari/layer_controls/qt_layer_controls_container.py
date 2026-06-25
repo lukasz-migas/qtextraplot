@@ -18,19 +18,22 @@ except (ImportError, TypeError):
     )
 
 from napari._qt.layer_controls.qt_image_controls import QtImageControls
-from napari._qt.layer_controls.qt_labels_controls import QtLabelsControls
-from napari._qt.layer_controls.qt_points_controls import QtPointsControls
-from napari._qt.layer_controls.qt_shapes_controls import QtShapesControls
 from napari._qt.layer_controls.qt_surface_controls import QtSurfaceControls
 from napari._qt.layer_controls.qt_vectors_controls import QtVectorsControls
 from napari.layers import Image, Labels, Points, Shapes, Surface, Vectors
 from qtpy.QtWidgets import QFrame, QStackedWidget
 
+from qtextraplot._napari.layer_controls.qt_layer_bound_controls import (
+    QtLayerBoundLabelsControls,
+    QtLayerBoundPointsControls,
+    QtLayerBoundShapesControls,
+)
+
 layer_to_controls = {
-    Labels: QtLabelsControls,
+    Labels: QtLayerBoundLabelsControls,
     Image: QtImageControls,  # must be after Labels layer
-    Shapes: QtShapesControls,
-    Points: QtPointsControls,
+    Shapes: QtLayerBoundShapesControls,
+    Points: QtLayerBoundPointsControls,
     Surface: QtSurfaceControls,
     Vectors: QtVectorsControls,
 }
@@ -66,7 +69,7 @@ def create_qt_layer_controls(layer):
         if isinstance(layer, layer_type):
             return controls(layer)
 
-    raise TypeError(f"Could not find QtControls for layer of type {type(layer)}")
+    raise TypeError(f"Could not find QtControls for layer of type {type(layer)}")  # noqa: TRY003
 
 
 class QtLayerControlsContainer(QStackedWidget):
