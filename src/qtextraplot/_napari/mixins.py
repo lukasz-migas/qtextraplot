@@ -6,6 +6,7 @@ import typing as ty
 
 import numpy as np
 import qtextra.helpers as hp
+from loguru import logger
 from napari.utils.events import Event
 from qtpy.QtWidgets import QWidget
 
@@ -80,19 +81,16 @@ class ImageViewMixin:
         if "name" not in kwargs:
             kwargs["name"] = "Ion image"
 
-        # single-dataset mode
-        if isinstance(image, np.ndarray):
-            if image.ndim == 2:
-                self.image_layer = view_image.plot(image, **kwargs)
-            else:
-                self.image_layer = view_image.plot_rgb(image, **kwargs)
-        # multi-dataset mode
+        if isinstance(image, dict):
+            logger.warning(
+                "Plotting multiple images is not supported in this view. Only the first image will be plotted.",
+            )
+            return False
+
+        if image.ndim == 2:
+            self.image_layer = view_image.plot(image, **kwargs)
         else:
-            layers = {}
-            for name, array in image.items():
-                transformation = transformation_map[name] if transformation_map and name in transformation_map else {}
-                layers[name] = view_image.add_image(array, name=name, **transformation, metadata={"dataset": name})
-            self.image_layer = layers
+            self.image_layer = view_image.plot_rgb(image, **kwargs)
         return True
 
 
