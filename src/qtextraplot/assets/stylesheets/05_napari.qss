@@ -1,3 +1,13 @@
+/* ----------------- QtViewer / Layer controls ----------------- */
+
+QtViewer {
+   padding-top: 0px;
+}
+
+QtLayerButtons, QtViewerButtons, QtLayerList {
+  min-width: 242px;
+}
+
 /* the first one is the "partially checked" state */
 QtLayerList::indicator {
   width: 16px;
