@@ -347,7 +347,8 @@ class PlotBase(QWidget):
         if not sns:
             raise ImportError("Seaborn is required for this function")  # noqa: TRY003
 
-        sns.violinplot(data=df, ax=self.ax, **kwargs)
+        g = sns.violinplot(data=df, ax=self.ax, **kwargs)
+        g.legend().set_frame_on(False)
 
         extent = get_extent(self.ax)
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
@@ -357,7 +358,8 @@ class PlotBase(QWidget):
         """Plot box plot."""
         if not sns:
             raise ImportError("Seaborn is required for this function")  # noqa: TRY003
-        sns.boxplot(data=df, ax=self.ax, **kwargs)
+        g = sns.boxplot(data=df, ax=self.ax, **kwargs)
+        g.legend().set_frame_on(False)
 
         extent = get_extent(self.ax)
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
@@ -368,9 +370,10 @@ class PlotBase(QWidget):
         if not sns:
             raise ImportError("Seaborn is required for this function")  # noqa: TRY003
 
-        sns.boxenplot(data=df, ax=self.ax, **kwargs)
-        extent = get_extent(self.ax)
+        g = sns.boxenplot(data=df, ax=self.ax, **kwargs)
+        g.legend().set_frame_on(False)
 
+        extent = get_extent(self.ax)
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
 
         # Setup extents
@@ -380,9 +383,10 @@ class PlotBase(QWidget):
         """Plot stripplot plot."""
         if not sns:
             raise ImportError("Seaborn is required for this function")  # noqa: TRY003
-        sns.stripplot(data=df, ax=self.ax, **kwargs)
-        extent = get_extent(self.ax)
+        g = sns.stripplot(data=df, ax=self.ax, **kwargs)
+        g.legend().set_frame_on(False)
 
+        extent = get_extent(self.ax)
         self.setup_new_zoom([self.ax], data_limits=[extent], allow_extraction=False)
 
         # Setup extents
