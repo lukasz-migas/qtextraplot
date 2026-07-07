@@ -28,6 +28,7 @@ from qtextraplot._napari._qt_viewer_utils import (
 )
 from qtextraplot._napari._vispy import register_vispy_overlays
 from qtextraplot._napari.image._qapp_model import init_qactions, reset_default_keymap
+from qtextraplot._napari.image._safe_wheel import install_safe_wheel_handler
 from qtextraplot._napari.image._vispy import register_vispy_overlays as register_image_vispy_overlays
 from qtextraplot._napari.image.component_controls.qt_layer_buttons import QtLayerButtons, QtViewerButtons
 from qtextraplot._napari.image.component_controls.qt_layer_controls_container import QtLayerControlsContainer
@@ -89,6 +90,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
             size=self.viewer._canvas_size,
             autoswap=True,
         )
+        install_safe_wheel_handler(self.canvas)
         self._welcome_widget = self.canvas.native  # we don't need welcome widget
 
         self.viewer._layer_slicer.events.ready.connect(self._on_slice_ready)
