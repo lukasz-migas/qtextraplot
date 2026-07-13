@@ -25,6 +25,7 @@ class QtLegendControls(QtFramelessPopup):
     def __init__(self, viewer: ViewerType, parent=None):
         self.viewer = viewer
         self._selected_overlay: LegendOverlay | None = None
+        self._generate_from_layers = callable(getattr(viewer, "set_legend_from_layers", None))
 
         super().__init__(parent=parent)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -58,16 +59,28 @@ class QtLegendControls(QtFramelessPopup):
         self.position_combobox.currentTextChanged.connect(self.on_change_position)
 
         self.source_layer_combobox = QComboBox(self)
+        generate_text = "From layers" if self._generate_from_layers else "From points"
+        generate_tooltip = (
+            "Regenerate selected legend from visible plot layers"
+            if self._generate_from_layers
+            else "Regenerate selected legend from a Points layer"
+        )
+        generate_func = self.on_generate_from_layers if self._generate_from_layers else self.on_generate_from_points
         self.generate_button = hp.make_btn(
             self,
-            "From points",
-            tooltip="Regenerate selected legend from a Points layer",
-            func=self.on_generate_from_points,
+            generate_text,
+            tooltip=generate_tooltip,
+            func=generate_func,
+        )
+        auto_sync_tooltip = (
+            "Automatically refresh selected legend when plot layers change"
+            if self._generate_from_layers
+            else "Automatically refresh selected legend when its Points layer changes"
         )
         self.auto_sync_checkbox = hp.make_checkbox(
             self,
             "",
-            "Automatically refresh selected legend when its Points layer changes",
+            auto_sync_tooltip,
             value=False,
             func=self.on_change_auto_sync,
         )
@@ -132,7 +145,8 @@ class QtLegendControls(QtFramelessPopup):
         layout.addRow(hp.make_label(self, "Overlay"), self.overlay_combobox)
         layout.addRow(hp.make_label(self, "Visible"), self.visible_checkbox)
         layout.addRow(hp.make_label(self, "Position"), self.position_combobox)
-        layout.addRow(hp.make_label(self, "Points layer"), self.source_layer_combobox)
+        if not self._generate_from_layers:
+            layout.addRow(hp.make_label(self, "Points layer"), self.source_layer_combobox)
         layout.addRow(hp.make_label(self, "Regenerate"), self.generate_button)
         layout.addRow(hp.make_label(self, "Auto sync"), self.auto_sync_checkbox)
         layout.addRow(hp.make_label(self, "Text color"), self.text_color_swatch)
@@ -167,6 +181,22 @@ class QtLegendControls(QtFramelessPopup):
         if overlay_name is None:
             return None
         return self._legend_overlays().get(overlay_name)
+
+    @staticmethod
+    def _overlay_style_kwargs(overlay: LegendOverlay) -> dict[str, ty.Any]:
+        """Return style arguments that should survive legend regeneration."""
+        return {
+            "visible": overlay.visible,
+            "position": overlay.position,
+            "text_color": overlay.text_color,
+            "font_size": overlay.font_size,
+            "marker_size": overlay.marker_size,
+            "row_spacing": overlay.row_spacing,
+            "padding": overlay.padding,
+            "background_color": overlay.background_color,
+            "border_color": overlay.border_color,
+            "border_width": overlay.border_width,
+        }
 
     def _connect_selected_overlay(self, overlay: LegendOverlay | None) -> None:
         if self._selected_overlay is not None:
@@ -218,6 +248,10 @@ class QtLegendControls(QtFramelessPopup):
         self._refresh_controls()
 
     def _refresh_source_combo(self, _event=None) -> None:
+        if self._generate_from_layers:
+            self.generate_button.setEnabled(True)
+            return
+
         selected_name = self._selected_overlay.source_layer if self._selected_overlay is not None else None
         if self.source_layer_combobox.currentIndex() >= 0:
             selected_layer = ty.cast(Points | None, self.source_layer_combobox.currentData())
@@ -271,28 +305,30 @@ class QtLegendControls(QtFramelessPopup):
             return
         overlay_name = self._current_overlay_name() or LEGEND_OVERLAY_NAME
         overlay = self._selected_overlay
-        if overlay is None:
-            self.viewer.set_legend_from_points(
-                layer,
-                name=overlay_name,
-                sync=self.auto_sync_checkbox.isChecked(),
-            )
-        else:
-            self.viewer.set_legend_from_points(
-                layer,
-                name=overlay_name,
-                sync=self.auto_sync_checkbox.isChecked(),
-                visible=overlay.visible,
-                position=overlay.position,
-                text_color=overlay.text_color,
-                font_size=overlay.font_size,
-                marker_size=overlay.marker_size,
-                row_spacing=overlay.row_spacing,
-                padding=overlay.padding,
-                background_color=overlay.background_color,
-                border_color=overlay.border_color,
-                border_width=overlay.border_width,
-            )
+        style_kwargs = self._overlay_style_kwargs(overlay) if overlay is not None else {}
+        self.viewer.set_legend_from_points(
+            layer,
+            name=overlay_name,
+            sync=self.auto_sync_checkbox.isChecked(),
+            **style_kwargs,
+        )
+        self._refresh_overlay_combo()
+
+    def on_generate_from_layers(self) -> None:
+        """Regenerate the selected legend from visible plot layers."""
+        set_legend_from_layers = getattr(self.viewer, "set_legend_from_layers", None)
+        if set_legend_from_layers is None:
+            return
+
+        overlay_name = self._current_overlay_name() or LEGEND_OVERLAY_NAME
+        overlay = self._selected_overlay
+        style_kwargs = self._overlay_style_kwargs(overlay) if overlay is not None else {}
+        sync = self.auto_sync_checkbox.isChecked() if overlay is not None else True
+        set_legend_from_layers(
+            name=overlay_name,
+            sync=sync,
+            **style_kwargs,
+        )
         self._refresh_overlay_combo()
 
     def _on_source_layer_change(self, _event=None) -> None:
