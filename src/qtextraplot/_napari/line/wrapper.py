@@ -6,7 +6,7 @@ import typing as ty
 
 import numpy as np
 from koyo.secret import get_short_hash
-from napari.layers import Points
+from napari.layers import Layer, Points
 from napari.utils.events import Event
 from napari_plot.layers import Centroids, InfLine, Line, Region, Scatter, Shapes
 from napari_plot.layers.base import update_layer_attributes
@@ -438,6 +438,12 @@ class NapariLineView(ViewerBase):
             if data.shape[0] == len(x):
                 data[:, 0] = x
                 layer.data = data
+
+    def move_to_front(self, layer: Layer) -> None:
+        """Move layer to the front."""
+        if layer is None:
+            return
+        self.viewer.layers.move(self.viewer.layers.index(layer), len(self.viewer.layers))
 
 
 if __name__ == "__main__":  # pragma: no cover
