@@ -2,10 +2,10 @@
 
 import typing as ty
 
-from qtextra.helpers import add_flash_animation
+from qtextra.helpers import add_flash_animation, make_h_layout
 from qtextra.widgets.qt_toolbar_mini import QtMiniToolbar
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QHBoxLayout, QWidget
+from qtpy.QtWidgets import QWidget
 
 if ty.TYPE_CHECKING:
     from qtextraplot._mpl import ViewMplLine
@@ -35,10 +35,12 @@ class MplToolbar(QWidget):
             func=view.on_save_figure,
         )
 
-        layout = QHBoxLayout(self)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(toolbar)
+        make_h_layout(
+            toolbar,
+            parent=self,
+            spacing=0,
+            margin=0,
+        )
 
     def on_copy_to_clipboard(self):
         """Copy figure to clipboard."""

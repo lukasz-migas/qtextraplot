@@ -16,9 +16,10 @@ from koyo.visuals import find_text_color, get_intensity_formatter
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.collections import LineCollection
 from matplotlib.figure import Figure
+from qtextra.helpers import add_flash_animation, make_h_layout
 from qtextra.utils.utilities import connect
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QApplication, QHBoxLayout, QSizePolicy, QWidget
+from qtpy.QtWidgets import QApplication, QSizePolicy, QWidget
 
 from qtextraplot._mpl.gids import PlotIds
 from qtextraplot._mpl.interaction import ImageMPLInteraction, MPLInteraction
@@ -97,10 +98,7 @@ class PlotBase(QWidget):
         self.canvas.setFocus()
 
         # RESIZE
-        sizer = QHBoxLayout(self)
-        sizer.setContentsMargins(0, 0, 0, 0)
-        sizer.setSpacing(0)
-        sizer.addWidget(self.canvas, stretch=1)
+        make_h_layout(self.canvas, parent=self, margin=0, spacing=0, stretch_id=(1,))
 
         self._ax = None
         # Prepare for zoom
@@ -591,8 +589,6 @@ class PlotBase(QWidget):
 
     def copy_to_clipboard(self):
         """Copy canvas to clipboard."""
-        from qtextra.helpers import add_flash_animation
-
         pixmap = self.canvas.grab()
         QApplication.clipboard().setPixmap(pixmap)
         add_flash_animation(self)
