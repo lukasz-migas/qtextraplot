@@ -207,7 +207,7 @@ class LegendOverlay(CanvasOverlay):
     text_color: Array[float, (4,)] = DEFAULT_LEGEND_TEXT_COLOR
     font_size: float = 10.0
     marker_size: float = 10.0
-    row_spacing: float = 8.0
+    row_spacing: float = 10.0
     padding: float = 6.0
     background_color: Array[float, (4,)] = DEFAULT_LEGEND_BACKGROUND_COLOR
     border_color: Array[float, (4,)] = DEFAULT_LEGEND_BORDER_COLOR
