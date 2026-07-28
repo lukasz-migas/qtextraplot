@@ -172,6 +172,40 @@ class TestPlotBaseRepaint:
         assert called == []
 
 
+class TestPlotBaseLegend:
+    def test_set_legend_visible_updates_axes_and_figure_legends(self, plot_widget: PlotBase) -> None:
+        axes = plot_widget.ax
+        (line,) = axes.plot([0, 1], [0, 1], label="axes")
+        axes_legend = axes.legend()
+        figure_legend = plot_widget.figure.legend([line], ["figure"])
+
+        plot_widget.set_legend_visible(False)
+
+        assert plot_widget.legend_visible is False
+        assert axes_legend.get_visible() is False
+        assert figure_legend.get_visible() is False
+
+        plot_widget.set_legend_visible(True)
+
+        assert axes_legend.get_visible() is True
+        assert figure_legend.get_visible() is True
+
+    def test_legend_visibility_survives_clear(self, plot_widget: PlotBase) -> None:
+        plot_widget.set_legend_visible(False)
+
+        plot_widget.clear()
+
+        assert plot_widget.legend_visible is False
+
+    def test_set_legend_visible_can_skip_repaint(self, plot_widget: PlotBase) -> None:
+        draws: list[bool] = []
+        plot_widget.canvas.draw = lambda: draws.append(True)
+
+        plot_widget.set_legend_visible(False, repaint=False)
+
+        assert draws == []
+
+
 class TestPlotBaseSignals:
     def test_evt_move_emitted_by_zoom(self, qtbot, plot_widget):
         """Smoke test: setting up a zoom handler and connecting to evt_move should work."""
