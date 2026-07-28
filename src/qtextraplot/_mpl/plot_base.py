@@ -16,8 +16,7 @@ from koyo.visuals import find_text_color, get_intensity_formatter
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.collections import LineCollection
 from matplotlib.figure import Figure
-from qtextra.helpers import add_flash_animation, make_h_layout
-from qtextra.utils.utilities import connect
+from qtextra.helpers import add_flash_animation, connect, make_h_layout
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QApplication, QSizePolicy, QWidget
 
@@ -105,6 +104,7 @@ class PlotBase(QWidget):
         self.zoom = None
         self._disable_repaint = False
         self._repaint = True
+        self._legend_visible = True
 
         # obj containers
         self.text = []
@@ -899,6 +899,21 @@ class PlotBase(QWidget):
         if repaint:
             self.canvas.draw()
         self._repaint = False
+
+    @property
+    def legend_visible(self) -> bool:
+        """Return whether plot legends should be visible."""
+        return self._legend_visible
+
+    def set_legend_visible(self, visible: bool, repaint: bool = True) -> None:
+        """Show or hide every legend in the current figure."""
+        self._legend_visible = bool(visible)
+        legends = [axes.get_legend() for axes in self.figure.axes]
+        legends.extend(self.figure.legends)
+        for legend in legends:
+            if legend is not None:
+                legend.set_visible(self._legend_visible)
+        self.repaint(repaint)
 
     def tight(self, tight: bool = True):
         """Tighten layout."""

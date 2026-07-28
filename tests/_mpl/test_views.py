@@ -33,3 +33,15 @@ def test_mpl_line_view_imshow_caches_image(qtbot):
     view.imshow(image)
 
     assert np.array_equal(view._data["image"], image)
+
+
+def test_mpl_line_view_exposes_legend_visibility(qtbot) -> None:
+    view = ViewMplLine(None)
+    qtbot.addWidget(view.widget)
+    view.figure.ax.plot([0, 1], [0, 1], label="profile")
+    legend = view.figure.ax.legend()
+
+    view.set_legend_visible(False)
+
+    assert view.legend_visible is False
+    assert legend.get_visible() is False

@@ -37,6 +37,16 @@ class ViewMplLine(ViewBase):
         """Get widget."""
         return self.figure
 
+    @property
+    def legend_visible(self) -> bool:
+        """Return whether plot legends should be visible."""
+        return self.figure.legend_visible
+
+    def set_legend_visible(self, visible: bool, repaint: bool = True) -> None:
+        """Show or hide every legend in the current figure."""
+        with QMutexLocker(MUTEX):
+            self.figure.set_legend_visible(visible, repaint=repaint)
+
     def _cache_xy_state(self, x: np.ndarray, y: np.ndarray, **kwargs: ty.Any) -> None:
         """Cache the current x/y data and plot kwargs."""
         self._data.update(x=np.asarray(x), y=np.asarray(y))
