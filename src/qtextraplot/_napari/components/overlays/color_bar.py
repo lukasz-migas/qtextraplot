@@ -12,7 +12,10 @@ try:
 except ImportError:
     from pydantic import validator
 
-ColorBarItem = tuple[np.ndarray, str, tuple[float, float]]
+ColorMapValue = np.ndarray | str | tuple[float, float, float]
+PercentageColorBarItem = tuple[ColorMapValue, str, tuple[float, float] | tuple[float, float, float]]
+AbsoluteColorBarItem = tuple[ColorMapValue, str, tuple[float, float], str]
+ColorBarItem = PercentageColorBarItem | AbsoluteColorBarItem
 
 
 class ColorBarOverlay(CanvasOverlay):
