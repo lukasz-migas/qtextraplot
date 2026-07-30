@@ -8,7 +8,6 @@ Minor changes were made to make sure values can be easily updated and old unused
 """
 
 import io
-from typing import Tuple
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -39,7 +38,7 @@ def make_vispy_colormap(cmap: str) -> LinearSegmentedColormap:
     return LinearSegmentedColormap.from_list("vispy_cmap", rgba)
 
 
-def make_rgb_colormap(color: Tuple, n_bins=255) -> LinearSegmentedColormap:
+def make_rgb_colormap(color: tuple, n_bins=255) -> LinearSegmentedColormap:
     """Make RGB colormap."""
     lin_range = np.linspace(0, 1.0, n_bins)
     array = np.zeros((n_bins, 3))
@@ -219,11 +218,15 @@ class ColorBar(Image):
         axs = axs.flatten()
         for i, axes in enumerate(chunks(axs, 3)):
             _colorbar_data = colorbar_data[i]
+            unit = ""
+            is_absolute = len(_colorbar_data) == 4
             if len(_colorbar_data) == 1:
                 color, label, values = _colorbar_data, "", (0, 100)
             elif len(_colorbar_data) == 2:
                 color, label = _colorbar_data
                 values = (0, 100)
+            elif is_absolute:
+                color, label, values, unit = _colorbar_data
             else:
                 color, label, values = colorbar_data[i]
             extend = "neither" if len(values) == 2 else "max"
@@ -245,7 +248,10 @@ class ColorBar(Image):
                 extendfrac=0.1,
             )
             cb.set_ticks([0, 1])
-            cb.set_ticklabels([f"{v}%" for v in values[0:2]])
+            if is_absolute:
+                cb.set_ticklabels([f"{value:g}" for value in values[0:2]])
+            else:
+                cb.set_ticklabels([f"{value}%" for value in values[0:2]])
             cb.outline.set_linewidth(self.border_width)
             cb.outline.set_edgecolor(self.border_color)
             cb.ax.tick_params(width=self.border_width, labelsize=self.label_size, color=self.border_color)
@@ -264,7 +270,18 @@ class ColorBar(Image):
                     color=self.label_color,
                 )
             # set extra label
-            if len(values) == 3:
+            if is_absolute and unit:
+                ax_max.text(
+                    1.05,
+                    0.5,
+                    unit,
+                    transform=ax_cb.transAxes,
+                    fontsize=self.label_size,
+                    ha="left",
+                    va="center",
+                    color=self.label_color,
+                )
+            elif len(values) == 3:
                 ax_max.text(
                     1.05,
                     0.5,
