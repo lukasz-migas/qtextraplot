@@ -22,7 +22,6 @@ with contextlib.suppress(ImportError, TypeError):
 # Monkey patch icons
 import napari.resources._icons
 
-import qtextraplot._napari._register
 from qtextraplot._napari._compat import install_mode_enum_compatibility
 from qtextraplot.assets import ICONS
 

@@ -7,6 +7,7 @@ from contextlib import suppress
 
 import numpy as np
 from napari._vispy.overlays.base import ViewerOverlayMixin, VispyCanvasOverlay
+from napari._vispy.utils.qt_font import FontInfo
 from napari.utils.colormaps import ensure_colormap
 from napari.utils.events import disconnect_events
 from vispy.scene.visuals import Compound, Line, Markers, Rectangle, Text
@@ -78,7 +79,7 @@ def _border_segments(x_size: float, y_size: float) -> np.ndarray:
 class VispyLegendOverlay(ViewerOverlayMixin, VispyCanvasOverlay):
     """Canvas-space legend visual."""
 
-    def __init__(self, viewer, overlay: LegendOverlay, parent=None):
+    def __init__(self, viewer, overlay: LegendOverlay, font_info: FontInfo, parent=None):
         self._background = Rectangle(center=(0, 0), width=1, height=1, color=(0, 0, 0, 0))
         self._border = Line(connect="segments", method="gl")
         self._text = Text(text="", pos=(0, 0, 0), anchor_x="left", anchor_y="center")
@@ -86,7 +87,7 @@ class VispyLegendOverlay(ViewerOverlayMixin, VispyCanvasOverlay):
         self._connected_entries: tuple[LegendEntry, ...] = ()
 
         node = Compound([self._background, self._border, self._text], parent=parent)
-        super().__init__(node=node, viewer=viewer, overlay=overlay, parent=parent)
+        super().__init__(node=node, viewer=viewer, overlay=overlay, font_info=font_info, parent=parent)
 
         self.overlay.events.entries.connect(self._on_entries_change)
         self.overlay.events.text_color.connect(self._on_data_change)

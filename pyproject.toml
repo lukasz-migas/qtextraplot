@@ -13,7 +13,7 @@ include = ["src", "tests", "CHANGELOG.md"]
 name = "qtextraplot"
 description = "Extra plotting widgets for Qt"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "BSD 3-Clause License" }
 authors = [
     { email = "lukas.migas@yahoo.com", name = "Lukasz G. Migas" },
@@ -23,7 +23,6 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -54,8 +53,8 @@ pyqt6 = [
     "pyqt6>6.9.0; platform_system == 'Windows'",
     "pyqt6; platform_system != 'Windows'"
 ]
-1d = ["napari-plot>=0.2.0"]
-2d = ["napari[optional]>=0.6.6,<0.7.0"]
+1d = ["napari-plot>=0.3.0,<0.4.0"]
+2d = ["napari[optional]>=0.8.0,<0.9.0"]
 ndv = ["ndv[vispy]"]
 mpl = ["matplotlib"]
 plot = ["qtextraplot[1d]", "qtextraplot[2d]"]

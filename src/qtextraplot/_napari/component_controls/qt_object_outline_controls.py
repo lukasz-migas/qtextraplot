@@ -101,7 +101,10 @@ class QtObjectOutlineControls(QtFramelessPopup):
 
     def _connect_selected_overlay(self, overlay: ObjectOutlinesOverlay | None) -> None:
         if self._selected_overlay is not None:
-            disconnect_events(self._selected_overlay.events, self)
+            events = self._selected_overlay.events
+            events.visible.disconnect(self._on_visible_change)
+            events.closed.disconnect(self._on_closed_change)
+            events.outlines.disconnect(self._on_outlines_change)
             for outline in self._selected_overlay.outlines:
                 disconnect_events(outline.events, self)
         self._selected_overlay = overlay
@@ -145,9 +148,9 @@ class QtObjectOutlineControls(QtFramelessPopup):
         if overlay is None:
             return
 
-        with overlay.events.visible.blocker(), hp.qt_signals_blocked(self.visible_checkbox):
+        with overlay.events.visible.blocked(), hp.qt_signals_blocked(self.visible_checkbox):
             self.visible_checkbox.setChecked(overlay.visible)
-        with overlay.events.closed.blocker(), hp.qt_signals_blocked(self.closed_checkbox):
+        with overlay.events.closed.blocked(), hp.qt_signals_blocked(self.closed_checkbox):
             self.closed_checkbox.setChecked(overlay.closed)
         self._on_width_change()
         self._on_color_change()

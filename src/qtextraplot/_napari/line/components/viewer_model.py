@@ -10,6 +10,7 @@ from napari.layers import Points
 from napari.layers.base import Layer
 from napari_plot.layers import Centroids, Line, Scatter
 from napari_plot.viewer import ViewerModel as _ViewerModel
+from pydantic import PrivateAttr
 
 from qtextraplot._napari.components.overlays.legend import (
     DEFAULT_LEGEND_BACKGROUND_COLOR,
@@ -20,11 +21,6 @@ from qtextraplot._napari.components.overlays.legend import (
     LegendOverlay,
     legend_entries_from_points,
 )
-
-try:
-    from pydantic.v1 import PrivateAttr
-except ImportError:
-    from pydantic import PrivateAttr
 
 LEGEND_OVERLAY_NAME = "Legend"
 POINTS_LAYER_ERROR = "Legend source layer must be a Points layer."

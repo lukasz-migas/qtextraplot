@@ -10,11 +10,7 @@ from napari.components.overlays import SceneOverlay
 from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events import EventedModel
 from napari.utils.events.custom_types import Array
-
-try:
-    from pydantic.v1 import validator
-except ImportError:
-    from pydantic import validator
+from pydantic import ConfigDict, field_validator
 
 ColorLike = ty.Any
 OutlineData = np.ndarray
@@ -116,22 +112,27 @@ def normalize_object_outlines(
 class ObjectOutline(EventedModel):
     """Single object outline."""
 
+    model_config = EventedModel.model_config | ConfigDict(arbitrary_types_allowed=True)
+
     data: np.ndarray
     color: Array[float, (4,)] = (1.0, 0.0, 0.0, 1.0)
     width: float = 1.0
 
-    @validator("data", pre=True, always=True)
+    @field_validator("data", mode="before")
+    @classmethod
     def _coerce_data(cls, value: ty.Any) -> np.ndarray:
         return _coerce_outline_array(value)
 
-    @validator("color", pre=True, always=True)
+    @field_validator("color", mode="before")
+    @classmethod
     def _coerce_color(cls, value: ColorLike) -> np.ndarray:
         colors = transform_color(value)
         if len(colors) != 1:
             raise ValueError(OBJECT_COLOR_ERROR)
         return colors[0]
 
-    @validator("width", pre=True, always=True)
+    @field_validator("width", mode="before")
+    @classmethod
     def _coerce_width(cls, value: float) -> float:
         width = float(value)
         if width <= 0:
@@ -157,7 +158,8 @@ class ObjectOutlinesOverlay(SceneOverlay):
             )
         super().__init__(**data)
 
-    @validator("outlines", pre=True, always=True)
+    @field_validator("outlines", mode="before")
+    @classmethod
     def _coerce_outlines(cls, value: ty.Any) -> tuple[ObjectOutline, ...]:
         if value is None:
             return ()

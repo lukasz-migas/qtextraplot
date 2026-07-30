@@ -2,11 +2,11 @@
 
 import sys
 from collections import OrderedDict
+from enum import StrEnum
 
 from napari.components._viewer_constants import CanvasPosition
 from napari.layers.base._base_constants import Blending
 from napari.layers.labels._labels_constants import LabelColorMode, LabelsRendering
-from napari.utils.compat import StrEnum
 
 BACKSPACE = "delete" if sys.platform == "darwin" else "backspace"
 POSITION_TRANSLATIONS = OrderedDict(

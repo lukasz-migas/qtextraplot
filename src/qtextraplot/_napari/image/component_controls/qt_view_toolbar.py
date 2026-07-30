@@ -5,7 +5,6 @@ from __future__ import annotations
 from contextlib import suppress
 
 import qtextra.helpers as hp
-from napari.utils.events import disconnect_events
 from napari.utils.events.event import EmitterGroup, Event
 from qtextra.helpers import make_radio_btn_group
 from qtextra.widgets.qt_toolbar_mini import QtMiniToolbar
@@ -308,7 +307,7 @@ class QtViewToolbar(QWidget):
         if not self.allow_object_outlines:
             return
         for overlay in self._connected_object_outline_overlays:
-            disconnect_events(overlay.events, self)
+            overlay.events.visible.disconnect(self._sync_object_outlines_button)
         self._connected_object_outline_overlays = list(self.qt_viewer.viewer.object_outline_overlays().values())
         for overlay in self._connected_object_outline_overlays:
             overlay.events.visible.connect(self._sync_object_outlines_button)
@@ -318,7 +317,7 @@ class QtViewToolbar(QWidget):
         if not self.allow_legend:
             return
         for overlay in self._connected_legend_overlays:
-            disconnect_events(overlay.events, self)
+            overlay.events.visible.disconnect(self._sync_legend_button)
         self._connected_legend_overlays = list(self.qt_viewer.viewer.legend_overlays().values())
         for overlay in self._connected_legend_overlays:
             overlay.events.visible.connect(self._sync_legend_button)

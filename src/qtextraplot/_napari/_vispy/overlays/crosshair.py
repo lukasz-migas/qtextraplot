@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 from napari._vispy.overlays.base import ViewerOverlayMixin, VispySceneOverlay
+from napari._vispy.utils.qt_font import FontInfo
 from vispy.scene.visuals import Line
 
 from qtextraplot._napari.components.overlays.crosshair import CrossHairOverlay, Shape
@@ -44,11 +45,12 @@ def position_to_box(position: tuple[float, float], size: float = 1.0) -> np.ndar
 class VispyCrosshairOverlay(ViewerOverlayMixin, VispySceneOverlay):
     """Cross-hair."""
 
-    def __init__(self, viewer, overlay: CrossHairOverlay, parent=None):
+    def __init__(self, viewer, overlay: CrossHairOverlay, font_info: FontInfo, parent=None):
         super().__init__(
             node=Line(connect="segments", method="gl", parent=parent, width=3),
             viewer=viewer,
             overlay=overlay,
+            font_info=font_info,
             parent=parent,
         )
 

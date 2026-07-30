@@ -170,7 +170,19 @@ class QtLegendControls(QtFramelessPopup):
 
     def _connect_selected_overlay(self, overlay: LegendOverlay | None) -> None:
         if self._selected_overlay is not None:
-            disconnect_events(self._selected_overlay.events, self)
+            events = self._selected_overlay.events
+            events.visible.disconnect(self._on_visible_change)
+            events.position.disconnect(self._on_position_change)
+            events.source_layer.disconnect(self._on_source_layer_change)
+            events.sync_with_source.disconnect(self._on_auto_sync_change)
+            events.text_color.disconnect(self._on_text_color_change)
+            events.font_size.disconnect(self._on_font_size_change)
+            events.marker_size.disconnect(self._on_marker_size_change)
+            events.row_spacing.disconnect(self._on_row_spacing_change)
+            events.padding.disconnect(self._on_padding_change)
+            events.background_color.disconnect(self._on_background_color_change)
+            events.border_color.disconnect(self._on_border_color_change)
+            events.border_width.disconnect(self._on_border_width_change)
         self._selected_overlay = overlay
         if overlay is None:
             return

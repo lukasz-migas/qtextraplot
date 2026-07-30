@@ -9,6 +9,7 @@ from weakref import WeakSet
 from napari.components.viewer_model import ViewerModel as _ViewerModel
 from napari.layers import Image, Layer, Points
 from napari.utils.events.event import Event
+from pydantic import PrivateAttr
 
 from qtextraplot._napari.components.overlays.color_bar import ColorBarOverlay
 from qtextraplot._napari.components.overlays.crosshair import CrossHairOverlay
@@ -27,11 +28,6 @@ from qtextraplot._napari.components.overlays.object_outlines import (
     WidthLike,
 )
 from qtextraplot._napari.image.components._viewer_mouse_bindings import crosshair, double_click_to_zoom_reset
-
-try:
-    from pydantic.v1 import PrivateAttr
-except ImportError:
-    from pydantic import PrivateAttr
 
 if ty.TYPE_CHECKING:
     from napari.layers import Labels

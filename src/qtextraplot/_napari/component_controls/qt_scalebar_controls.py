@@ -3,7 +3,6 @@
 import numpy as np
 import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
-from napari.utils.events import disconnect_events
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout
@@ -118,7 +117,7 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def on_change_color(self, color: np.ndarray) -> None:
         """Update color."""
-        with self.viewer.scale_bar.events.color.blocker(self._on_color_changed):
+        with self.viewer.scale_bar.events.color.blocked():
             self.viewer.scale_bar.color = color
 
     def _on_color_changed(self, _event=None):
@@ -132,12 +131,12 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def _on_box_changed(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.box.blocker():
+        with self.viewer.scale_bar.events.box.blocked():
             self.box_checkbox.setChecked(self.viewer.scale_bar.box)
 
     def on_change_box_color(self, color: np.ndarray) -> None:
         """Update color."""
-        with self.viewer.scale_bar.events.box_color.blocker(self._on_box_color_changed):
+        with self.viewer.scale_bar.events.box_color.blocked():
             self.viewer.scale_bar.box_color = color
 
     def _on_box_color_changed(self, _event=None):
@@ -151,7 +150,7 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def _on_visible_change(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.visible.blocker():
+        with self.viewer.scale_bar.events.visible.blocked():
             self.visible_checkbox.setChecked(self.viewer.scale_bar.visible)
         hp.disable_widgets(
             self.font_size_spinbox,
@@ -172,7 +171,7 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def _on_colored_changed(self, _event=None) -> None:
         """Update colored checkbox."""
-        with self.viewer.scale_bar.events.colored.blocker():
+        with self.viewer.scale_bar.events.colored.blocked():
             self.colored_checkbox.setChecked(self.viewer.scale_bar.colored)
 
     def on_change_ticks(self) -> None:
@@ -181,7 +180,7 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def _on_ticks_change(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.ticks.blocker():
+        with self.viewer.scale_bar.events.ticks.blocked():
             self.ticks_checkbox.setChecked(self.viewer.scale_bar.ticks)
 
     def on_change_position(self) -> None:
@@ -190,7 +189,7 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def _on_position_change(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.position.blocker():
+        with self.viewer.scale_bar.events.position.blocked():
             hp.set_combobox_current_index(self.position_combobox, self.viewer.scale_bar.position)
 
     def on_change_unit(self, _event=None) -> None:
@@ -201,7 +200,7 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def _on_unit_change(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.unit.blocker():
+        with self.viewer.scale_bar.events.unit.blocked():
             unit = self.viewer.scale_bar.unit
             hp.set_combobox_current_index(self.units_combobox, unit)
 
@@ -211,12 +210,21 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def _on_font_size_change(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.font_size.blocker():
+        with self.viewer.scale_bar.events.font_size.blocked():
             self.font_size_spinbox.setValue(self.viewer.scale_bar.font_size)
 
     def close(self) -> None:
         """Disconnect events when widget is closing."""
-        disconnect_events(self.viewer.scale_bar.events, self)
+        events = self.viewer.scale_bar.events
+        events.visible.disconnect(self._on_visible_change)
+        events.colored.disconnect(self._on_colored_changed)
+        events.color.disconnect(self._on_color_changed)
+        events.ticks.disconnect(self._on_ticks_change)
+        events.box.disconnect(self._on_box_changed)
+        events.box_color.disconnect(self._on_box_color_changed)
+        events.position.disconnect(self._on_position_change)
+        events.unit.disconnect(self._on_unit_change)
+        events.font_size.disconnect(self._on_font_size_change)
         super().close()
 
 

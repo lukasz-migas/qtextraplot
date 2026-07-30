@@ -13,7 +13,6 @@ from napari.utils import DirectLabelColormap
 from qtpy.QtCore import QMutex, QMutexLocker, Slot  # type: ignore[attr-defined]
 from qtpy.QtWidgets import QWidget
 
-from qtextraplot._napari._utilities import get_font_for_os
 from qtextraplot._napari._wrapper import ViewerBase
 from qtextraplot._napari.components.overlays.color_bar import ColorBarItem
 from qtextraplot._napari.components.overlays.legend import (
@@ -76,10 +75,6 @@ class NapariImageView(ViewerBase):
             **kwargs,
         )
         self.toolbar = self.widget.viewerToolbar
-
-        font = get_font_for_os()
-        for overlay in self.widget.text_overlay:
-            overlay.node.face = font
 
         # add few layers
         self.image_layer = None
