@@ -3,6 +3,7 @@
 import numpy as np
 import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
+from napari.utils._units import get_unit_registry
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout
@@ -29,7 +30,6 @@ class QtScaleBarControls(QtFramelessPopup):
         self.viewer.scale_bar.events.box.connect(self._on_box_changed)
         self.viewer.scale_bar.events.box_color.connect(self._on_box_color_changed)
         self.viewer.scale_bar.events.position.connect(self._on_position_change)
-        self.viewer.scale_bar.events.unit.connect(self._on_unit_change)
         self.viewer.scale_bar.events.font_size.connect(self._on_font_size_change)
         self._on_visible_change()
 
@@ -84,7 +84,7 @@ class QtScaleBarControls(QtFramelessPopup):
         self.ticks_checkbox.setChecked(self.viewer.scale_bar.ticks)
         self.ticks_checkbox.stateChanged.connect(self.on_change_ticks)
 
-        pixel_size, unit = get_value_for_unit(self.viewer.scale_bar.unit)
+        pixel_size, unit = get_value_for_unit(self.viewer)
         self.units_combobox = hp.make_combobox(self)
         hp.set_combobox_data(self.units_combobox, UNITS_TRANSLATIONS, unit)
         self.units_combobox.currentTextChanged.connect(self.on_change_unit)
@@ -193,16 +193,13 @@ class QtScaleBarControls(QtFramelessPopup):
             hp.set_combobox_current_index(self.position_combobox, self.viewer.scale_bar.position)
 
     def on_change_unit(self, _event=None) -> None:
-        """Update dimension."""
+        """Update the physical size and units of every layer."""
         unit = self.units_combobox.currentData()
-        unit = f"{self.pixel_size.value()}{unit}" if unit == "um" else unit
-        self.viewer.scale_bar.unit = unit
-
-    def _on_unit_change(self, _event=None) -> None:
-        """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.unit.blocked():
-            unit = self.viewer.scale_bar.unit
-            hp.set_combobox_current_index(self.units_combobox, unit)
+        layer_unit = None if unit == "px" else unit or "dimensionless"
+        pixel_size = self.pixel_size.value() if unit == "um" else 1.0
+        for layer in self.viewer.layers:
+            layer.units = (layer_unit,) * layer.ndim
+            layer.scale = np.full(layer.ndim, pixel_size)
 
     def on_change_font_size(self) -> None:
         """Update visibility checkbox."""
@@ -223,19 +220,21 @@ class QtScaleBarControls(QtFramelessPopup):
         events.box.disconnect(self._on_box_changed)
         events.box_color.disconnect(self._on_box_color_changed)
         events.position.disconnect(self._on_position_change)
-        events.unit.disconnect(self._on_unit_change)
         events.font_size.disconnect(self._on_font_size_change)
         super().close()
 
 
-def get_value_for_unit(value: str) -> tuple[float, str]:
-    """Extract unit from value."""
-    if value == "" or value is None:
-        return 1, UNITS_TRANSLATIONS[""]
-    if value == "px":
-        return 1, UNITS_TRANSLATIONS[value]
-    if "um" in value:
-        if value[:-2] == "":
-            return 1, UNITS_TRANSLATIONS["um"]
-        return float(value[:-2]), UNITS_TRANSLATIONS["um"]
-    return 1, UNITS_TRANSLATIONS[""]
+def get_value_for_unit(viewer: ViewerType) -> tuple[float, str]:
+    """Return the displayed-axis pixel size and supported layer unit."""
+    units = viewer.layers.units
+    if units is None:
+        return 1.0, ""
+
+    axis = viewer.dims.displayed[-1]
+    unit = units[axis]
+    registry = get_unit_registry()
+    if unit == registry.micrometer:
+        return float(viewer.layers.extent.step[axis]), "um"
+    if unit == registry.pixel:
+        return 1.0, "px"
+    return 1.0, ""

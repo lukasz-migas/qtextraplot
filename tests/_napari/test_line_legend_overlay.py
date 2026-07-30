@@ -10,6 +10,7 @@ import pytest
 napari = pytest.importorskip("napari", reason="napari is not installed")
 pytest.importorskip("napari_plot", reason="napari-plot is not installed")
 
+from napari._app_model import get_app_model  # noqa: E402
 from napari._app_model.constants import MenuId  # noqa: E402
 from napari._app_model.context import get_context  # noqa: E402
 from napari._qt._qapp_model import build_qmodel_menu  # noqa: E402
@@ -199,6 +200,10 @@ def test_line_layer_context_menu_uses_napari_context_keys(qtbot, _mock_opengl_ca
 
     assert "any_selected_layers_deletion_locked" in context
     menu.update_from_context(context)
+    get_app_model().commands.execute_command("napari.layer.duplicate").result()
+
+    assert len(view.viewer.layers) == 2
+    assert type(view.viewer.layers[1]) is type(view.viewer.layers[0])
 
 
 @pytest.mark.xfail(reason="flaky")
