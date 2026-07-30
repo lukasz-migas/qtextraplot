@@ -8,6 +8,7 @@ from contextlib import suppress
 
 from napari.components.layerlist import LayerList
 from napari.layers import Image, Layer
+from numpy.linalg import LinAlgError
 
 
 class ViewerBase(ABC):
@@ -62,7 +63,8 @@ class ViewerBase(ABC):
     def clear(self) -> None:
         """Clear canvas."""
         self._clear()
-        self.viewer.layers.clear()
+        with suppress(LinAlgError):
+            self.viewer.layers.clear()
         self._reset_text_overlay()
 
     def clear_and_exclude(self, *name_or_layer: ty.Iterable[str | Layer]) -> None:
@@ -80,7 +82,8 @@ class ViewerBase(ABC):
 
     def close(self) -> None:
         """Close the view instance."""
-        self.viewer.layers.clear()
+        with suppress(LinAlgError):
+            self.viewer.layers.clear()
         self.widget.close()
 
     @property

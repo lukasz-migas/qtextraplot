@@ -13,7 +13,10 @@ pytest.importorskip("napari_plot", reason="napari-plot is not installed")
 from qtpy.QtCore import QPoint, Qt  # noqa: E402
 from qtpy.QtWidgets import QWidget  # noqa: E402
 
+from qtextraplot._napari._constants import CanvasPosition  # noqa: E402
+from qtextraplot._napari.component_controls.qt_legend_controls import QtLegendControls  # noqa: E402
 from qtextraplot._napari.components.overlays.legend import LegendOverlay  # noqa: E402
+from qtextraplot._napari.line._vispy.canvas import CANVAS_OVERLAY_PADDING  # noqa: E402
 from qtextraplot._napari.line.component_controls.qt_view_toolbar import QtViewRightToolbar  # noqa: E402
 from qtextraplot._napari.line.components.viewer_model import (  # noqa: E402
     LEGEND_OVERLAY_NAME,
@@ -165,6 +168,97 @@ def test_line_view_exposes_legend_api() -> None:
     assert hasattr(NapariLineView, "set_legend_from_layers")
     assert hasattr(NapariLineView, "refresh_legend_from_layers")
     assert hasattr(NapariLineView, "clear_legend")
+
+
+def test_line_legend_controls_generate_from_layers_without_label_property(qtbot) -> None:
+    """Line controls should derive legend rows from layers rather than point features."""
+    viewer = Viewer()
+    viewer.add_line(np.asarray([[0, 0], [1, 1]]), name="Line", color="red")
+    viewer.add_points(
+        np.asarray([[0, 0], [1, 1]]),
+        name="Points",
+        face_color="blue",
+        symbol="square",
+    )
+    overlay = viewer.set_legend_from_layers(
+        visible=True,
+        sync=False,
+        position=CanvasPosition.BOTTOM_LEFT,
+        font_size=17,
+    )
+    controls = QtLegendControls(viewer)
+    qtbot.addWidget(controls)
+
+    assert controls.generate_button.text() == "From layers"
+
+    controls.auto_sync_checkbox.setChecked(True)
+    controls.on_generate_from_layers()
+
+    assert viewer._overlays[LEGEND_OVERLAY_NAME] is overlay
+    assert [entry.label for entry in overlay.entries] == ["Line", "Points"]
+    assert overlay.source_layer is None
+    assert overlay.sync_with_source
+    assert overlay.position == CanvasPosition.BOTTOM_LEFT
+    assert overlay.font_size == 17
+
+    position_index = controls.position_combobox.findData(CanvasPosition.TOP_CENTER)
+    controls.position_combobox.setCurrentIndex(position_index)
+    controls.on_change_position()
+
+    assert overlay.position == CanvasPosition.TOP_CENTER
+
+
+def test_line_canvas_positions_and_resizes_legend(qtbot) -> None:
+    """Line canvas should honor every legend position and updated legend dimensions."""
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = NapariLineView(parent, add_toolbars=False)
+    qtbot.addWidget(view.widget)
+    view.widget.resize(640, 480)
+    view.widget.show()
+    view.plot([0.0, 1.0], [0.0, 1.0], name="Line", color="red")
+    overlay = view.set_legend_from_layers(visible=True, position=CanvasPosition.TOP_RIGHT)
+    canvas = view.widget.canvas
+    visual = canvas._overlay_to_visual[overlay]
+    canvas._request_canvas_update()
+
+    def expected_translation(position: CanvasPosition) -> tuple[float, float]:
+        x_max, y_max = canvas.view.size
+        if position in (CanvasPosition.TOP_LEFT, CanvasPosition.BOTTOM_LEFT):
+            x = CANVAS_OVERLAY_PADDING
+        elif position in (CanvasPosition.TOP_RIGHT, CanvasPosition.BOTTOM_RIGHT):
+            x = x_max - visual.x_size - CANVAS_OVERLAY_PADDING
+        else:
+            x = (x_max - visual.x_size) / 2
+
+        if position in (CanvasPosition.TOP_LEFT, CanvasPosition.TOP_CENTER, CanvasPosition.TOP_RIGHT):
+            y = CANVAS_OVERLAY_PADDING
+        else:
+            y = y_max - visual.y_size - CANVAS_OVERLAY_PADDING
+        return x, y
+
+    for position in CanvasPosition:
+        overlay.position = position
+        np.testing.assert_allclose(visual.node.transform.translate[:2], expected_translation(position))
+
+    overlay.position = CanvasPosition.TOP_RIGHT
+    previous_width = visual.x_size
+    overlay.font_size = 20
+
+    assert visual.x_size > previous_width
+    np.testing.assert_allclose(
+        visual.node.transform.translate[:2],
+        expected_translation(CanvasPosition.TOP_RIGHT),
+    )
+
+    x_max, y_max = canvas.view.size
+    canvas.view.size = (x_max + 100, y_max + 50)
+    canvas.on_resize(None)
+
+    np.testing.assert_allclose(
+        visual.node.transform.translate[:2],
+        expected_translation(CanvasPosition.TOP_RIGHT),
+    )
 
 
 def test_line_view_reuses_scatter_and_applies_per_point_colors(qtbot) -> None:
