@@ -143,6 +143,7 @@ class ObjectOutline(EventedModel):
 class ObjectOutlinesOverlay(SceneOverlay):
     """Object outlines rendered over image data."""
 
+    gridded: ty.ClassVar[bool] = False
     outlines: tuple[ObjectOutline, ...] = ()
     target_layer: str | None = None
     closed: bool = True

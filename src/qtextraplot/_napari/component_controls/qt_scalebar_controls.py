@@ -10,6 +10,7 @@ from qtpy.QtWidgets import QFormLayout
 
 from qtextraplot._napari._constants import POSITION_TRANSLATIONS, UNITS_TRANSLATIONS
 from qtextraplot._napari._enums import ViewerType
+from qtextraplot._napari._utilities import set_layer_spatial_calibration
 
 
 class QtScaleBarControls(QtFramelessPopup):
@@ -197,9 +198,11 @@ class QtScaleBarControls(QtFramelessPopup):
         unit = self.units_combobox.currentData()
         layer_unit = None if unit == "px" else unit or "dimensionless"
         pixel_size = self.pixel_size.value() if unit == "um" else 1.0
-        for layer in self.viewer.layers:
-            layer.units = (layer_unit,) * layer.ndim
-            layer.scale = np.full(layer.ndim, pixel_size)
+        set_layer_spatial_calibration(
+            self.viewer.layers,
+            unit=layer_unit,
+            pixel_size=pixel_size,
+        )
 
     def on_change_font_size(self) -> None:
         """Update visibility checkbox."""

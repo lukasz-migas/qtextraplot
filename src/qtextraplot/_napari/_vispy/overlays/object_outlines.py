@@ -77,6 +77,7 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         self.viewer.layers.events.inserted.connect(self._on_target_layer_change)
         self.viewer.layers.events.removed.connect(self._on_target_layer_change)
         self.viewer.layers.events.changed.connect(self._on_target_layer_change)
+        self.viewer.grid.events.enabled.connect(self._on_visible_change)
 
         self._connect_outline_events()
         self._connect_target_layer_events()
@@ -172,6 +173,10 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         self._on_blending_change()
         self.node.update()
 
+    def _should_be_visible(self) -> bool:
+        """Return whether outlines can be shown in the current view mode."""
+        return self.overlay.visible and not self.viewer.grid.enabled
+
     def reset(self) -> None:
         super().reset()
         self._on_data_change()
@@ -181,6 +186,7 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         if self._target_layer is not None:
             disconnect_events(self._target_layer.events, self)
         disconnect_events(self.viewer.dims.events, self)
+        disconnect_events(self.viewer.grid.events, self)
         disconnect_events(self.viewer.layers.events, self)
         self._clear_lines()
         super().close()

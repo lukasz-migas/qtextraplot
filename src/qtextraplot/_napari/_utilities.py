@@ -1,9 +1,25 @@
 """Utilities."""
 
+from __future__ import annotations
+
+from collections.abc import Iterable
 from functools import lru_cache
 
+from napari.layers import Layer
 from qtpy.QtCore import QPoint, QSize, Qt
 from qtpy.QtGui import QPainter, QPen, QPixmap
+
+
+def set_layer_spatial_calibration(
+    layers: Iterable[Layer],
+    *,
+    unit: str | None,
+    pixel_size: float,
+) -> None:
+    """Set isotropic spatial units and pixel size on napari layers."""
+    for layer in layers:
+        layer.units = (unit,) * layer.ndim
+        layer.scale = (pixel_size,) * layer.ndim
 
 
 @lru_cache(maxsize=2)

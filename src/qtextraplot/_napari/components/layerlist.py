@@ -1,5 +1,8 @@
-from napari.components.layerlist import Extent
+from collections.abc import Iterable
+
 from napari.components.layerlist import LayerList as _LayerList
+from napari.layers import Layer
+from napari.layers.utils.layer_utils import LayerListExtent
 
 
 class LayerList(_LayerList):
@@ -9,23 +12,13 @@ class LayerList(_LayerList):
         super().__init__(*args, **kwargs)
 
     @property
-    def selection_extent(self) -> Extent:
+    def selection_extent(self) -> LayerListExtent:
         """Extent of layers in data and world coordinates."""
-        extent_list = [layer.extent for layer in self.selection]
-        return Extent(
-            data=None,
-            world=self._get_extent_world(extent_list),
-            step=self._get_step_size(extent_list),
-        )
+        return self.get_extent(self.selection)
 
-    def extent_for(self, layers) -> Extent:
+    def extent_for(self, layers: Iterable[Layer]) -> LayerListExtent:
         """Extent of layers in data and world coordinates."""
-        extent_list = [layer.extent for layer in layers]
-        return Extent(
-            data=None,
-            world=self._get_extent_world(extent_list),
-            step=self._get_step_size(extent_list),
-        )
+        return self.get_extent(layers)
 
     def toggle_selected_editable(self) -> None:
         """Toggle editable of selected layers."""
