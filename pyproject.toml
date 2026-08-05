@@ -93,7 +93,7 @@ dev = [
     "check-manifest",
 ]
 docs = [
-    "qtextraplo[plot]",
+    "qtextraplot[plot]",
     "mkdocs-macros-plugin>=1.3.9",
     "mkdocs-material>=9.6.20",
     "mkdocstrings>=0.30.0",
