@@ -192,6 +192,10 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         fit_to_data_extent: bool = False,
     ):
         """Capture a screenshot of the Vispy canvas."""
+        if not canvas_only:
+            scale = size = None
+            fit_to_data_extent = False
+
         return Window._screenshot(
             self,
             size=size,
