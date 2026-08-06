@@ -3,7 +3,6 @@
 import numpy as np
 import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
-from napari.utils.events import disconnect_events
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt, Slot  # type: ignore[attr-defined]
 from qtpy.QtWidgets import QFormLayout
@@ -77,7 +76,7 @@ class QtTextOverlayControls(QtFramelessPopup):
 
     def _on_visible_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.text_overlay.events.visible.blocker():
+        with self.viewer.text_overlay.events.visible.blocked():
             self.visible_checkbox.setChecked(self.viewer.text_overlay.visible)
         hp.disable_widgets(
             self.color_swatch,
@@ -93,7 +92,7 @@ class QtTextOverlayControls(QtFramelessPopup):
 
     def _on_text_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.text_overlay.events.text.blocker():
+        with self.viewer.text_overlay.events.text.blocked():
             self.text_edit.setText(self.viewer.text_overlay.text)
 
     def on_change_position(self):
@@ -102,7 +101,7 @@ class QtTextOverlayControls(QtFramelessPopup):
 
     def _on_position_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.text_overlay.events.position.blocker():
+        with self.viewer.text_overlay.events.position.blocked():
             hp.set_combobox_current_index(self.position_combobox, self.viewer.text_overlay.position)
 
     def on_change_font_size(self):
@@ -111,7 +110,7 @@ class QtTextOverlayControls(QtFramelessPopup):
 
     def _on_font_size_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.text_overlay.events.font_size.blocker():
+        with self.viewer.text_overlay.events.font_size.blocked():
             self.font_size_spinbox.setValue(self.viewer.text_overlay.font_size)
 
     @Slot(np.ndarray)  # type: ignore
@@ -126,5 +125,10 @@ class QtTextOverlayControls(QtFramelessPopup):
 
     def close(self):
         """Disconnect events when widget is closing."""
-        disconnect_events(self.viewer.text_overlay.events, self)
+        events = self.viewer.text_overlay.events
+        events.visible.disconnect(self._on_visible_change)
+        events.color.disconnect(self._on_color_change)
+        events.position.disconnect(self._on_position_change)
+        events.font_size.disconnect(self._on_font_size_change)
+        events.text.disconnect(self._on_text_change)
         super().close()

@@ -4,7 +4,7 @@ import typing as ty
 from weakref import ref
 
 import qtextra.helpers as hp
-from napari.utils.events import Event, disconnect_events
+from napari.utils.events import Event
 from napari_plot._qt.qt_toolbar import create_tools_menu
 from napari_plot.components.dragtool import DragMode
 from qtextra.helpers import make_radio_btn_group, show_menu
@@ -231,7 +231,7 @@ class QtViewRightToolbar(QtMiniToolbar):
         if not self.allow_legend:
             return
         for overlay in self._connected_legend_overlays:
-            disconnect_events(overlay.events, self)
+            overlay.events.visible.disconnect(self._sync_legend_button)
         self._connected_legend_overlays = list(self.ref_qt_viewer().viewer.legend_overlays().values())
         for overlay in self._connected_legend_overlays:
             overlay.events.visible.connect(self._sync_legend_button)

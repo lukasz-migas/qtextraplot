@@ -10,13 +10,9 @@ from napari.components.overlays import CanvasOverlay
 from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events import EventedModel
 from napari.utils.events.custom_types import Array
+from pydantic import field_validator
 
 from qtextraplot._napari._constants import SYMBOL_ALIAS, CanvasPosition
-
-try:
-    from pydantic.v1 import validator
-except ImportError:
-    from pydantic import validator
 
 if ty.TYPE_CHECKING:
     from napari.layers import Points
@@ -168,24 +164,28 @@ class LegendEntry(EventedModel):
     color: Array[float, (4,)] | None = None
     colormap: str | None = None
 
-    @validator("label", pre=True, always=True)
+    @field_validator("label", mode="before")
+    @classmethod
     def _coerce_label(cls, value: ty.Any) -> str:
         label = str(value)
         if not label:
             raise ValueError(EMPTY_LABEL_ERROR)
         return label
 
-    @validator("marker", pre=True, always=True)
+    @field_validator("marker", mode="before")
+    @classmethod
     def _validate_marker(cls, value: ty.Any) -> str | None:
         return _coerce_marker(value)
 
-    @validator("color", pre=True, always=True)
+    @field_validator("color", mode="before")
+    @classmethod
     def _validate_color(cls, value: ColorLike | None) -> np.ndarray | None:
         if value is None:
             return None
         return _coerce_single_color(value)
 
-    @validator("colormap", pre=True, always=True)
+    @field_validator("colormap", mode="before")
+    @classmethod
     def _validate_colormap(cls, value: ty.Any) -> str | None:
         if value is None:
             return None
@@ -219,29 +219,34 @@ class LegendOverlay(CanvasOverlay):
     group_by_style: bool = True
     sync_with_source: bool = False
 
-    @validator("entries", pre=True, always=True)
+    @field_validator("entries", mode="before")
+    @classmethod
     def _coerce_entries(cls, value: ty.Any) -> tuple[LegendEntry, ...]:
         return normalize_legend_entries(value)
 
-    @validator("text_color", "background_color", "border_color", pre=True, always=True)
+    @field_validator("text_color", "background_color", "border_color", mode="before")
+    @classmethod
     def _coerce_color(cls, value: ColorLike) -> np.ndarray:
         return _coerce_single_color(value)
 
-    @validator("font_size", "marker_size", "row_spacing", pre=True, always=True)
+    @field_validator("font_size", "marker_size", "row_spacing", mode="before")
+    @classmethod
     def _coerce_positive_number(cls, value: float) -> float:
         number = float(value)
         if number <= 0:
             raise ValueError(LEGEND_SIZE_ERROR)
         return number
 
-    @validator("padding", pre=True, always=True)
+    @field_validator("padding", mode="before")
+    @classmethod
     def _coerce_padding(cls, value: float) -> float:
         padding = float(value)
         if padding < 0:
             raise ValueError(LEGEND_PADDING_ERROR)
         return padding
 
-    @validator("border_width", pre=True, always=True)
+    @field_validator("border_width", mode="before")
+    @classmethod
     def _coerce_border_width(cls, value: float) -> float:
         width = float(value)
         if width < 0:

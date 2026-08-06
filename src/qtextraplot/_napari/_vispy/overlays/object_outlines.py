@@ -7,6 +7,7 @@ from contextlib import suppress
 
 import numpy as np
 from napari._vispy.overlays.base import ViewerOverlayMixin, VispySceneOverlay
+from napari._vispy.utils.qt_font import FontInfo
 from napari.utils.events import disconnect_events
 from vispy.scene.visuals import Compound, Line
 
@@ -56,11 +57,12 @@ def points_to_segments(points: np.ndarray, closed: bool) -> np.ndarray:
 class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
     """Object outline visual."""
 
-    def __init__(self, viewer, overlay: ObjectOutlinesOverlay, parent=None):
+    def __init__(self, viewer, overlay: ObjectOutlinesOverlay, font_info: FontInfo, parent=None):
         super().__init__(
             node=Compound([], parent=parent),
             viewer=viewer,
             overlay=overlay,
+            font_info=font_info,
             parent=parent,
         )
         self._line_nodes: list[Line] = []
@@ -75,6 +77,7 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         self.viewer.layers.events.inserted.connect(self._on_target_layer_change)
         self.viewer.layers.events.removed.connect(self._on_target_layer_change)
         self.viewer.layers.events.changed.connect(self._on_target_layer_change)
+        self.viewer.grid.events.enabled.connect(self._on_visible_change)
 
         self._connect_outline_events()
         self._connect_target_layer_events()
@@ -170,6 +173,10 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         self._on_blending_change()
         self.node.update()
 
+    def _should_be_visible(self) -> bool:
+        """Return whether outlines can be shown in the current view mode."""
+        return self.overlay.visible and not self.viewer.grid.enabled
+
     def reset(self) -> None:
         super().reset()
         self._on_data_change()
@@ -179,6 +186,7 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         if self._target_layer is not None:
             disconnect_events(self._target_layer.events, self)
         disconnect_events(self.viewer.dims.events, self)
+        disconnect_events(self.viewer.grid.events, self)
         disconnect_events(self.viewer.layers.events, self)
         self._clear_lines()
         super().close()

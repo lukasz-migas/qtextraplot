@@ -10,6 +10,7 @@ import pytest
 napari = pytest.importorskip("napari", reason="napari is not installed")
 vispy = pytest.importorskip("vispy", reason="vispy is not installed")
 
+from napari._vispy.utils.qt_font import FontInfo  # noqa: E402
 from napari._vispy.utils.visual import overlay_to_visual  # noqa: E402
 from qtpy.QtWidgets import QWidget  # noqa: E402
 
@@ -179,7 +180,7 @@ def test_vispy_legend_overlay_registration_and_size():
 
     viewer = Viewer()
     overlay = viewer.set_legend([{"label": "Cell", "marker": "disc", "color": "red"}])
-    visual = VispyLegendOverlay(viewer, overlay)
+    visual = VispyLegendOverlay(viewer, overlay, FontInfo())
 
     assert legend_layout_size(overlay) == (visual.x_size, visual.y_size)
     assert visual.x_size > 0
@@ -191,7 +192,7 @@ def test_vispy_legend_overlay_registration_and_size():
 def test_vispy_legend_position_change_requests_canvas_update():
     viewer = Viewer()
     overlay = viewer.set_legend([{"label": "Long legend label", "marker": "disc", "color": "red"}])
-    visual = VispyLegendOverlay(viewer, overlay)
+    visual = VispyLegendOverlay(viewer, overlay, FontInfo())
     calls = []
     visual.canvas_position_callback = lambda: calls.append(True)
 

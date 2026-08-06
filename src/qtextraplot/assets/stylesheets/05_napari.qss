@@ -560,3 +560,9 @@ QtAboutKeybindings {
   min-width: 600px;
   min-height: 605px;
 }
+
+/* Prevent napari's global checked-checkbox fill from leaking into qtextraplot. */
+QCheckBox::indicator:checked,
+QWidget[emphasized="true"] QCheckBox::indicator:checked {
+  background-color: transparent;
+}

@@ -17,7 +17,7 @@ from napari.settings import get_settings
 from napari.utils._register import create_func as create_add_method
 from napari.utils.events import Event, EventedDict, EventedModel, disconnect_events
 from napari.utils.key_bindings import KeymapProvider
-from napari.utils.mouse_bindings import MousemapProvider
+from napari.utils.mouse_bindings import MousemapProviderPydantic
 from napari.utils.theme import available_themes, is_theme_available
 from pydantic import ConfigDict, Field, PrivateAttr, field_validator
 
@@ -38,10 +38,10 @@ if GridLinesOverlay:
     DEFAULT_OVERLAYS["grid_lines"] = GridLinesOverlay
 
 
-class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
+class ViewerModelBase(KeymapProvider, MousemapProviderPydantic, EventedModel):
     """Viewer containing the rendered scene, layers and controlling elements."""
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = EventedModel.model_config | ConfigDict(extra="ignore")
 
     # Using frozen=True means these attributes aren't settable and don't
     # have an event emitter associated with them
@@ -133,7 +133,8 @@ class ViewerModelBase(KeymapProvider, MousemapProvider, EventedModel):
         # )
 
     @field_validator("theme")
-    def _valid_theme(v):
+    @classmethod
+    def _valid_theme(cls, v):
         if not is_theme_available(v):
             themes = ", ".join(available_themes())
             raise ValueError(f"Theme '{v}' not found; options are {themes}.")  # noqa: TRY003

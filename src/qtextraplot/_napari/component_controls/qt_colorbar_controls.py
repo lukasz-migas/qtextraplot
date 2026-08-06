@@ -65,7 +65,6 @@ class QtColorBarControls(QtFramelessPopup):
         )
 
         # tick and text controls
-        print(self._get_common_value("color", "white"))
         self.text_color_swatch = QColorSwatchEdit(self, initial_color=self._get_common_value("color", "white"))
         self.text_color_swatch.color_changed.connect(self.on_change_border_color)
 

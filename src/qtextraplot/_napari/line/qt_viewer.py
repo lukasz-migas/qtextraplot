@@ -7,14 +7,19 @@ from contextlib import suppress
 
 import numpy as np
 import qtextra.helpers as hp
+from napari._qt._qapp_model.qactions import init_qactions as init_napari_qactions
 from napari._qt.containers.qt_layer_list import QtLayerList
+from napari._qt.qt_main_window import _QtMainWindow as _NapariQtMainWindow
 from napari._qt.widgets.qt_dims import QtDims
+from napari._vispy.utils.qt_font import QtFontManager
 from napari.utils.key_bindings import KeymapHandler
-from napari_plot._qt._qapp_model import init_qactions, reset_default_keymap
+from napari_plot._qt._qapp_model import init_qactions as init_napari_plot_qactions
+from napari_plot._qt._qapp_model import reset_default_keymap
 from napari_plot._qt.qt_main_window import Window, _QtMainWindow
 from napari_plot._qt.qt_viewer import QtViewer as _QtViewer
 from napari_plot._vispy.overlays import register_vispy_overlays as register_napari_plot_vispy_overlays
 from qtpy.QtCore import QCoreApplication, QEvent, Qt
+from qtpy.QtGui import QGuiApplication
 from qtpy.QtWidgets import QWidget
 
 from qtextraplot._napari._qt_viewer_utils import (
@@ -67,6 +72,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         **kwargs: ty.Any,
     ):
         self._disable_controls = disable_controls
+        self._theme_connected: bool = False
 
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -75,7 +81,11 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
 
         self.viewer = viewer
         # essential that these are set because we need to use the providers for in_and_out
-        self._register_instance(_QtMainWindow._instances, _QtViewer._instances)
+        self._register_instance(
+            _NapariQtMainWindow._instances,
+            _QtMainWindow._instances,
+            _QtViewer._instances,
+        )
         self._qt_viewer = self._qt_window = self
 
         self.dims = QtDims(self.viewer.dims)
@@ -85,6 +95,8 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         self._viewerButtons = None
         self._key_map_handler = KeymapHandler()
         self._key_map_handler.keymap_providers = [self.viewer]
+        self._font_manager = QtFontManager()
+        self._overlay_font = QGuiApplication.font().family()
         self._console_backlog = []
         self._console = None
 
@@ -94,12 +106,15 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
             key_map_handler=self._key_map_handler,
             size=self.viewer._canvas_size,
             autoswap=True,
+            font_manager=self._font_manager,
+            font_family=self._overlay_font,
         )
         self._welcome_widget = self.canvas.native  # we don't need welcome widget
 
         # this is the line that initializes any Qt-based app-model Actions that
         # were defined somewhere in the `_qt` module and imported in init_qactions
-        init_qactions()
+        init_napari_qactions()
+        init_napari_plot_qactions()
 
         with suppress(IndexError):
             viewer.cursor.events.position.disconnect(viewer.update_status_from_cursor)
@@ -130,6 +145,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
 
         if connect_theme:
             CANVAS.evt_theme_changed.connect(self.toggle_theme)
+            self._theme_connected = True
             self.toggle_theme()  # force theme change
 
     def _set_layout(self, add_toolbars: bool, **kwargs):
@@ -180,6 +196,13 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         self.viewer.axis.label_color = as_array("axis", CANVAS)
         self.viewer.axis.tick_color = as_array("axis", CANVAS)
         self.viewer.text_overlay.color = as_array("label", CANVAS)
+
+    def _disconnect_theme(self) -> None:
+        """Disconnect the theme signal when it is connected."""
+        if not self._theme_connected:
+            return
+        self._theme_connected = False
+        CANVAS.evt_theme_changed.disconnect(self.toggle_theme)
 
     @property
     def x_axis(self):
@@ -298,7 +321,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         cleanup_qt_viewer(
             event,
             canvas_native=self.canvas.native,
-            disconnect=lambda: CANVAS.evt_theme_changed.disconnect(self.toggle_theme),
+            disconnect=self._disconnect_theme,
         )
 
     def keyPressEvent(self, event):

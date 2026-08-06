@@ -10,10 +10,15 @@ import pytest
 napari = pytest.importorskip("napari", reason="napari is not installed")
 vispy = pytest.importorskip("vispy", reason="vispy is not installed")
 
+from napari._vispy.utils.qt_font import FontInfo  # noqa: E402
 from napari.layers import Image  # noqa: E402
 from qtpy.QtWidgets import QWidget  # noqa: E402
 
-from qtextraplot._napari._vispy.overlays.object_outlines import outline_data_to_scene, points_to_segments  # noqa: E402
+from qtextraplot._napari._vispy.overlays.object_outlines import (  # noqa: E402
+    VispyObjectOutlinesOverlay,
+    outline_data_to_scene,
+    points_to_segments,
+)
 from qtextraplot._napari.component_controls.qt_object_outline_controls import QtObjectOutlineControls  # noqa: E402
 from qtextraplot._napari.components.overlays.object_outlines import (  # noqa: E402
     ObjectOutlinesOverlay,
@@ -161,6 +166,43 @@ def test_viewer_sets_all_object_outline_visibility():
 
     assert not viewer.object_outlines_visible
     assert not any(overlay.visible for overlay in viewer.object_outline_overlays().values())
+
+
+def test_vispy_object_outlines_are_hidden_in_grid_mode():
+    viewer = Viewer()
+    image = viewer.add_image(np.zeros((10, 10)), name="Target")
+    overlay = viewer.set_object_outlines(np.array([[0, 0], [1, 1]]), target_layer=image)
+    visual = VispyObjectOutlinesOverlay(viewer, overlay, FontInfo())
+
+    assert not overlay.gridded
+    assert visual.node.visible
+
+    viewer.grid.enabled = True
+
+    assert overlay.visible
+    assert not visual.node.visible
+
+    viewer.grid.enabled = False
+
+    assert visual.node.visible
+    visual.close()
+
+
+def test_image_view_grid_mode_does_not_reparent_object_outlines(qtbot, _mock_opengl_capabilities):
+    view = NapariImageView(add_dims=False, add_toolbars=False, allow_extraction=False)
+    qtbot.addWidget(view.widget)
+    image = view.viewer.add_image(np.zeros((10, 10)), name="Target")
+    overlay = view.set_object_outlines(np.array([[0, 0], [1, 1]]), target_layer=image)
+    visual = view.widget.canvas._overlay_to_visual[overlay][0]
+
+    view.viewer.grid.enabled = True
+
+    assert len(view.widget.canvas._overlay_to_visual[overlay]) == 1
+    assert not visual.node.visible
+
+    view.viewer.grid.enabled = False
+
+    assert visual.node.visible
 
 
 def test_viewer_clear_canvas_removes_object_outline_overlays():

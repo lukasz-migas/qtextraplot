@@ -12,8 +12,10 @@ from napari._qt.qt_main_window import Window, _QtMainWindow
 from napari._qt.qt_viewer import QtViewer as _QtViewer
 from napari._qt.widgets.qt_dims import QtDims
 from napari._vispy.canvas import VispyCanvas
+from napari._vispy.utils.qt_font import QtFontManager
 from napari.utils.key_bindings import KeymapHandler
 from qtpy.QtCore import QCoreApplication, QEvent, Qt
+from qtpy.QtGui import QGuiApplication
 from qtpy.QtWidgets import QWidget
 from superqt import ensure_main_thread
 
@@ -78,6 +80,8 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         self._viewerButtons = None
         self._key_map_handler = KeymapHandler()
         self._key_map_handler.keymap_providers = [self.viewer]
+        self._font_manager = QtFontManager()
+        self._overlay_font = QGuiApplication.font().family()
         self._console_backlog = []
         self._console = None
 
@@ -88,6 +92,8 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
             key_map_handler=self._key_map_handler,
             size=self.viewer._canvas_size,
             autoswap=True,
+            font_manager=self._font_manager,
+            font_family=self._overlay_font,
         )
         self._welcome_widget = self.canvas.native  # we don't need welcome widget
 
@@ -122,7 +128,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
     @property
     def text_overlay(self):
         """Return text overlay."""
-        return self.canvas._overlay_to_visual[self.viewer.text_overlay]
+        return self.canvas._overlay_to_visual.get(self.viewer.text_overlay, [])
 
     def _set_layout(self, add_dims: bool, add_toolbars: bool, **kwargs):
         # set in main canvas

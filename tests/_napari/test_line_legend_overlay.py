@@ -10,6 +10,10 @@ import pytest
 napari = pytest.importorskip("napari", reason="napari is not installed")
 pytest.importorskip("napari_plot", reason="napari-plot is not installed")
 
+from napari._app_model import get_app_model  # noqa: E402
+from napari._app_model.constants import MenuId  # noqa: E402
+from napari._app_model.context import get_context  # noqa: E402
+from napari._qt._qapp_model import build_qmodel_menu  # noqa: E402
 from qtpy.QtCore import QPoint, Qt  # noqa: E402
 from qtpy.QtWidgets import QWidget  # noqa: E402
 
@@ -167,7 +171,7 @@ def test_line_view_exposes_legend_api() -> None:
     assert hasattr(NapariLineView, "clear_legend")
 
 
-def test_line_view_reuses_scatter_and_applies_per_point_colors(qtbot) -> None:
+def test_line_view_reuses_scatter_and_applies_per_point_colors(qtbot, _mock_opengl_capabilities) -> None:
     """Scatter updates should retain the layer and propagate point colors."""
     parent = QWidget()
     qtbot.addWidget(parent)
@@ -183,8 +187,27 @@ def test_line_view_reuses_scatter_and_applies_per_point_colors(qtbot) -> None:
     assert layer.symbol.tolist() == ["square"]
 
 
+def test_line_layer_context_menu_uses_napari_context_keys(qtbot, _mock_opengl_capabilities) -> None:
+    """The napari 0.8 layer menu should evaluate against plot-layer contexts."""
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = NapariLineView(parent, add_toolbars=False, connect_theme=False)
+    qtbot.addWidget(view.widget)
+    view.plot([0.0, 1.0], [0.0, 1.0], name="line")
+
+    context = get_context(view.viewer.layers)
+    menu = build_qmodel_menu(MenuId.LAYERLIST_CONTEXT, parent=view.widget.layers)
+
+    assert "any_selected_layers_deletion_locked" in context
+    menu.update_from_context(context)
+    get_app_model().commands.execute_command("napari.layer.duplicate").result()
+
+    assert len(view.viewer.layers) == 2
+    assert type(view.viewer.layers[1]) is type(view.viewer.layers[0])
+
+
 @pytest.mark.xfail(reason="flaky")
-def test_line_view_forwards_modified_double_clicks(qtbot) -> None:
+def test_line_view_forwards_modified_double_clicks(qtbot, _mock_opengl_capabilities) -> None:
     """Ctrl-double-click should reach viewer callbacks with world coordinates."""
     parent = QWidget()
     qtbot.addWidget(parent)

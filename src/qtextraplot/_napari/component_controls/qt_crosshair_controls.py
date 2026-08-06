@@ -2,7 +2,6 @@
 
 import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
-from napari.utils.events import disconnect_events
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout
@@ -107,7 +106,7 @@ class QtCrosshairControls(QtFramelessPopup):
 
     def _on_visible_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.cross_hair.events.visible.blocker():
+        with self.viewer.cross_hair.events.visible.blocked():
             self.visible_checkbox.setChecked(self.viewer.cross_hair.visible)
         hp.disable_widgets(
             self.color_swatch,
@@ -125,7 +124,7 @@ class QtCrosshairControls(QtFramelessPopup):
 
     def _on_position_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.cross_hair.events.position.blocker():
+        with self.viewer.cross_hair.events.position.blocked():
             self.position_y_spin.setValue(self.viewer.cross_hair.position[0])
             self.position_x_spin.setValue(self.viewer.cross_hair.position[1])
 
@@ -135,7 +134,7 @@ class QtCrosshairControls(QtFramelessPopup):
 
     def _on_width_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.cross_hair.events.width.blocker():
+        with self.viewer.cross_hair.events.width.blocked():
             self.width_spinbox.setValue(self.viewer.cross_hair.width)
 
     def on_change_window(self):
@@ -144,7 +143,7 @@ class QtCrosshairControls(QtFramelessPopup):
 
     def _on_window_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.cross_hair.events.window.blocker():
+        with self.viewer.cross_hair.events.window.blocked():
             self.window_spinbox.setValue(self.viewer.cross_hair.window)
 
     def on_change_color(self, color: str):
@@ -158,5 +157,10 @@ class QtCrosshairControls(QtFramelessPopup):
 
     def close(self):
         """Disconnect events when widget is closing."""
-        disconnect_events(self.viewer.cross_hair.events, self)
+        events = self.viewer.cross_hair.events
+        events.visible.disconnect(self._on_visible_change)
+        events.width.disconnect(self._on_width_change)
+        events.color.disconnect(self._on_color_change)
+        events.window.disconnect(self._on_window_change)
+        events.position.disconnect(self._on_position_change)
         super().close()

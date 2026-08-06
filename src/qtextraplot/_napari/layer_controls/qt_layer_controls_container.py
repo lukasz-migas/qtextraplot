@@ -1,27 +1,15 @@
-"""Container class."""
+"""Layer controls container compatible with napari 0.8."""
 
-try:
-    from napari_plot._qt.layer_controls.qt_infline_controls import QtInfLineControls
-    from napari_plot._qt.layer_controls.qt_line_controls import QtLineControls
-    from napari_plot._qt.layer_controls.qt_multiline_controls import QtMultiLineControls
-    from napari_plot._qt.layer_controls.qt_region_controls import QtRegionControls
-    from napari_plot._qt.layer_controls.qt_scatter_controls import QtScatterControls
-    from napari_plot.layers import Centroids, InfLine, Line, MultiLine, Region, Scatter
-except (ImportError, TypeError):
-    Centroids, InfLine, Line, MultiLine, Region, Scatter = None, None, None, None, None, None
-    QtInfLineControls, QtLineControls, QtMultiLineControls, QtRegionControls, QtScatterControls = (
-        None,
-        None,
-        None,
-        None,
-        None,
-    )
+from __future__ import annotations
 
-from napari._qt.layer_controls.qt_image_controls import QtImageControls
-from napari._qt.layer_controls.qt_surface_controls import QtSurfaceControls
-from napari._qt.layer_controls.qt_vectors_controls import QtVectorsControls
-from napari.layers import Image, Labels, Points, Shapes, Surface, Vectors
-from qtpy.QtWidgets import QFrame, QStackedWidget
+from typing import Any
+
+from napari._qt.layer_controls import qt_layer_controls_container as napari_layer_controls
+from napari._qt.layer_controls.qt_layer_controls_container import (
+    QtLayerControlsContainer as NapariQtLayerControlsContainer,
+)
+from napari.layers import Labels, Points, Shapes
+from napari.utils.events import Event
 
 from qtextraplot._napari.layer_controls.qt_layer_bound_controls import (
     QtLayerBoundLabelsControls,
@@ -29,20 +17,40 @@ from qtextraplot._napari.layer_controls.qt_layer_bound_controls import (
     QtLayerBoundShapesControls,
 )
 
-layer_to_controls = {
+try:
+    from napari_plot._qt.layer_controls.qt_centroids_controls import QtCentroidControls
+    from napari_plot._qt.layer_controls.qt_infline_controls import QtInfLineControls
+    from napari_plot._qt.layer_controls.qt_line_controls import QtLineControls
+    from napari_plot._qt.layer_controls.qt_multiline_controls import QtMultiLineControls
+    from napari_plot._qt.layer_controls.qt_region_controls import QtRegionControls
+    from napari_plot._qt.layer_controls.qt_scatter_controls import QtScatterControls
+    from napari_plot.layers import Centroids, InfLine, Line, MultiLine, Region, Scatter
+except (ImportError, TypeError):
+    QtCentroidControls = None
+    QtInfLineControls = None
+    QtLineControls = None
+    QtMultiLineControls = None
+    QtRegionControls = None
+    QtScatterControls = None
+    Centroids = None
+    InfLine = None
+    Line = None
+    MultiLine = None
+    Region = None
+    Scatter = None
+
+
+layer_to_controls: dict[type, type] = {
     Labels: QtLayerBoundLabelsControls,
-    Image: QtImageControls,  # must be after Labels layer
-    Shapes: QtLayerBoundShapesControls,
     Points: QtLayerBoundPointsControls,
-    Surface: QtSurfaceControls,
-    Vectors: QtVectorsControls,
+    Shapes: QtLayerBoundShapesControls,
 }
-# add if napari-plot is available
+
 if Centroids is not None:
     layer_to_controls.update(
         {
             Line: QtLineControls,
-            Centroids: QtLineControls,
+            Centroids: QtCentroidControls,
             Scatter: QtScatterControls,
             Region: QtRegionControls,
             InfLine: QtInfLineControls,
@@ -50,117 +58,26 @@ if Centroids is not None:
         },
     )
 
-
-def create_qt_layer_controls(layer):
-    """
-    Create a qt controls widget for a layer based on its layer type.
-
-    Parameters
-    ----------
-    layer : napari.layers._base_layer.Layer
-        Layer that needs its controls widget created.
-
-    Returns
-    -------
-    controls : napari.layers.base.QtLayerControls
-        Qt controls widget
-    """
-    for layer_type, controls in layer_to_controls.items():
-        if isinstance(layer, layer_type):
-            return controls(layer)
-
-    raise TypeError(f"Could not find QtControls for layer of type {type(layer)}")  # noqa: TRY003
+napari_layer_controls.layer_to_controls.update(layer_to_controls)
+create_qt_layer_controls = napari_layer_controls.create_qt_layer_controls
 
 
-class QtLayerControlsContainer(QStackedWidget):
-    """Container widget for QtLayerControl widgets.
+class QtLayerControlsContainer(NapariQtLayerControlsContainer):
+    """Display napari and qtextraplot controls for the active layer."""
 
-    Parameters
-    ----------
-    viewer : napari.components.ViewerModel
-        Napari viewer containing the rendered scene, layers, and controls.
-
-    Attributes
-    ----------
-    empty_widget : qtpy.QtWidgets.QFrame
-        Empty placeholder frame for when no layer is selected.
-    viewer : napari.components.ViewerModel
-        Napari viewer containing the rendered scene, layers, and controls.
-    widgets : dict
-        Dictionary of key value pairs matching layer with its widget controls.
-        widgets[layer] = controls
-    """
-
-    def __init__(self, qt_viewer, viewer):
-        super().__init__()
-        self.setProperty("emphasized", True)
+    def __init__(self, qt_viewer: Any, viewer: Any) -> None:
         self.qt_viewer = qt_viewer
-        self.viewer = viewer
+        super().__init__(viewer)
+        self.setProperty("emphasized", True)
 
-        self.setMouseTracking(True)
-        self.empty_widget = QFrame()
-        self.empty_widget.setObjectName("empty_controls_widget")
-        self.widgets = {}
-        self.addWidget(self.empty_widget)
-        self.setCurrentWidget(self.empty_widget)
+    def _add(self, event: Event) -> None:
+        """Add controls and mark napari's built-ins for scoped styling."""
+        super()._add(event)
+        controls = self.widgets[event.value]
+        controls.setProperty(
+            "napari_builtin",
+            controls.__class__.__module__.startswith("napari."),
+        )
 
-        self.viewer.layers.events.inserted.connect(self._add)
-        self.viewer.layers.events.removed.connect(self._remove)
-        self.viewer.layers.selection.events.active.connect(self._display)
-        viewer.dims.events.ndisplay.connect(self._on_ndisplay_changed)
 
-    def _on_ndisplay_changed(self, event):
-        """Responds to a change in the dimensionality displayed in the canvas.
-
-        Parameters
-        ----------
-        event : Event
-            Event with the new dimensionality value at `event.value`.
-        """
-        for widget in self.widgets.values():
-            if widget is not self.empty_widget:
-                widget.ndisplay = event.value
-
-    def _display(self, event):
-        """Change the displayed controls to be those of the target layer.
-
-        Parameters
-        ----------
-        event : Event
-            Event with the target layer at `event.item`.
-        """
-        layer = event.value
-        if layer is None:
-            self.setCurrentWidget(self.empty_widget)
-        else:
-            controls = self.widgets[layer]
-            self.setCurrentWidget(controls)
-
-    def _add(self, event):
-        """Add the controls target layer to the list of control widgets.
-
-        Parameters
-        ----------
-        event : Event
-            Event with the target layer at `event.value`.
-        """
-        layer = event.value
-        controls = create_qt_layer_controls(layer)
-        controls.ndisplay = self.viewer.dims.ndisplay
-        self.addWidget(controls)
-        self.widgets[layer] = controls
-
-    def _remove(self, event):
-        """Remove the controls target layer from the list of control widgets.
-
-        Parameters
-        ----------
-        event : Event
-            Event with the target layer at `event.value`.
-        """
-        layer = event.value
-        controls = self.widgets[layer]
-        self.removeWidget(controls)
-        controls.close()
-        controls = None
-        del self.widgets[layer]
+__all__ = ["QtLayerControlsContainer", "create_qt_layer_controls", "layer_to_controls"]
