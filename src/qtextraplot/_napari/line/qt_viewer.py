@@ -72,6 +72,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         **kwargs: ty.Any,
     ):
         self._disable_controls = disable_controls
+        self._theme_connected: bool = False
 
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -144,6 +145,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
 
         if connect_theme:
             CANVAS.evt_theme_changed.connect(self.toggle_theme)
+            self._theme_connected = True
             self.toggle_theme()  # force theme change
 
     def _set_layout(self, add_toolbars: bool, **kwargs):
@@ -194,6 +196,13 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         self.viewer.axis.label_color = as_array("axis", CANVAS)
         self.viewer.axis.tick_color = as_array("axis", CANVAS)
         self.viewer.text_overlay.color = as_array("label", CANVAS)
+
+    def _disconnect_theme(self) -> None:
+        """Disconnect the theme signal when it is connected."""
+        if not self._theme_connected:
+            return
+        self._theme_connected = False
+        CANVAS.evt_theme_changed.disconnect(self.toggle_theme)
 
     @property
     def x_axis(self):
@@ -312,7 +321,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         cleanup_qt_viewer(
             event,
             canvas_native=self.canvas.native,
-            disconnect=lambda: CANVAS.evt_theme_changed.disconnect(self.toggle_theme),
+            disconnect=self._disconnect_theme,
         )
 
     def keyPressEvent(self, event):
