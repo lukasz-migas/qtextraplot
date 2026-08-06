@@ -168,6 +168,7 @@ class QtViewToolbar(QWidget):
         self.tools_text_btn = toolbar_right.add_qta_tool(
             "text",
             tooltip="Show/hide text label. Right-click on the button to change text settings.",
+            checkable=True,
             check=self.viewer.text_overlay.visible,
             func=self._toggle_text_visible,
             func_menu=self.on_open_text_config,

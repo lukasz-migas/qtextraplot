@@ -1,5 +1,5 @@
 """Line viewer components."""
 
-from qtextraplot._napari.line.components.viewer_model import Viewer
+from napari_plot.viewer import ViewerModel as Viewer
 
 __all__ = ["Viewer"]

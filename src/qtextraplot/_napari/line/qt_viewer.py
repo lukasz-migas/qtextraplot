@@ -39,7 +39,7 @@ from qtextraplot._napari.line.layer_controls.qt_layer_buttons import QtLayerButt
 from qtextraplot.config import CANVAS, CanvasThemes
 
 if ty.TYPE_CHECKING:
-    from qtextraplot._napari.line.components.viewer_model import Viewer
+    from napari_plot.viewer import ViewerModel as Viewer
 
 reset_default_keymap()
 register_napari_plot_vispy_overlays()
