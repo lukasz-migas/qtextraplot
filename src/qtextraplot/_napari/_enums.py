@@ -5,7 +5,7 @@ import typing as ty
 from qtextraplot._napari.image.components.viewer_model import Viewer as ImageViewer
 
 try:
-    from qtextraplot._napari.line.components.viewer_model import Viewer as LineViewer
+    from napari_plot.viewer import ViewerModel as LineViewer
 except ImportError:
     LineViewer = None
 

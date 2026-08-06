@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing as ty
 from contextlib import suppress
 
 import qtextra.helpers as hp
@@ -44,6 +45,7 @@ class QtViewToolbar(QWidget):
         self.allow_legend = kwargs.pop("allow_legend", True)
         self._connected_object_outline_overlays = []
         self._connected_legend_overlays = []
+        self._connected_name_overlays: list[ty.Any] = []
 
         self.events = EmitterGroup(
             auto_connect=False,
@@ -168,10 +170,23 @@ class QtViewToolbar(QWidget):
         self.tools_text_btn = toolbar_right.add_qta_tool(
             "text",
             tooltip="Show/hide text label. Right-click on the button to change text settings.",
+            checkable=True,
             check=self.viewer.text_overlay.visible,
             func=self._toggle_text_visible,
             func_menu=self.on_open_text_config,
         )
+        self.tools_name_overlay_btn = toolbar_right.add_qta_tool(
+            "name_overlay",
+            tooltip="Show/hide layer labels. Right-click on the button to change layer label settings.",
+            checkable=True,
+            check=self._all_layer_names_visible(),
+            func=self._toggle_layer_names_visible,
+            func_menu=self.on_open_layer_names_config,
+        )
+        self.viewer.layers.events.inserted.connect(self._refresh_name_overlay_event_connections)
+        self.viewer.layers.events.removed.connect(self._refresh_name_overlay_event_connections)
+        self.viewer.layers.events.changed.connect(self._refresh_name_overlay_event_connections)
+        self._refresh_name_overlay_event_connections()
         self.tools_scalebar_btn = toolbar_right.add_qta_tool(
             "ruler",
             tooltip="Show/hide scalebar",
@@ -262,6 +277,7 @@ class QtViewToolbar(QWidget):
             self._refresh_object_outline_event_connections()
         if self.allow_legend:
             self._refresh_legend_event_connections()
+        self._refresh_name_overlay_event_connections()
 
     def _toggle_grid_visible(self, state: bool) -> None:
         self.qt_viewer.viewer.grid.enabled = state
@@ -276,6 +292,12 @@ class QtViewToolbar(QWidget):
         for layer in self.viewer.layers:
             if hasattr(layer, "colorbar") and hasattr(layer, "rgb") and not layer.rgb:
                 layer.colorbar.visible = state
+
+    def _toggle_layer_names_visible(self, state: bool) -> None:
+        for layer in self.viewer.layers:
+            if hasattr(layer, "name_overlay"):
+                layer.name_overlay.visible = state
+        self._sync_name_overlay_button()
 
     def _toggle_text_visible(self, state: bool) -> None:
         self.qt_viewer.viewer.text_overlay.visible = state
@@ -302,6 +324,28 @@ class QtViewToolbar(QWidget):
             return
         with hp.qt_signals_blocked(self.tools_legend_btn):
             self.tools_legend_btn.setChecked(self.qt_viewer.viewer.legend_visible)
+
+    def _all_layer_names_visible(self) -> bool:
+        """Return whether every available layer name overlay is visible."""
+        overlays = [layer.name_overlay for layer in self.viewer.layers if hasattr(layer, "name_overlay")]
+        return bool(overlays) and all(overlay.visible for overlay in overlays)
+
+    def _sync_name_overlay_button(self, _event: ty.Any = None) -> None:
+        """Synchronize the layer name overlay toolbar button."""
+        with hp.qt_signals_blocked(self.tools_name_overlay_btn):
+            self.tools_name_overlay_btn.setChecked(self._all_layer_names_visible())
+
+    def _refresh_name_overlay_event_connections(self, _event: ty.Any = None) -> None:
+        """Refresh layer name overlay visibility event connections."""
+        for overlay in self._connected_name_overlays:
+            with suppress(TypeError, ValueError):
+                overlay.events.visible.disconnect(self._sync_name_overlay_button)
+        self._connected_name_overlays = [
+            layer.name_overlay for layer in self.viewer.layers if hasattr(layer, "name_overlay")
+        ]
+        for overlay in self._connected_name_overlays:
+            overlay.events.visible.connect(self._sync_name_overlay_button)
+        self._sync_name_overlay_button()
 
     def _refresh_object_outline_event_connections(self, _event=None) -> None:
         if not self.allow_object_outlines:
@@ -349,6 +393,15 @@ class QtViewToolbar(QWidget):
         from qtextraplot._napari.component_controls.qt_text_overlay_controls import QtTextOverlayControls
 
         dlg = QtTextOverlayControls(self.viewer, self.qt_viewer)
+        dlg.show_left_of_mouse()
+
+    def on_open_layer_names_config(self) -> None:
+        """Open layer name overlay configuration."""
+        from qtextraplot._napari.component_controls.qt_layer_name_overlay_controls import (
+            QtLayerNameOverlayControls,
+        )
+
+        dlg = QtLayerNameOverlayControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_scalebar_config(self) -> None:

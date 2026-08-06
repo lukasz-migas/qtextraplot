@@ -27,6 +27,7 @@ update_styles(STYLES)
 
 update_icon_mapping(
     {
+        "name_overlay": "mdi6.label-multiple",
         "new_surface": "ei.star",
         # "new_labels": "fa5s.tag",
         "new_labels": "fa5s.paint-brush",
