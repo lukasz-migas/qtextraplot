@@ -137,8 +137,7 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def on_change_box_color(self, color: np.ndarray) -> None:
         """Update color."""
-        with self.viewer.scale_bar.events.box_color.blocked():
-            self.viewer.scale_bar.box_color = color
+        self.viewer.scale_bar.box_color = color
 
     def _on_box_color_changed(self, _event=None):
         """Receive layer.current_border_color() change event and update view."""
