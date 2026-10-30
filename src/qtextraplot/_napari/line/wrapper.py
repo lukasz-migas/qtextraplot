@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import typing as ty
+from contextlib import suppress
 
 import numpy as np
 from koyo.secret import get_short_hash
@@ -94,6 +95,51 @@ class NapariLineView(ViewerBase):
 
         # own instances
         self._instances.append(self)
+
+    def close(self) -> None:
+        """Close the view instance."""
+        with suppress(ValueError):
+            self._instances.remove(self)
+        super().close()
+
+    def connect_click(
+        self,
+        func: ty.Callable[[float, float], None],
+        button: int = 1,
+        max_move_px: float = 3,
+    ) -> ty.Callable:
+        """Call `func(x, y)` (in data coordinates) when user clicks in the canvas without dragging.
+
+        Dragging (e.g. box zoom) is not considered a click. Note that a double-click also produces a click, so if both
+        actions are needed, the click should be handled with a delay.
+
+        Returns
+        -------
+        callback : Callable
+            Mouse drag callback that can be passed to `disconnect_click`.
+        """
+
+        def _on_click(_viewer: Viewer, event: ty.Any) -> ty.Generator[None, None, None]:
+            if event.button != button:
+                return
+            start = np.asarray(event.pos)
+            moved = False
+            yield
+            while event.type == "mouse_move":
+                if np.abs(np.asarray(event.pos) - start).max() > max_move_px:
+                    moved = True
+                yield
+            if not moved and event.position is not None:
+                y, x = event.position[-2:]
+                func(float(x), float(y))
+
+        self.viewer.mouse_drag_callbacks.append(_on_click)
+        return _on_click
+
+    def disconnect_click(self, callback: ty.Callable) -> None:
+        """Remove callback added by `connect_click`."""
+        with suppress(ValueError):
+            self.viewer.mouse_drag_callbacks.remove(callback)
 
     def _update_view(self) -> None:
         self.widget.canvas.native.update()

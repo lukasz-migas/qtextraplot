@@ -116,3 +116,64 @@ def test_line_view_forwards_modified_double_clicks(qtbot, _mock_opengl_capabilit
     )
 
     assert len(received) == 1
+
+
+class _FakeMouseEvent:
+    """Mutable stand-in for napari's read-only mouse event."""
+
+    def __init__(self, pos: tuple[float, float], position: tuple[float, float], button: int = 1) -> None:
+        self.type = "mouse_press"
+        self.pos = np.asarray(pos)
+        self.position = position
+        self.button = button
+
+
+def _run_drag_callback(callback, event: _FakeMouseEvent, moves: list[tuple[float, float]]) -> None:
+    """Drive mouse drag generator the same way napari does."""
+    gen = callback(None, event)
+    try:
+        next(gen)
+    except StopIteration:
+        return
+    for pos in moves:
+        event.type = "mouse_move"
+        event.pos = np.asarray(pos)
+        next(gen)
+    event.type = "mouse_release"
+    with pytest.raises(StopIteration):
+        next(gen)
+
+
+def test_line_view_connect_click(qtbot, _mock_opengl_capabilities) -> None:
+    """Clicks without dragging are forwarded in data coordinates and drags/other buttons are ignored."""
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = NapariLineView(parent, add_toolbars=False, connect_theme=False)
+    qtbot.addWidget(view.widget)
+    received: list[tuple[float, float]] = []
+
+    callback = view.connect_click(lambda x, y: received.append((x, y)))
+    assert callback in view.viewer.mouse_drag_callbacks
+
+    # world coordinates are (y, x)
+    _run_drag_callback(callback, _FakeMouseEvent((10, 10), (0.5, 200.0)), [(11, 10)])
+    assert received == [(200.0, 0.5)]
+
+    # dragging is a zoom, not a click
+    _run_drag_callback(callback, _FakeMouseEvent((10, 10), (0.5, 200.0)), [(30, 10)])
+    # right-click is ignored
+    _run_drag_callback(callback, _FakeMouseEvent((10, 10), (0.5, 200.0), button=2), [])
+    assert received == [(200.0, 0.5)]
+
+    view.disconnect_click(callback)
+    assert callback not in view.viewer.mouse_drag_callbacks
+
+
+def test_line_view_close_removes_instance(qtbot, _mock_opengl_capabilities) -> None:
+    """Closed views should not be kept alive by the instance list."""
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = NapariLineView(parent, add_toolbars=False, connect_theme=False)
+    assert view in NapariLineView._instances
+    view.close()
+    assert view not in NapariLineView._instances
