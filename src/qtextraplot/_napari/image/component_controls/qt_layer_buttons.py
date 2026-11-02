@@ -153,14 +153,14 @@ class QtViewerButtons(QFrame):
             "grid_off",
             "Toggle grid view. Right-click on the button to change grid settings.",
             checkable=True,
-            checked=viewer.grid.enabled,
+            checked=viewer.canvas.grid.enabled,
             checked_icon_name="grid_on",
             # action="napari:toggle_grid",
             func=self.toggle_grid,
             func_menu=self.open_grid_popup,
         )
 
-        @self.viewer.grid.events.enabled.connect
+        @self.viewer.canvas.grid.events.enabled.connect
         def _set_grid_mode_checkstate(event):
             self.gridViewButton.setChecked(event.value)
 
@@ -219,7 +219,7 @@ class QtViewerButtons(QFrame):
 
     def toggle_grid(self) -> None:
         """Toggle grid."""
-        self.viewer.grid.enabled = not self.viewer.grid.enabled
+        self.viewer.canvas.grid.enabled = not self.viewer.canvas.grid.enabled
 
     def open_roll_popup(self):
         """Open a grid popup to manually order the dimensions."""

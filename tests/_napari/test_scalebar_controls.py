@@ -12,7 +12,7 @@ from qtextraplot._napari.image.components.viewer_model import Viewer
 
 
 def test_scalebar_controls_use_layer_units(qtbot) -> None:
-    """The controls should use napari 0.8 layer units without warnings."""
+    """The controls should use napari 0.10 layer units without warnings."""
     viewer = Viewer()
     layer = viewer.add_image(
         np.zeros((4, 4)),

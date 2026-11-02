@@ -126,7 +126,7 @@ class QtViewToolbar(QWidget):
             "grid_off",
             "Toggle grid view. Right-click on the button to change grid settings.",
             checkable=True,
-            checked=self.viewer.grid.enabled,
+            checked=self.viewer.canvas.grid.enabled,
             checked_icon_name="grid_on",
             func=self._toggle_grid_visible,
             func_menu=self.open_grid_popup,
@@ -150,9 +150,9 @@ class QtViewToolbar(QWidget):
                 func=self._toggle_object_outlines_visible,
                 func_menu=self.on_open_object_outline_config,
             )
-            self.viewer._overlays.events.added.connect(self._refresh_object_outline_event_connections)
-            self.viewer._overlays.events.removed.connect(self._refresh_object_outline_event_connections)
-            self.viewer._overlays.events.changed.connect(self._refresh_object_outline_event_connections)
+            self.viewer.scene.overlays.events.added.connect(self._refresh_object_outline_event_connections)
+            self.viewer.scene.overlays.events.removed.connect(self._refresh_object_outline_event_connections)
+            self.viewer.scene.overlays.events.changed.connect(self._refresh_object_outline_event_connections)
             self._refresh_object_outline_event_connections()
         if self.allow_legend:
             self.tools_legend_btn = toolbar_right.add_qta_tool(
@@ -163,15 +163,15 @@ class QtViewToolbar(QWidget):
                 func=self._toggle_legend_visible,
                 func_menu=self.on_open_legend_config,
             )
-            self.viewer._overlays.events.added.connect(self._refresh_legend_event_connections)
-            self.viewer._overlays.events.removed.connect(self._refresh_legend_event_connections)
-            self.viewer._overlays.events.changed.connect(self._refresh_legend_event_connections)
+            self.viewer.canvas.overlays.events.added.connect(self._refresh_legend_event_connections)
+            self.viewer.canvas.overlays.events.removed.connect(self._refresh_legend_event_connections)
+            self.viewer.canvas.overlays.events.changed.connect(self._refresh_legend_event_connections)
             self._refresh_legend_event_connections()
         self.tools_text_btn = toolbar_right.add_qta_tool(
             "text",
             tooltip="Show/hide text label. Right-click on the button to change text settings.",
             checkable=True,
-            check=self.viewer.text_overlay.visible,
+            check=self.viewer.canvas.overlays.text.visible,
             func=self._toggle_text_visible,
             func_menu=self.on_open_text_config,
         )
@@ -191,9 +191,33 @@ class QtViewToolbar(QWidget):
             "ruler",
             tooltip="Show/hide scalebar",
             checkable=True,
-            check=self.viewer.scale_bar.visible,
+            check=self.viewer.canvas.overlays.scale_bar.visible,
             func=self._toggle_scale_bar_visible,
             func_menu=self.on_open_scalebar_config,
+        )
+        self.tools_axes_btn = toolbar_right.add_qta_tool(
+            "axes",
+            tooltip="Show/hide axes. Right-click on the button to change axes settings.",
+            checkable=True,
+            check=self._axes_visible(),
+            func=self._toggle_axes_visible,
+            func_menu=self.on_open_axes_config,
+        )
+        self.tools_cursor_crosshair_btn = toolbar_right.add_qta_tool(
+            "cursor_crosshair",
+            tooltip="Show/hide cursor crosshair. Right-click on the button to change cursor crosshair settings.",
+            checkable=True,
+            check=self.viewer.scene.overlays.crosshair.visible,
+            func=self._toggle_cursor_crosshair_visible,
+            func_menu=self.on_open_cursor_crosshair_config,
+        )
+        self.tools_coordinate_grid_btn = toolbar_right.add_qta_tool(
+            "coordinate_grid",
+            tooltip="Show/hide coordinate grid. Right-click on the button to change coordinate grid settings.",
+            checkable=True,
+            check=self.viewer.scene.overlays.coordinate_grid.visible,
+            func=self._toggle_coordinate_grid_visible,
+            func_menu=self.on_open_coordinate_grid_config,
         )
         self.tools_colorbar_btn = toolbar_right.add_qta_tool(
             "colorbar",
@@ -234,7 +258,7 @@ class QtViewToolbar(QWidget):
         from napari._qt.dialogs.screenshot_dialog import ScreenshotDialog
 
         dialog = ScreenshotDialog(self.qt_viewer.screenshot, self, history=[])
-        if dialog.exec_():
+        if dialog.exec():
             pass
 
     def on_copy_to_clipboard(self):
@@ -250,12 +274,12 @@ class QtViewToolbar(QWidget):
 
     def connect_toolbar(self) -> None:
         """Connect events."""
-        self.qt_viewer.viewer.scale_bar.events.visible.connect(
-            lambda x: self.tools_scalebar_btn.setChecked(self.qt_viewer.viewer.scale_bar.visible),
+        self.qt_viewer.viewer.canvas.overlays.scale_bar.events.visible.connect(
+            lambda x: self.tools_scalebar_btn.setChecked(self.qt_viewer.viewer.canvas.overlays.scale_bar.visible),
         )
 
-        self.qt_viewer.viewer.grid.events.enabled.connect(
-            lambda x: self.tools_grid_btn.setChecked(self.qt_viewer.viewer.grid.enabled),
+        self.qt_viewer.viewer.canvas.grid.events.enabled.connect(
+            lambda x: self.tools_grid_btn.setChecked(self.qt_viewer.viewer.canvas.grid.enabled),
         )
 
         with suppress(KeyError):
@@ -265,8 +289,21 @@ class QtViewToolbar(QWidget):
                 lambda x: self.tools_colorbar_btn.setChecked(self.qt_viewer.viewer.color_bar.visible),
             )
 
-        self.qt_viewer.viewer.text_overlay.events.visible.connect(
-            lambda x: self.tools_text_btn.setChecked(self.qt_viewer.viewer.text_overlay.visible),
+        self.qt_viewer.viewer.canvas.overlays.text.events.visible.connect(
+            lambda x: self.tools_text_btn.setChecked(self.qt_viewer.viewer.canvas.overlays.text.visible),
+        )
+
+        self.qt_viewer.viewer.scene.overlays.axes.events.visible.connect(self._sync_axes_button)
+        self.qt_viewer.viewer.canvas.overlays.axes.events.visible.connect(self._sync_axes_button)
+        self.qt_viewer.viewer.scene.overlays.crosshair.events.visible.connect(
+            lambda x: self.tools_cursor_crosshair_btn.setChecked(
+                self.qt_viewer.viewer.scene.overlays.crosshair.visible,
+            ),
+        )
+        self.qt_viewer.viewer.scene.overlays.coordinate_grid.events.visible.connect(
+            lambda x: self.tools_coordinate_grid_btn.setChecked(
+                self.qt_viewer.viewer.scene.overlays.coordinate_grid.visible,
+            ),
         )
 
         if self.allow_crosshair:
@@ -280,10 +317,10 @@ class QtViewToolbar(QWidget):
         self._refresh_name_overlay_event_connections()
 
     def _toggle_grid_visible(self, state: bool) -> None:
-        self.qt_viewer.viewer.grid.enabled = state
+        self.qt_viewer.viewer.canvas.grid.enabled = state
 
     def _toggle_scale_bar_visible(self, state: bool) -> None:
-        self.qt_viewer.viewer.scale_bar.visible = state
+        self.qt_viewer.viewer.canvas.overlays.scale_bar.visible = state
 
     def _toggle_grid_lines_visible(self, state: bool) -> None:
         self.qt_viewer.viewer.grid_lines.visible = state
@@ -299,8 +336,27 @@ class QtViewToolbar(QWidget):
                 layer.name_overlay.visible = state
         self._sync_name_overlay_button()
 
+    def _axes_visible(self) -> bool:
+        return self.viewer.scene.overlays.axes.visible or self.viewer.canvas.overlays.axes.visible
+
+    def _toggle_axes_visible(self, state: bool) -> None:
+        # the button only toggles the scene axes; when hiding, hide the canvas axes too
+        self.qt_viewer.viewer.scene.overlays.axes.visible = state
+        if not state:
+            self.qt_viewer.viewer.canvas.overlays.axes.visible = False
+
+    def _sync_axes_button(self, _event=None) -> None:
+        with hp.qt_signals_blocked(self.tools_axes_btn):
+            self.tools_axes_btn.setChecked(self._axes_visible())
+
+    def _toggle_cursor_crosshair_visible(self, state: bool) -> None:
+        self.qt_viewer.viewer.scene.overlays.crosshair.visible = state
+
+    def _toggle_coordinate_grid_visible(self, state: bool) -> None:
+        self.qt_viewer.viewer.scene.overlays.coordinate_grid.visible = state
+
     def _toggle_text_visible(self, state: bool) -> None:
-        self.qt_viewer.viewer.text_overlay.visible = state
+        self.qt_viewer.viewer.canvas.overlays.text.visible = state
 
     def _toggle_crosshair_visible(self, state: bool) -> None:
         self.qt_viewer.viewer.cross_hair.visible = state
@@ -409,6 +465,27 @@ class QtViewToolbar(QWidget):
         from qtextraplot._napari.component_controls.qt_scalebar_controls import QtScaleBarControls
 
         dlg = QtScaleBarControls(self.viewer, self.qt_viewer)
+        dlg.show_left_of_mouse()
+
+    def on_open_axes_config(self) -> None:
+        """Open axes config."""
+        from qtextraplot._napari.component_controls.qt_axes_controls import QtAxesControls
+
+        dlg = QtAxesControls(self.viewer, self.qt_viewer)
+        dlg.show_left_of_mouse()
+
+    def on_open_cursor_crosshair_config(self) -> None:
+        """Open cursor crosshair config."""
+        from qtextraplot._napari.component_controls.qt_cursor_crosshair_controls import QtCursorCrosshairControls
+
+        dlg = QtCursorCrosshairControls(self.viewer, self.qt_viewer)
+        dlg.show_left_of_mouse()
+
+    def on_open_coordinate_grid_config(self) -> None:
+        """Open coordinate grid config."""
+        from qtextraplot._napari.component_controls.qt_coordinate_grid_controls import QtCoordinateGridControls
+
+        dlg = QtCoordinateGridControls(self.viewer, self.qt_viewer)
         dlg.show_left_of_mouse()
 
     def on_open_colorbar_config(self) -> None:

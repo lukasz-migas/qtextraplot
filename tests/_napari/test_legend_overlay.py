@@ -103,8 +103,8 @@ def test_viewer_supports_named_legend_overlays():
     first = viewer.set_legend([{"label": "A", "color": "red"}], name="first")
     second = viewer.set_legend([{"label": "B", "color": "blue"}], name="second")
 
-    assert viewer._overlays["first"] is first
-    assert viewer._overlays["second"] is second
+    assert viewer.canvas.overlays["first"] is first
+    assert viewer.canvas.overlays["second"] is second
     assert viewer.legend_visible
 
     viewer.set_legend_visible(False)
@@ -115,8 +115,8 @@ def test_viewer_supports_named_legend_overlays():
 
     viewer.clear_legend("first")
 
-    assert "first" not in viewer._overlays
-    assert viewer._overlays["second"] is second
+    assert "first" not in viewer.canvas.overlays
+    assert viewer.canvas.overlays["second"] is second
 
 
 def test_viewer_sets_legend_from_points_layer_name():
@@ -194,7 +194,7 @@ def test_vispy_legend_position_change_requests_canvas_update():
     overlay = viewer.set_legend([{"label": "Long legend label", "marker": "disc", "color": "red"}])
     visual = VispyLegendOverlay(viewer, overlay, FontInfo())
     calls = []
-    visual.canvas_position_callback = lambda: calls.append(True)
+    viewer.canvas.events._overlay_positions_changed.connect(lambda _event: calls.append(True))
 
     overlay.position = "bottom_left"
 
@@ -218,7 +218,7 @@ def test_legend_controls_generate_from_points_and_update_style(qtbot):
     assert controls.source_layer_combobox.currentData() is points
 
     controls.on_generate_from_points()
-    overlay = viewer._overlays["Legend"]
+    overlay = viewer.canvas.overlays["Legend"]
 
     assert isinstance(overlay, LegendOverlay)
     assert [entry.label for entry in overlay.entries] == ["A", "B"]
@@ -259,7 +259,7 @@ def test_legend_controls_toggle_auto_sync(qtbot):
     controls.auto_sync_checkbox.setChecked(True)
     controls.on_change_auto_sync()
 
-    overlay = viewer._overlays["Legend"]
+    overlay = viewer.canvas.overlays["Legend"]
     assert overlay.sync_with_source
 
 

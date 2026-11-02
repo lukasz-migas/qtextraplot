@@ -104,7 +104,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
             viewer=self.viewer,
             parent=self,
             key_map_handler=self._key_map_handler,
-            size=self.viewer._canvas_size,
+            size=self.viewer.canvas.size,
             autoswap=True,
             font_manager=self._font_manager,
             font_family=self._overlay_font,
@@ -224,10 +224,6 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         """Mapping of Napari layer to Vispy layer. Added for backward compatibility."""
         return self.canvas.layer_to_visual
 
-    def on_resize(self, event):
-        """Update cached x-axis offset."""
-        self.viewer._canvas_size = tuple(self.canvas.size[::-1])
-
     def _on_boxzoom(self, event):
         """Update boxzoom visibility."""
         self.viewer.span.visible = event.visible
@@ -253,7 +249,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
         from napari._qt.dialogs.screenshot_dialog import ScreenshotDialog
 
         dialog = ScreenshotDialog(self.screenshot, self, history=[])
-        if dialog.exec_():
+        if dialog.exec():
             pass
 
     def screenshot(self, path=None, size=None, scale=None, flash=True, canvas_only=False) -> np.ndarray:

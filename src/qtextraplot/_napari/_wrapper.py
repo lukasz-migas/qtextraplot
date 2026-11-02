@@ -45,7 +45,7 @@ class ViewerBase(ABC):
     def _reset_text_overlay(self) -> None:
         """Clear overlay text if the viewer exposes a text overlay."""
         with suppress(AttributeError):
-            self.viewer.text_overlay.text = ""
+            self.viewer.canvas.overlays.text.text = ""
 
     def _clear_tracked_layers(self, *attr_names: str) -> None:
         """Reset tracked wrapper layer references to ``None``."""

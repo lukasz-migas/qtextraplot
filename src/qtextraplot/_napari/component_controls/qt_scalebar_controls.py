@@ -3,6 +3,7 @@
 import numpy as np
 import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
+from napari.components.overlays import ScaleBarOverlay
 from napari.utils._units import get_unit_registry
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt
@@ -11,6 +12,7 @@ from qtpy.QtWidgets import QFormLayout
 from qtextraplot._napari._constants import POSITION_TRANSLATIONS, UNITS_TRANSLATIONS
 from qtextraplot._napari._enums import ViewerType
 from qtextraplot._napari._utilities import set_layer_spatial_calibration
+from qtextraplot._napari.widgets.qt_font_size import QtFontSizeWidget
 
 
 class QtScaleBarControls(QtFramelessPopup):
@@ -24,15 +26,20 @@ class QtScaleBarControls(QtFramelessPopup):
         self.setObjectName("scalebar")
         self.setMouseTracking(True)
 
-        self.viewer.scale_bar.events.visible.connect(self._on_visible_change)
-        self.viewer.scale_bar.events.colored.connect(self._on_colored_changed)
-        self.viewer.scale_bar.events.color.connect(self._on_color_changed)
-        self.viewer.scale_bar.events.ticks.connect(self._on_ticks_change)
-        self.viewer.scale_bar.events.box.connect(self._on_box_changed)
-        self.viewer.scale_bar.events.box_color.connect(self._on_box_color_changed)
-        self.viewer.scale_bar.events.position.connect(self._on_position_change)
-        self.viewer.scale_bar.events.font_size.connect(self._on_font_size_change)
+        self.overlay.events.visible.connect(self._on_visible_change)
+        self.overlay.events.colored.connect(self._on_colored_changed)
+        self.overlay.events.color.connect(self._on_color_changed)
+        self.overlay.events.ticks.connect(self._on_ticks_change)
+        self.overlay.events.box.connect(self._on_box_changed)
+        self.overlay.events.box_color.connect(self._on_box_color_changed)
+        self.overlay.events.position.connect(self._on_position_change)
+        self.overlay.events.font_size.connect(self._on_font_size_change)
         self._on_visible_change()
+
+    @property
+    def overlay(self) -> ScaleBarOverlay:
+        """Scale bar overlay."""
+        return self.viewer.canvas.overlays.scale_bar
 
     # noinspection PyAttributeOutsideInit
     def make_panel(self) -> QFormLayout:
@@ -41,7 +48,7 @@ class QtScaleBarControls(QtFramelessPopup):
             self,
             "",
             "Show/hide scalebar",
-            value=self.viewer.scale_bar.visible,
+            value=self.overlay.visible,
             func=self.on_change_visible,
         )
 
@@ -49,12 +56,12 @@ class QtScaleBarControls(QtFramelessPopup):
             self,
             "",
             "Invert color",
-            value=self.viewer.scale_bar.colored,
+            value=self.overlay.colored,
             func=self.on_change_colored,
         )
 
         self.color_swatch = QColorSwatchEdit(
-            initial_color=self.viewer.scale_bar.color,
+            initial_color=self.overlay.color,
             tooltip="Click to set color of the scalebar and text.",
         )
         self.color_swatch.color_changed.connect(self.on_change_color)
@@ -63,26 +70,29 @@ class QtScaleBarControls(QtFramelessPopup):
             self,
             "",
             "Show/hide scalebar",
-            value=self.viewer.scale_bar.visible,
+            value=self.overlay.visible,
             func=self.on_change_box,
         )
 
         self.box_color_swatch = QColorSwatchEdit(
-            initial_color=self.viewer.scale_bar.box_color,
+            initial_color=self.overlay.box_color,
             tooltip="Click to set background color.",
         )
         self.box_color_swatch.color_changed.connect(self.on_change_box_color)
 
         self.position_combobox = hp.make_combobox(self)
-        hp.set_combobox_data(self.position_combobox, POSITION_TRANSLATIONS, self.viewer.scale_bar.position)
+        hp.set_combobox_data(self.position_combobox, POSITION_TRANSLATIONS, self.overlay.position)
         self.position_combobox.currentTextChanged.connect(self.on_change_position)
 
-        self.font_size_spinbox = hp.make_double_slider_with_text(self, 4, 20, step_size=1)
-        self.font_size_spinbox.setValue(self.viewer.scale_bar.font_size)
-        self.font_size_spinbox.valueChanged.connect(self.on_change_font_size)
+        self.font_size_spinbox = QtFontSizeWidget(
+            self,
+            value=self.overlay.font_size,
+            max_value=20,
+            func=self.on_change_font_size,
+        )
 
         self.ticks_checkbox = hp.make_checkbox(self, "", "Display end ticks")
-        self.ticks_checkbox.setChecked(self.viewer.scale_bar.ticks)
+        self.ticks_checkbox.setChecked(self.overlay.ticks)
         self.ticks_checkbox.stateChanged.connect(self.on_change_ticks)
 
         pixel_size, unit = get_value_for_unit(self.viewer)
@@ -118,41 +128,41 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def on_change_color(self, color: np.ndarray) -> None:
         """Update color."""
-        with self.viewer.scale_bar.events.color.blocked():
-            self.viewer.scale_bar.color = color
+        with self.overlay.events.color.blocked():
+            self.overlay.color = color
 
     def _on_color_changed(self, _event=None):
         """Receive layer.current_border_color() change event and update view."""
         with hp.qt_signals_blocked(self.color_swatch):
-            self.color_swatch.setColor(self.viewer.scale_bar.color)
+            self.color_swatch.setColor(self.overlay.color)
 
     def on_change_box(self) -> None:
         """Update visibility checkbox."""
-        self.viewer.scale_bar.box = self.box_checkbox.isChecked()
+        self.overlay.box = self.box_checkbox.isChecked()
 
     def _on_box_changed(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.box.blocked():
-            self.box_checkbox.setChecked(self.viewer.scale_bar.box)
+        with self.overlay.events.box.blocked():
+            self.box_checkbox.setChecked(self.overlay.box)
 
     def on_change_box_color(self, color: np.ndarray) -> None:
         """Update color."""
-        with self.viewer.scale_bar.events.box_color.blocked():
-            self.viewer.scale_bar.box_color = color
+        with self.overlay.events.box_color.blocked():
+            self.overlay.box_color = color
 
     def _on_box_color_changed(self, _event=None):
         """Receive layer.current_border_color() change event and update view."""
         with hp.qt_signals_blocked(self.box_color_swatch):
-            self.box_color_swatch.setColor(self.viewer.scale_bar.box_color)
+            self.box_color_swatch.setColor(self.overlay.box_color)
 
     def on_change_visible(self) -> None:
         """Update visibility checkbox."""
-        self.viewer.scale_bar.visible = self.visible_checkbox.isChecked()
+        self.overlay.visible = self.visible_checkbox.isChecked()
 
     def _on_visible_change(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.visible.blocked():
-            self.visible_checkbox.setChecked(self.viewer.scale_bar.visible)
+        with self.overlay.events.visible.blocked():
+            self.visible_checkbox.setChecked(self.overlay.visible)
         hp.disable_widgets(
             self.font_size_spinbox,
             self.units_combobox,
@@ -163,35 +173,35 @@ class QtScaleBarControls(QtFramelessPopup):
             self.ticks_checkbox,
             self.colored_checkbox,
             self.box_checkbox,
-            disabled=not self.viewer.scale_bar.visible,
+            disabled=not self.overlay.visible,
         )
 
     def on_change_colored(self) -> None:
         """Update colored checkbox."""
-        self.viewer.scale_bar.colored = self.colored_checkbox.isChecked()
+        self.overlay.colored = self.colored_checkbox.isChecked()
 
     def _on_colored_changed(self, _event=None) -> None:
         """Update colored checkbox."""
-        with self.viewer.scale_bar.events.colored.blocked():
-            self.colored_checkbox.setChecked(self.viewer.scale_bar.colored)
+        with self.overlay.events.colored.blocked():
+            self.colored_checkbox.setChecked(self.overlay.colored)
 
     def on_change_ticks(self) -> None:
         """Update visibility checkbox."""
-        self.viewer.scale_bar.ticks = self.ticks_checkbox.isChecked()
+        self.overlay.ticks = self.ticks_checkbox.isChecked()
 
     def _on_ticks_change(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.ticks.blocked():
-            self.ticks_checkbox.setChecked(self.viewer.scale_bar.ticks)
+        with self.overlay.events.ticks.blocked():
+            self.ticks_checkbox.setChecked(self.overlay.ticks)
 
     def on_change_position(self) -> None:
         """Update visibility checkbox."""
-        self.viewer.scale_bar.position = self.position_combobox.currentData()
+        self.overlay.position = self.position_combobox.currentData()
 
     def _on_position_change(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.position.blocked():
-            hp.set_combobox_current_index(self.position_combobox, self.viewer.scale_bar.position)
+        with self.overlay.events.position.blocked():
+            hp.set_combobox_current_index(self.position_combobox, self.overlay.position)
 
     def on_change_unit(self, _event=None) -> None:
         """Update the physical size and units of every layer."""
@@ -206,16 +216,16 @@ class QtScaleBarControls(QtFramelessPopup):
 
     def on_change_font_size(self) -> None:
         """Update visibility checkbox."""
-        self.viewer.scale_bar.font_size = self.font_size_spinbox.value()
+        self.overlay.font_size = self.font_size_spinbox.value()
 
     def _on_font_size_change(self, _event=None) -> None:
         """Update visibility checkbox."""
-        with self.viewer.scale_bar.events.font_size.blocked():
-            self.font_size_spinbox.setValue(self.viewer.scale_bar.font_size)
+        with self.overlay.events.font_size.blocked():
+            self.font_size_spinbox.setValue(self.overlay.font_size)
 
     def close(self) -> None:
         """Disconnect events when widget is closing."""
-        events = self.viewer.scale_bar.events
+        events = self.overlay.events
         events.visible.disconnect(self._on_visible_change)
         events.colored.disconnect(self._on_colored_changed)
         events.color.disconnect(self._on_color_changed)

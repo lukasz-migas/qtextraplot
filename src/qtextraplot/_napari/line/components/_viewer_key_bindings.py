@@ -56,8 +56,9 @@ def reset_view(viewer):
 
 @ViewerModel.bind_key("Control-G")
 def toggle_grid(viewer):
-    """Toggle grid mode."""
-    viewer.grid.enabled = not viewer.grid.enabled
+    """Toggle plot grid visibility once per key press."""
+    viewer.grid_lines.visible = not viewer.grid_lines.visible
+    yield
 
 
 @ViewerModel.bind_key("V")

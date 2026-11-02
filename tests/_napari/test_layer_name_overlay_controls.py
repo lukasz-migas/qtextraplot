@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 from qtpy.QtWidgets import QWidget
 
 napari = pytest.importorskip("napari", reason="napari is not installed")
-try:
-    from napari.components.overlays.text import LayerNameOverlay
-except ImportError:
-    pytest.skip("LayerNameOverlay requires napari 0.8 or newer", allow_module_level=True)
+from napari.components.overlays.text import LayerNameOverlay  # noqa: E402
 
 from qtextraplot._napari._constants import CanvasPosition  # noqa: E402
 from qtextraplot._napari.component_controls.qt_layer_name_overlay_controls import (  # noqa: E402
@@ -158,9 +157,12 @@ def test_toolbar_layer_name_button_toggles_visibility(qtbot) -> None:
     qt_viewer.viewer = viewer
     qt_viewer.on_toggle_controls_dialog = lambda: None
     qtbot.addWidget(qt_viewer)
-    viewer.grid = type("Grid", (), {"enabled": False})()
-    viewer.text_overlay = type("TextOverlay", (), {"visible": False})()
-    viewer.scale_bar = type("ScaleBar", (), {"visible": False})()
+    hidden = SimpleNamespace(visible=False)
+    viewer.canvas = SimpleNamespace(
+        grid=SimpleNamespace(enabled=False),
+        overlays=SimpleNamespace(text=hidden, scale_bar=hidden, axes=hidden),
+    )
+    viewer.scene = SimpleNamespace(overlays=SimpleNamespace(axes=hidden, crosshair=hidden, coordinate_grid=hidden))
     viewer.reset_view = lambda: None
     viewer.clear_canvas = lambda: None
     toolbar = QtViewToolbar(

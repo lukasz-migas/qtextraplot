@@ -141,17 +141,17 @@ def test_viewer_supports_multiple_named_object_outline_overlays():
     first = viewer.set_object_outlines(np.array([[0, 0], [1, 1]]), name="first", target_layer=image)
     second = viewer.set_object_outlines(np.array([[2, 2], [3, 3]]), name="second", target_layer=image)
 
-    assert viewer._overlays["first"] is first
-    assert viewer._overlays["second"] is second
+    assert viewer.scene.overlays["first"] is first
+    assert viewer.scene.overlays["second"] is second
 
     viewer.clear_object_outlines("first")
 
-    assert "first" not in viewer._overlays
-    assert viewer._overlays["second"] is second
+    assert "first" not in viewer.scene.overlays
+    assert viewer.scene.overlays["second"] is second
 
     viewer.clear_object_outlines()
 
-    assert "second" not in viewer._overlays
+    assert "second" not in viewer.scene.overlays
 
 
 def test_viewer_sets_all_object_outline_visibility():
@@ -177,12 +177,12 @@ def test_vispy_object_outlines_are_hidden_in_grid_mode():
     assert not overlay.gridded
     assert visual.node.visible
 
-    viewer.grid.enabled = True
+    viewer.canvas.grid.enabled = True
 
     assert overlay.visible
     assert not visual.node.visible
 
-    viewer.grid.enabled = False
+    viewer.canvas.grid.enabled = False
 
     assert visual.node.visible
     visual.close()
@@ -193,14 +193,14 @@ def test_image_view_grid_mode_does_not_reparent_object_outlines(qtbot, _mock_ope
     qtbot.addWidget(view.widget)
     image = view.viewer.add_image(np.zeros((10, 10)), name="Target")
     overlay = view.set_object_outlines(np.array([[0, 0], [1, 1]]), target_layer=image)
-    visual = view.widget.canvas._overlay_to_visual[overlay][0]
+    visual = view.widget.canvas._viewer_overlay_to_visual[overlay][0]
 
-    view.viewer.grid.enabled = True
+    view.viewer.canvas.grid.enabled = True
 
-    assert len(view.widget.canvas._overlay_to_visual[overlay]) == 1
+    assert len(view.widget.canvas._viewer_overlay_to_visual[overlay]) == 1
     assert not visual.node.visible
 
-    view.viewer.grid.enabled = False
+    view.viewer.canvas.grid.enabled = False
 
     assert visual.node.visible
 
@@ -212,7 +212,7 @@ def test_viewer_clear_canvas_removes_object_outline_overlays():
 
     viewer.clear_canvas()
 
-    assert "first" not in viewer._overlays
+    assert "first" not in viewer.scene.overlays
 
 
 def test_object_outline_controls_update_selected_overlay(qtbot):

@@ -90,7 +90,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
             viewer=viewer,
             parent=self,
             key_map_handler=self._key_map_handler,
-            size=self.viewer._canvas_size,
+            size=self.viewer.canvas.size,
             autoswap=True,
             font_manager=self._font_manager,
             font_family=self._overlay_font,
@@ -128,7 +128,7 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
     @property
     def text_overlay(self):
         """Return text overlay."""
-        return self.canvas._overlay_to_visual.get(self.viewer.text_overlay, [])
+        return self.canvas._viewer_overlay_to_visual.get(self.viewer.canvas.overlays.text, [])
 
     def _set_layout(self, add_dims: bool, add_toolbars: bool, **kwargs):
         # set in main canvas
@@ -255,9 +255,9 @@ class QtViewer(QtViewerInstanceTracker, QWidget):
 
         xmin, xmax, ymin, ymax = event.value
         zoom, ycenter, xcenter = calculate_zoom(xmin, xmax, ymin, ymax, self.viewer)
-        self.viewer.camera.center = (1, ycenter, xcenter)
+        self.viewer.scene.camera.center = (1, ycenter, xcenter)
         # calculate zoom by checking the current extents
-        self.viewer.camera.zoom = zoom
+        self.viewer.scene.camera.zoom = zoom
 
     def on_open_controls_dialog(self, event=None) -> None:
         """Open dialog responsible for layer settings."""

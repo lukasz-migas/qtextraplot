@@ -77,8 +77,8 @@ if __name__ == "__main__":  # pragma: no cover
 
     _ = qapplication()  # analysis:ignore
     # dlg = SpectrumPlotPopup(None, title="Spectrum viewer")
-    dlg = QtMplPopup(None, title="Spectrum viewer")
+    dlg = QtNDVPopup(None, title="Spectrum viewer")
     apply_style(dlg)
     dlg.plot(np.arange(100), np.arange(100))
     dlg.show()
-    sys.exit(dlg.exec_())
+    sys.exit(dlg.exec())

@@ -8,7 +8,7 @@ from qtextraplot._napari.image.wrapper import NapariImageView
 
 
 def test_image_view_constructs_and_adds_image(qtbot, _mock_opengl_capabilities) -> None:
-    """The image viewer should construct and render a napari 0.8 image layer."""
+    """The image viewer should construct and render a napari 0.10 image layer."""
     view = NapariImageView(
         add_dims=False,
         add_toolbars=False,
@@ -23,7 +23,7 @@ def test_image_view_constructs_and_adds_image(qtbot, _mock_opengl_capabilities) 
 
 
 def test_extract_shapes_layer_uses_image_scale(qtbot, _mock_opengl_capabilities) -> None:
-    """The extraction layer should inherit the image scale with napari 0.8."""
+    """The extraction layer should inherit the image scale with napari 0.10."""
     view = NapariImageView(
         add_dims=False,
         add_toolbars=False,

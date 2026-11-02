@@ -39,6 +39,13 @@ class QtViewerInstanceTracker:
             registry.append(self)
         self.current_index = len(self._instances) - 1
 
+    def _stop_worker_threads(self) -> None:
+        """Stop dims playback threads; napari calls this on registered windows at exit."""
+        dims = getattr(self, "dims", None)
+        if dims is not None:
+            with suppress(RuntimeError):
+                dims.stop()
+
 
 def calc_status_from_cursor(viewer) -> tuple[str | dict, str] | None:
     """Build status and tooltip text from the current cursor position."""

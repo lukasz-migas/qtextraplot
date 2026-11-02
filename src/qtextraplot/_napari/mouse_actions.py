@@ -20,7 +20,7 @@ def install_auto_scale_checkbox(view: NapariLineView) -> None:
     def on_auto_zoom() -> None:
         """Automatically zoom on the data range."""
         if view.config.auto_zoom:
-            with view.viewer.camera.events.zoomed.blocker():
+            with view.viewer.scene.camera.events.zoomed.blocker():
                 view.viewer.reset_current_y_view()
 
     def on_update_state(event: ty.Any) -> None:
@@ -40,7 +40,7 @@ def install_auto_scale_checkbox(view: NapariLineView) -> None:
     view.config.events.auto_zoom.connect(on_update_state)
     view.config.events.auto_zoom.connect(on_auto_zoom)
     # connect to zoomed event
-    view.viewer.camera.events.zoomed.connect(on_auto_zoom)
+    view.viewer.scene.camera.events.zoomed.connect(on_auto_zoom)
 
 
 def install_double_click_to_zoom_out(view: NapariLineView) -> None:

@@ -56,6 +56,9 @@ update_icon_mapping(
         "new_points": "mdi6.scatter-plot",
         "new_shapes": "mdi6.shape-outline",
         "legend": "mdi.map-legend",
+        "axes": "mdi6.axis-arrow",
+        "cursor_crosshair": "mdi6.crosshairs",
+        "coordinate_grid": "mdi6.grid-large",
     },
     key="qtextraplot",
 )

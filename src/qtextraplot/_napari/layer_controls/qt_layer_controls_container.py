@@ -1,4 +1,4 @@
-"""Layer controls container compatible with napari 0.8."""
+"""Layer controls container compatible with napari 0.10."""
 
 from __future__ import annotations
 
@@ -73,7 +73,10 @@ class QtLayerControlsContainer(NapariQtLayerControlsContainer):
     def _add(self, event: Event) -> None:
         """Add controls and mark napari's built-ins for scoped styling."""
         super()._add(event)
-        controls = self.widgets[event.value]
+        # napari skips per-layer controls when dynamic layer controls are enabled
+        controls = self.widgets.get(event.value)
+        if controls is None:
+            return
         controls.setProperty(
             "napari_builtin",
             controls.__class__.__module__.startswith("napari."),

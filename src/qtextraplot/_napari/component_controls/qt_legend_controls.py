@@ -31,9 +31,9 @@ class QtLegendControls(QtFramelessPopup):
         self.setObjectName("legend")
         self.setMouseTracking(True)
 
-        self.viewer._overlays.events.added.connect(self._on_overlay_collection_change)
-        self.viewer._overlays.events.removed.connect(self._on_overlay_collection_change)
-        self.viewer._overlays.events.changed.connect(self._on_overlay_collection_change)
+        self.viewer.canvas.overlays.events.added.connect(self._on_overlay_collection_change)
+        self.viewer.canvas.overlays.events.removed.connect(self._on_overlay_collection_change)
+        self.viewer.canvas.overlays.events.changed.connect(self._on_overlay_collection_change)
         self.viewer.layers.events.inserted.connect(self._refresh_source_combo)
         self.viewer.layers.events.removed.connect(self._refresh_source_combo)
         self.viewer.layers.events.changed.connect(self._refresh_source_combo)
@@ -477,6 +477,6 @@ class QtLegendControls(QtFramelessPopup):
     def close(self) -> None:
         """Disconnect events when widget is closing."""
         self._connect_selected_overlay(None)
-        disconnect_events(self.viewer._overlays.events, self)
+        disconnect_events(self.viewer.canvas.overlays.events, self)
         disconnect_events(self.viewer.layers.events, self)
         super().close()
