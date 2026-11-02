@@ -81,3 +81,34 @@ def test_native_colorbar_registration_keeps_qtextraplot_colorbar() -> None:
 
     assert overlay_to_visual[NapariColorBarOverlay] is _SafeVispyColorBarOverlay
     assert overlay_to_visual[QtextraColorBarOverlay] is VispyColorbarOverlay
+
+
+def test_native_colorbar_created_visible_survives_ticks_without_majors(
+    qtbot,
+    _mock_opengl_capabilities,
+    monkeypatch,
+) -> None:
+    """Showing the colorbar builds the overlay already visible, so ticks are computed during construction.
+
+    napari-plot replaces VisPy's ticker globally and can return minor ticks without any major tick,
+    which crashes VisPy unless the guarded ticker is already installed at that point.
+    """
+    import vispy.visuals.axis
+
+    from qtextraplot._napari.image.wrapper import NapariImageView
+
+    class _NoMajorTicker(vispy.visuals.axis.Ticker):
+        def _get_tick_frac_labels(self):
+            return np.empty(0), np.asarray([0.2, 0.4, 0.6, 0.8]), []
+
+    monkeypatch.setattr(vispy.visuals.axis, "Ticker", _NoMajorTicker)
+
+    view = NapariImageView(add_dims=False, add_toolbars=False, allow_extraction=False)
+    qtbot.addWidget(view.widget)
+    layer = view.plot(np.random.default_rng(0).random((32, 32)), name="Signal")
+
+    layer.colorbar.visible = True
+
+    visual = view.widget.canvas._layer_overlay_to_visual[layer][layer.colorbar]
+    assert isinstance(visual, _SafeVispyColorBarOverlay)
+    assert isinstance(visual.node.ticks.ticker, _SafeColorBarTicker)
