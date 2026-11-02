@@ -53,7 +53,7 @@ pyqt6 = [
     "pyqt6>6.9.0; platform_system == 'Windows'",
     "pyqt6; platform_system != 'Windows'"
 ]
-1d = ["napari-plot>=0.3.1,<0.4.0"]
+1d = ["napari-plot>=0.4.0,<0.5.0"]
 2d = ["napari[optional]>=0.8.0,<0.9.0"]
 ndv = ["ndv[vispy]"]
 mpl = ["matplotlib"]
