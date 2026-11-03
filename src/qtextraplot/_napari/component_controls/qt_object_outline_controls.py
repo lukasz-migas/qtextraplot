@@ -28,9 +28,9 @@ class QtObjectOutlineControls(QtFramelessPopup):
         self.setObjectName("object_outlines")
         self.setMouseTracking(True)
 
-        self.viewer._overlays.events.added.connect(self._on_overlay_collection_change)
-        self.viewer._overlays.events.removed.connect(self._on_overlay_collection_change)
-        self.viewer._overlays.events.changed.connect(self._on_overlay_collection_change)
+        self.viewer.scene.overlays.events.added.connect(self._on_overlay_collection_change)
+        self.viewer.scene.overlays.events.removed.connect(self._on_overlay_collection_change)
+        self.viewer.scene.overlays.events.changed.connect(self._on_overlay_collection_change)
         self._refresh_overlay_combo()
 
     # noinspection PyAttributeOutsideInit
@@ -238,5 +238,5 @@ class QtObjectOutlineControls(QtFramelessPopup):
     def close(self) -> None:
         """Disconnect events when widget is closing."""
         self._connect_selected_overlay(None)
-        disconnect_events(self.viewer._overlays.events, self)
+        disconnect_events(self.viewer.scene.overlays.events, self)
         super().close()

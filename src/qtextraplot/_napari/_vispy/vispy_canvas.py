@@ -113,4 +113,4 @@ if __name__ == "__main__":  # pragma: no cover
 
     dlg.show()
     canvas.show()
-    sys.exit(dlg.exec_())
+    sys.exit(dlg.exec())

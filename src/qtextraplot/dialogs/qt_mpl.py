@@ -81,4 +81,4 @@ if __name__ == "__main__":  # pragma: no cover
     apply_style(dlg)
     dlg.plot(np.arange(100), np.arange(100))
     dlg.show()
-    sys.exit(dlg.exec_())
+    sys.exit(dlg.exec())

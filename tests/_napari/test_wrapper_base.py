@@ -11,7 +11,7 @@ class _DummyViewerBase(ViewerBase):
     def __init__(self):
         self.viewer = SimpleNamespace(
             layers=[],
-            text_overlay=SimpleNamespace(text="initial"),
+            canvas=SimpleNamespace(overlays=SimpleNamespace(text=SimpleNamespace(text="initial"))),
         )
         self.widget = SimpleNamespace(canvas=None, view=SimpleNamespace(camera=None), close=lambda: None)
 
@@ -43,7 +43,7 @@ def test_clear_tracked_layer_on_remove_only_clears_matching_layer():
 def test_reset_text_overlay_is_tolerant_when_missing():
     view = _DummyViewerBase()
     view._reset_text_overlay()
-    assert view.viewer.text_overlay.text == ""
+    assert view.viewer.canvas.overlays.text.text == ""
 
-    del view.viewer.text_overlay
+    del view.viewer.canvas.overlays.text
     view._reset_text_overlay()

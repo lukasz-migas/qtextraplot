@@ -15,9 +15,10 @@ class VispyCanvas(_VispyCanvas):
 
     def __init__(self, *args: ty.Any, **kwargs: ty.Any) -> None:
         super().__init__(*args, **kwargs)
-        self.viewer._overlays.events.added.connect(self._on_overlay_added)
-        self.viewer._overlays.events.removed.connect(self._on_overlay_removed)
-        self.viewer._overlays.events.changed.connect(self._on_overlay_changed)
+        overlay_events = self.viewer.canvas.overlays.events
+        overlay_events.added.connect(self._on_overlay_added)
+        overlay_events.removed.connect(self._on_overlay_removed)
+        overlay_events.changed.connect(self._on_overlay_changed)
 
     def _on_mouse_double_click(self, event) -> None:
         """Process mouse double-click events, including modified clicks."""
@@ -59,7 +60,7 @@ class VispyCanvas(_VispyCanvas):
         with suppress(AttributeError):
             self._scene_canvas.update()
 
-    def close(self) -> None:
-        """Disconnect overlay collection listeners."""
-        disconnect_events(self.viewer._overlays.events, self)
-        super().close()
+    def delete(self) -> None:
+        """Disconnect overlay collection listeners and delete the canvas."""
+        disconnect_events(self.viewer.canvas.overlays.events, self)
+        super().delete()

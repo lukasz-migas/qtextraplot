@@ -96,7 +96,7 @@ class QtScreenshotDialog(QtFramelessPopup):
         )
 
         dialog = ScreenshotDialog(save_func, self.parent() or self, HOME_DIRECTORY, history=[])
-        if dialog.exec_():
+        if dialog.exec():
             pass
 
     def on_copy_to_clipboard(self) -> None:

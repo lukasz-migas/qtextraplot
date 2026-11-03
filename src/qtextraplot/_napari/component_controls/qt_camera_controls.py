@@ -51,7 +51,7 @@ class QtCameraControls(QtFramelessPopup):
         """Add 3D camera controls to the popup."""
         self.perspective = hp.make_double_slider_with_text(
             parent=self,
-            value=self.viewer.camera.perspective,
+            value=self.viewer.scene.camera.perspective,
             value_range=(0, 90),
             func=self._update_perspective,
         )
@@ -63,21 +63,21 @@ class QtCameraControls(QtFramelessPopup):
 
         self.rx = hp.make_double_slider_with_text(
             parent=self,
-            value=self.viewer.camera.angles[0],
+            value=self.viewer.scene.camera.angles[0],
             value_range=(-180, 180),
             func=partial(self._update_camera_angles, 0),
         )
 
         self.ry = hp.make_double_slider_with_text(
             parent=self,
-            value=self.viewer.camera.angles[1],
+            value=self.viewer.scene.camera.angles[1],
             value_range=(-89, 89),
             func=partial(self._update_camera_angles, 1),
         )
 
         self.rz = hp.make_double_slider_with_text(
             parent=self,
-            value=self.viewer.camera.angles[2],
+            value=self.viewer.scene.camera.angles[2],
             value_range=(-180, 180),
             func=partial(self._update_camera_angles, 2),
         )
@@ -105,7 +105,7 @@ class QtCameraControls(QtFramelessPopup):
         """Add shared hp.make_double_slider_with_text controls to the popup."""
         self.zoom = hp.make_double_slider_with_text(
             parent=self,
-            value=self.viewer.camera.zoom,
+            value=self.viewer.scene.camera.zoom,
             value_range=(0.01, 100),
             n_decimals=2,
             func=self._update_zoom,
@@ -129,14 +129,14 @@ class QtCameraControls(QtFramelessPopup):
         self.vertical_combo = hp.make_enum_combobox(
             parent=self,
             enum_class=VerticalAxisOrientation,
-            current_enum=self.viewer.camera.orientation[1],
+            current_enum=self.viewer.scene.camera.orientation[1],
             callback=partial(self._update_orientation, VerticalAxisOrientation),
         )
 
         self.horizontal_combo = hp.make_enum_combobox(
             parent=self,
             enum_class=HorizontalAxisOrientation,
-            current_enum=self.viewer.camera.orientation[2],
+            current_enum=self.viewer.scene.camera.orientation[2],
             callback=partial(self._update_orientation, HorizontalAxisOrientation),
         )
 
@@ -152,7 +152,7 @@ class QtCameraControls(QtFramelessPopup):
             self.depth_combo = hp.make_enum_combobox(
                 parent=self,
                 enum_class=DepthAxisOrientation,
-                current_enum=self.viewer.camera.orientation[0],
+                current_enum=self.viewer.scene.camera.orientation[0],
                 callback=partial(self._update_orientation, DepthAxisOrientation),
             )
 
@@ -165,7 +165,7 @@ class QtCameraControls(QtFramelessPopup):
                 "",  # updated dynamically
             )
             self._update_handedness_help_symbol()
-            self.viewer.camera.events.orientation.connect(self._update_handedness_help_symbol)
+            self.viewer.scene.camera.events.orientation.connect(self._update_handedness_help_symbol)
 
         grid_layout.addWidget(QLabel("Orientation:"), 0, 0)
         grid_layout.addWidget(orientation_widget, 0, 1)
@@ -173,7 +173,7 @@ class QtCameraControls(QtFramelessPopup):
 
     def _update_handedness_help_symbol(self, event=None) -> None:
         """Update the handedness symbol based on the camera orientation."""
-        handedness = self.viewer.camera.handedness
+        handedness = self.viewer.scene.camera.handedness
         tooltip_text = (
             "Controls the orientation of the depth, vertical, and horizontal camera axes.\n"
             "Default is right-handed (towards, down, right).\n"
@@ -195,20 +195,20 @@ class QtCameraControls(QtFramelessPopup):
             HorizontalAxisOrientation,
         )
         axis_to_update = axes.index(orientation_type)
-        new_orientation = list(self.viewer.camera.orientation)
+        new_orientation = list(self.viewer.scene.camera.orientation)
         new_orientation[axis_to_update] = orientation_type(orientation_value)
-        self.viewer.camera.orientation = tuple(new_orientation)
+        self.viewer.scene.camera.orientation = tuple(new_orientation)
 
     def _update_camera_angles(self, idx: int, value: float) -> None:
         """Update the camera angles."""
-        angles = list(self.viewer.camera.angles)
+        angles = list(self.viewer.scene.camera.angles)
         angles[idx] = value
-        self.viewer.camera.angles = tuple(angles)
+        self.viewer.scene.camera.angles = tuple(angles)
 
     def _update_zoom(self, value: float) -> None:
         """Update the camera zoom."""
-        self.viewer.camera.zoom = value
+        self.viewer.scene.camera.zoom = value
 
     def _update_perspective(self, value: float) -> None:
         """Update the camera perspective."""
-        self.viewer.camera.perspective = value
+        self.viewer.scene.camera.perspective = value

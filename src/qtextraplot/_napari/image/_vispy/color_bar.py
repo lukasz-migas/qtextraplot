@@ -25,6 +25,9 @@ class _SafeColorBarTicker(Ticker):
 class _SafeVispyColorBarOverlay(VispyColorBarOverlay):
     """Use the guarded ticker for Napari's native per-layer colorbars."""
 
-    def __init__(self, *args: ty.Any, **kwargs: ty.Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.node.ticks.ticker = _SafeColorBarTicker(self.node.ticks)
+    def _on_ticks_change(self) -> None:
+        # Napari computes ticks from inside ``__init__`` (via ``reset``), so the guarded ticker has to be
+        # installed here rather than after construction.
+        if not isinstance(self.node.ticks.ticker, _SafeColorBarTicker):
+            self.node.ticks.ticker = _SafeColorBarTicker(self.node.ticks)
+        super()._on_ticks_change()

@@ -77,7 +77,7 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         self.viewer.layers.events.inserted.connect(self._on_target_layer_change)
         self.viewer.layers.events.removed.connect(self._on_target_layer_change)
         self.viewer.layers.events.changed.connect(self._on_target_layer_change)
-        self.viewer.grid.events.enabled.connect(self._on_visible_change)
+        self.viewer.canvas.grid.events.enabled.connect(self._on_visible_change)
 
         self._connect_outline_events()
         self._connect_target_layer_events()
@@ -138,6 +138,10 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         while len(self._line_nodes) < count:
             line = Line(connect="segments", method="gl")
             self.node.add_subvisual(line)
+            # Compound nodes only attach inherited clippers to existing subvisuals; napari reparents
+            # scene overlays in grid mode, and detaching then fails for lines added afterwards.
+            for clipper in self.node._clippers.values():
+                line.attach(clipper, line)
             self._line_nodes.append(line)
 
     def _line_groups(self, layer: Layer) -> list[tuple[float, np.ndarray, np.ndarray]]:
@@ -175,7 +179,7 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
 
     def _should_be_visible(self) -> bool:
         """Return whether outlines can be shown in the current view mode."""
-        return self.overlay.visible and not self.viewer.grid.enabled
+        return self.overlay.visible and not self.viewer.canvas.grid.enabled
 
     def reset(self) -> None:
         super().reset()
@@ -186,7 +190,7 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         if self._target_layer is not None:
             disconnect_events(self._target_layer.events, self)
         disconnect_events(self.viewer.dims.events, self)
-        disconnect_events(self.viewer.grid.events, self)
+        disconnect_events(self.viewer.canvas.grid.events, self)
         disconnect_events(self.viewer.layers.events, self)
         self._clear_lines()
         super().close()

@@ -73,7 +73,7 @@ def test_line_view_reuses_scatter_and_applies_per_point_colors(qtbot, _mock_open
 
 
 def test_line_layer_context_menu_uses_napari_context_keys(qtbot, _mock_opengl_capabilities) -> None:
-    """The napari 0.8 layer menu should evaluate against plot-layer contexts."""
+    """The napari 0.10 layer menu should evaluate against plot-layer contexts."""
     parent = QWidget()
     qtbot.addWidget(parent)
     view = NapariLineView(parent, add_toolbars=False, connect_theme=False)

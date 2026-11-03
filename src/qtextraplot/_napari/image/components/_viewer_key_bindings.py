@@ -112,7 +112,7 @@ def reset_view(viewer):
 @Viewer.bind_key("Control-G")
 def toggle_grid(viewer):
     """Toggle grid mode."""
-    viewer.grid.enabled = not viewer.grid.enabled
+    viewer.canvas.grid.enabled = not viewer.canvas.grid.enabled
 
 
 @Viewer.bind_key("V")

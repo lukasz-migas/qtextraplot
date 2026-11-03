@@ -32,10 +32,8 @@ from qtextraplot._napari.image.components._viewer_mouse_bindings import crosshai
 if ty.TYPE_CHECKING:
     from napari.layers import Labels
 
-DEFAULT_OVERLAYS = {
-    "cross_hair": CrossHairOverlay,
-    "color_bar": ColorBarOverlay,
-}
+DEFAULT_SCENE_OVERLAYS = {"cross_hair": CrossHairOverlay}
+DEFAULT_CANVAS_OVERLAYS = {"color_bar": ColorBarOverlay}
 LEGEND_OVERLAY_NAME = "Legend"
 POINTS_LAYER_ERROR = "Legend source layer must be a Points layer."
 LEGEND_SOURCE_EVENTS = ("data", "face_color", "border_color", "symbol", "properties", "features")
@@ -57,9 +55,10 @@ class Viewer(_ViewerModel):
             self.mouse_double_click_callbacks.clear()
             self.mouse_double_click_callbacks.append(double_click_to_zoom_reset)
 
-        for key, value in DEFAULT_OVERLAYS.items():
-            self._overlays[key] = value()
-        # self._overlays.update({k: v() for k, v in DEFAULT_OVERLAYS.items()})
+        for key, value in DEFAULT_SCENE_OVERLAYS.items():
+            self.scene.overlays[key] = value()
+        for key, value in DEFAULT_CANVAS_OVERLAYS.items():
+            self.canvas.overlays[key] = value()
         self.events.add(crosshair=Event, zoom=Event, clear_canvas=Event)
         self.layers.events.inserted.connect(self._refresh_legend_source_connections)
         self.layers.events.removed.connect(self._refresh_legend_source_connections)
@@ -69,16 +68,16 @@ class Viewer(_ViewerModel):
     @property
     def cross_hair(self) -> CrossHairOverlay:
         """Crosshair overlay."""
-        return self._overlays["cross_hair"]
+        return self.scene.overlays["cross_hair"]
 
     @property
     def color_bar(self) -> ColorBarOverlay:
         """Colorbar overlay."""
-        return self._overlays["color_bar"]
+        return self.canvas.overlays["color_bar"]
 
     def legend_overlays(self) -> dict[str, LegendOverlay]:
         """Return legend overlays keyed by overlay name."""
-        return {name: overlay for name, overlay in self._overlays.items() if isinstance(overlay, LegendOverlay)}
+        return {name: overlay for name, overlay in self.canvas.overlays.items() if isinstance(overlay, LegendOverlay)}
 
     @property
     def legend_visible(self) -> bool:
@@ -107,10 +106,10 @@ class Viewer(_ViewerModel):
         border_width: float = 1.0,
     ) -> LegendOverlay:
         """Set a named canvas legend overlay."""
-        overlay = self._overlays.get(name)
+        overlay = self.canvas.overlays.get(name)
         if not isinstance(overlay, LegendOverlay):
             overlay = LegendOverlay()
-            self._overlays[name] = overlay
+            self.canvas.overlays[name] = overlay
 
         overlay.source_layer = None
         overlay.sync_with_source = False
@@ -130,9 +129,9 @@ class Viewer(_ViewerModel):
 
     def clear_legend(self, name: str = LEGEND_OVERLAY_NAME) -> None:
         """Clear a named legend overlay."""
-        overlay = self._overlays.get(name)
+        overlay = self.canvas.overlays.get(name)
         if isinstance(overlay, LegendOverlay):
-            del self._overlays[name]
+            del self.canvas.overlays[name]
         self._refresh_legend_source_connections()
 
     def _resolve_points_layer(self, layer: str | Points) -> Points:
@@ -186,7 +185,7 @@ class Viewer(_ViewerModel):
 
     def refresh_legend_from_source(self, name: str = LEGEND_OVERLAY_NAME) -> LegendOverlay | None:
         """Refresh a point-derived legend without changing its style."""
-        overlay = self._overlays.get(name)
+        overlay = self.canvas.overlays.get(name)
         if not isinstance(overlay, LegendOverlay):
             return None
         layer = self._legend_source_layer(overlay)
@@ -206,7 +205,7 @@ class Viewer(_ViewerModel):
 
     def set_legend_auto_sync(self, name: str = LEGEND_OVERLAY_NAME, enabled: bool = True) -> LegendOverlay | None:
         """Enable or disable live refresh for a point-derived legend."""
-        overlay = self._overlays.get(name)
+        overlay = self.canvas.overlays.get(name)
         if not isinstance(overlay, LegendOverlay):
             return None
         overlay.sync_with_source = enabled
@@ -270,7 +269,9 @@ class Viewer(_ViewerModel):
 
     def object_outline_overlays(self) -> dict[str, ObjectOutlinesOverlay]:
         """Return object outline overlays keyed by overlay name."""
-        return {name: overlay for name, overlay in self._overlays.items() if isinstance(overlay, ObjectOutlinesOverlay)}
+        return {
+            name: overlay for name, overlay in self.scene.overlays.items() if isinstance(overlay, ObjectOutlinesOverlay)
+        }
 
     @property
     def object_outlines_visible(self) -> bool:
@@ -310,10 +311,10 @@ class Viewer(_ViewerModel):
     ) -> ObjectOutlinesOverlay:
         """Set a named object outline overlay."""
         resolved_target_layer = self._resolve_object_outline_target_layer(target_layer)
-        overlay = self._overlays.get(name)
+        overlay = self.scene.overlays.get(name)
         if not isinstance(overlay, ObjectOutlinesOverlay):
             overlay = ObjectOutlinesOverlay(target_layer=resolved_target_layer, closed=closed, visible=visible)
-            self._overlays[name] = overlay
+            self.scene.overlays[name] = overlay
 
         overlay.target_layer = resolved_target_layer
         overlay.closed = closed
@@ -324,14 +325,14 @@ class Viewer(_ViewerModel):
     def clear_object_outlines(self, name: str | None = None) -> None:
         """Clear one or all object outline overlays."""
         if name is not None:
-            overlay = self._overlays.get(name)
+            overlay = self.scene.overlays.get(name)
             if isinstance(overlay, ObjectOutlinesOverlay):
-                del self._overlays[name]
+                del self.scene.overlays[name]
             return
 
-        for overlay_name, overlay in list(self._overlays.items()):
+        for overlay_name, overlay in list(self.scene.overlays.items()):
             if isinstance(overlay, ObjectOutlinesOverlay):
-                del self._overlays[overlay_name]
+                del self.scene.overlays[overlay_name]
 
     def clear_canvas(self) -> None:
         """Remove all layers from the canvas."""

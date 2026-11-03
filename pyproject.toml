@@ -43,18 +43,16 @@ all = [
     "qtextraplot[plot,pyqt6,pyqtgraph]"
 ]
 pyqtgraph = ["pyqtgraph"]
-pyside2 = ["pyside2"]
 pyside6 = [
     "pyside6>6.9.0; platform_system == 'Windows'",
-    "pyside6; platform_system != 'Windows'"
+    "pyside6>=6.8.3; platform_system != 'Windows'"
 ]
-pyqt5 = ["pyqt5"]
 pyqt6 = [
     "pyqt6>6.9.0; platform_system == 'Windows'",
-    "pyqt6; platform_system != 'Windows'"
+    "pyqt6>=6.7; platform_system != 'Windows'"
 ]
-1d = ["napari-plot>=0.3.1,<0.4.0"]
-2d = ["napari[optional]>=0.8.0,<0.9.0"]
+1d = ["napari-plot>=0.4.0,<0.5.0"]
+2d = ["napari[optional]>=0.10.0,<0.11.0"]
 ndv = ["ndv[vispy]"]
 mpl = ["matplotlib"]
 plot = ["qtextraplot[1d]", "qtextraplot[2d]"]

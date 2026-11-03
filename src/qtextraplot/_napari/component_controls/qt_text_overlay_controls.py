@@ -3,12 +3,14 @@
 import numpy as np
 import qtextra.helpers as hp
 from napari._qt.widgets.qt_color_swatch import QColorSwatchEdit
+from napari.components.overlays import TextOverlay
 from qtextra.widgets.qt_dialog import QtFramelessPopup
 from qtpy.QtCore import Qt, Slot  # type: ignore[attr-defined]
 from qtpy.QtWidgets import QFormLayout
 
 from qtextraplot._napari._constants import TEXT_POSITION_TRANSLATIONS
 from qtextraplot._napari._enums import ViewerType
+from qtextraplot._napari.widgets.qt_font_size import QtFontSizeWidget
 
 
 class QtTextOverlayControls(QtFramelessPopup):
@@ -22,12 +24,17 @@ class QtTextOverlayControls(QtFramelessPopup):
         self.setObjectName("text_overlay")
         self.setMouseTracking(True)
 
-        self.viewer.text_overlay.events.visible.connect(self._on_visible_change)
-        self.viewer.text_overlay.events.color.connect(self._on_color_change)
-        self.viewer.text_overlay.events.position.connect(self._on_position_change)
-        self.viewer.text_overlay.events.font_size.connect(self._on_font_size_change)
-        self.viewer.text_overlay.events.text.connect(self._on_text_change)
+        self.overlay.events.visible.connect(self._on_visible_change)
+        self.overlay.events.color.connect(self._on_color_change)
+        self.overlay.events.position.connect(self._on_position_change)
+        self.overlay.events.font_size.connect(self._on_font_size_change)
+        self.overlay.events.text.connect(self._on_text_change)
         self._on_visible_change()
+
+    @property
+    def overlay(self) -> TextOverlay:
+        """Text overlay."""
+        return self.viewer.canvas.overlays.text
 
     # noinspection PyAttributeOutsideInit
     def make_panel(self) -> QFormLayout:
@@ -36,28 +43,21 @@ class QtTextOverlayControls(QtFramelessPopup):
             self,
             "",
             "Show/hide text",
-            value=self.viewer.text_overlay.visible,
+            value=self.overlay.visible,
             func=self.on_change_visible,
         )
 
-        self.text_edit = hp.make_line_edit(self, self.viewer.text_overlay.text, placeholder="Text...")
+        self.text_edit = hp.make_line_edit(self, self.overlay.text, placeholder="Text...")
         self.text_edit.textChanged.connect(self.on_change_text)
 
         self.position_combobox = hp.make_combobox(self)
-        hp.set_combobox_data(self.position_combobox, TEXT_POSITION_TRANSLATIONS, self.viewer.text_overlay.position)
+        hp.set_combobox_data(self.position_combobox, TEXT_POSITION_TRANSLATIONS, self.overlay.position)
         self.position_combobox.currentTextChanged.connect(self.on_change_position)
 
-        self.color_swatch = QColorSwatchEdit(self, initial_color=self.viewer.text_overlay.color)
+        self.color_swatch = QColorSwatchEdit(self, initial_color=self.overlay.color)
         self.color_swatch.color_changed.connect(self.on_change_color)
 
-        self.font_size_spinbox = hp.make_double_slider_with_text(
-            self,
-            4,
-            32,
-            step_size=1,
-            value=self.viewer.text_overlay.font_size,
-            func=self.on_change_font_size,
-        )
+        self.font_size_spinbox = QtFontSizeWidget(self, value=self.overlay.font_size, func=self.on_change_font_size)
 
         layout = hp.make_form_layout(parent=self)
         layout.setContentsMargins(6, 6, 6, 6)
@@ -72,60 +72,60 @@ class QtTextOverlayControls(QtFramelessPopup):
 
     def on_change_visible(self):
         """Update visibility checkbox."""
-        self.viewer.text_overlay.visible = self.visible_checkbox.isChecked()
+        self.overlay.visible = self.visible_checkbox.isChecked()
 
     def _on_visible_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.text_overlay.events.visible.blocked():
-            self.visible_checkbox.setChecked(self.viewer.text_overlay.visible)
+        with self.overlay.events.visible.blocked():
+            self.visible_checkbox.setChecked(self.overlay.visible)
         hp.disable_widgets(
             self.color_swatch,
             self.text_edit,
             self.position_combobox,
             self.font_size_spinbox,
-            disabled=not self.viewer.text_overlay.visible,
+            disabled=not self.overlay.visible,
         )
 
     def on_change_text(self):
         """Update visibility checkbox."""
-        self.viewer.text_overlay.text = self.text_edit.text()
+        self.overlay.text = self.text_edit.text()
 
     def _on_text_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.text_overlay.events.text.blocked():
-            self.text_edit.setText(self.viewer.text_overlay.text)
+        with self.overlay.events.text.blocked():
+            self.text_edit.setText(self.overlay.text)
 
     def on_change_position(self):
         """Update visibility checkbox."""
-        self.viewer.text_overlay.position = self.position_combobox.currentData()
+        self.overlay.position = self.position_combobox.currentData()
 
     def _on_position_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.text_overlay.events.position.blocked():
-            hp.set_combobox_current_index(self.position_combobox, self.viewer.text_overlay.position)
+        with self.overlay.events.position.blocked():
+            hp.set_combobox_current_index(self.position_combobox, self.overlay.position)
 
     def on_change_font_size(self):
         """Update visibility checkbox."""
-        self.viewer.text_overlay.font_size = self.font_size_spinbox.value()
+        self.overlay.font_size = self.font_size_spinbox.value()
 
     def _on_font_size_change(self, _event=None):
         """Update visibility checkbox."""
-        with self.viewer.text_overlay.events.font_size.blocked():
-            self.font_size_spinbox.setValue(self.viewer.text_overlay.font_size)
+        with self.overlay.events.font_size.blocked():
+            self.font_size_spinbox.setValue(self.overlay.font_size)
 
     @Slot(np.ndarray)  # type: ignore
     def on_change_color(self, color: np.ndarray):
         """Update edge color of layer model from color picker user input."""
-        self.viewer.text_overlay.color = color
+        self.overlay.color = color
 
     def _on_color_change(self, _event=None):
         """Update visibility checkbox."""
         with hp.qt_signals_blocked(self.color_swatch):
-            self.color_swatch.setColor(self.viewer.text_overlay.color)
+            self.color_swatch.setColor(self.overlay.color)
 
     def close(self):
         """Disconnect events when widget is closing."""
-        events = self.viewer.text_overlay.events
+        events = self.overlay.events
         events.visible.disconnect(self._on_visible_change)
         events.color.disconnect(self._on_color_change)
         events.position.disconnect(self._on_position_change)
