@@ -33,7 +33,7 @@ dependencies = [
     "qtpy",
     "koyo>=0.3.7",
     "numpy",
-    "qtextra>=0.2.2",
+    "qtextra>=0.3.0",
 ]
 
 # extras
