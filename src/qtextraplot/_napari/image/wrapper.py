@@ -23,6 +23,8 @@ from qtextraplot._napari.components.overlays.legend import (
 )
 from qtextraplot._napari.components.overlays.object_outlines import (
     ColorLike,
+    LabelLike,
+    LabelPosition,
     ObjectOutlinesOverlay,
     OutlineInput,
     WidthLike,
@@ -239,8 +241,11 @@ class NapariImageView(ViewerBase):
         width: WidthLike = 1.0,
         closed: bool = True,
         visible: bool = True,
+        label: LabelLike = None,
+        label_size: float = 10.0,
+        label_position: LabelPosition | str = LabelPosition.TOP_LEFT,
     ) -> ObjectOutlinesOverlay:
-        """Set object outlines on top of an image layer."""
+        """Set object outlines, with optional per-outline labels, on top of an image layer."""
         if target_layer is None:
             target_layer = self.image_layer
         return self.viewer.set_object_outlines(
@@ -251,6 +256,9 @@ class NapariImageView(ViewerBase):
             width=width,
             closed=closed,
             visible=visible,
+            label=label,
+            label_size=label_size,
+            label_position=label_position,
         )
 
     def clear_object_outlines(self, name: str | None = None) -> None:
