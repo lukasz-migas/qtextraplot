@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import collections.abc as cabc
 import typing as ty
+from enum import Enum
 
 import numpy as np
 from napari.components.overlays import SceneOverlay
@@ -17,6 +18,7 @@ OutlineData = np.ndarray
 OutlineDataLike = OutlineData | ty.Sequence[ty.Sequence[float]]
 OutlineInput = OutlineDataLike | ty.Sequence[OutlineDataLike]
 WidthLike = float | ty.Sequence[float] | np.ndarray
+LabelLike = str | ty.Sequence[str | None] | None
 
 OUTLINE_DATA_ERROR = "Outline data must be a two-dimensional array with at least two points and two columns."
 OUTLINE_SEQUENCE_ERROR = "Outline data must be a two-dimensional array or a sequence of two-dimensional arrays."
@@ -29,7 +31,18 @@ WIDTH_COUNT_ERROR = "Width count must be one or match the number of outlines."
 OUTLINE_WIDTHS_ERROR = "Outline widths must be positive."
 OBJECT_COLOR_ERROR = "Object outline color must be a single color."
 OBJECT_WIDTH_ERROR = "Object outline width must be positive."
+SINGLE_LABEL_ERROR = "A single outline only accepts one label."
+LABEL_COUNT_ERROR = "Label count must be one or match the number of outlines."
+LABEL_SIZE_ERROR = "Outline label size must be positive."
 MISSING = object()
+
+
+class LabelPosition(str, Enum):
+    """Position of an outline label relative to the outline bounding box."""
+
+    TOP_LEFT = "top_left"
+    TOP_CENTER = "top_center"
+    BOTTOM_CENTER = "bottom_center"
 
 
 def _coerce_outline_array(value: ty.Any) -> np.ndarray:
@@ -94,18 +107,36 @@ def _coerce_widths(width: WidthLike, n_outlines: int) -> tuple[float, ...]:
     return tuple(float(width_value) for width_value in widths)
 
 
+def _coerce_labels(label: LabelLike, n_outlines: int) -> tuple[str | None, ...]:
+    if label is None or isinstance(label, str):
+        return (label,) * n_outlines
+    labels = tuple(label)
+    if len(labels) == 1:
+        return labels * n_outlines
+    if n_outlines == 1:
+        raise ValueError(SINGLE_LABEL_ERROR)
+    if len(labels) != n_outlines:
+        raise ValueError(LABEL_COUNT_ERROR)
+    return labels
+
+
 def normalize_object_outlines(
     outlines: OutlineInput | ObjectOutline | ty.Sequence[ObjectOutline],
     color: ColorLike = "red",
     width: WidthLike = 1.0,
+    label: LabelLike = None,
 ) -> tuple[ObjectOutline, ...]:
-    """Normalize outline data and style into object outline models."""
+    """Normalize outline data, style and labels into object outline models.
+
+    A single color, width or label is broadcast to all outlines; otherwise one value per outline is expected.
+    """
     outline_arrays = _coerce_outline_arrays(outlines)
     colors = _coerce_colors(color, len(outline_arrays))
     widths = _coerce_widths(width, len(outline_arrays))
+    labels = _coerce_labels(label, len(outline_arrays))
     return tuple(
-        ObjectOutline(data=outline, color=color_, width=width_)
-        for outline, color_, width_ in zip(outline_arrays, colors, widths, strict=True)
+        ObjectOutline(data=outline, color=color_, width=width_, label=label_)
+        for outline, color_, width_, label_ in zip(outline_arrays, colors, widths, labels, strict=True)
     )
 
 
@@ -117,6 +148,7 @@ class ObjectOutline(EventedModel):
     data: np.ndarray
     color: Array[float, (4,)] = (1.0, 0.0, 0.0, 1.0)
     width: float = 1.0
+    label: str | None = None
 
     @field_validator("data", mode="before")
     @classmethod
@@ -147,15 +179,19 @@ class ObjectOutlinesOverlay(SceneOverlay):
     outlines: tuple[ObjectOutline, ...] = ()
     target_layer: str | None = None
     closed: bool = True
+    label_size: float = 10.0
+    label_position: LabelPosition = LabelPosition.TOP_LEFT
 
     def __init__(self, **data: ty.Any):
         color = data.pop("color", MISSING)
         width = data.pop("width", MISSING)
-        if "outlines" in data and (color is not MISSING or width is not MISSING):
+        label = data.pop("label", MISSING)
+        if "outlines" in data and (color is not MISSING or width is not MISSING or label is not MISSING):
             data["outlines"] = normalize_object_outlines(
                 data["outlines"],
                 color="red" if color is MISSING else color,
                 width=1.0 if width is MISSING else width,
+                label=None if label is MISSING else label,
             )
         super().__init__(**data)
 
@@ -170,18 +206,29 @@ class ObjectOutlinesOverlay(SceneOverlay):
             return tuple(value)
         return normalize_object_outlines(value)
 
+    @field_validator("label_size", mode="before")
+    @classmethod
+    def _coerce_label_size(cls, value: float) -> float:
+        size = float(value)
+        if size <= 0:
+            raise ValueError(LABEL_SIZE_ERROR)
+        return size
+
     def set_outlines(
         self,
         outlines: OutlineInput | ObjectOutline | ty.Sequence[ObjectOutline],
         color: ColorLike = "red",
         width: WidthLike = 1.0,
+        label: LabelLike = None,
     ) -> None:
-        """Set outline coordinate data and drawing style."""
-        self.outlines = normalize_object_outlines(outlines, color=color, width=width)
+        """Set outline coordinate data, drawing style and optional labels."""
+        self.outlines = normalize_object_outlines(outlines, color=color, width=width, label=label)
 
 
 __all__ = [
     "ColorLike",
+    "LabelLike",
+    "LabelPosition",
     "ObjectOutline",
     "ObjectOutlinesOverlay",
     "OutlineData",
