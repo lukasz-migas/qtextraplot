@@ -16,11 +16,13 @@ from qtpy.QtWidgets import QWidget  # noqa: E402
 
 from qtextraplot._napari._vispy.overlays.object_outlines import (  # noqa: E402
     VispyObjectOutlinesOverlay,
+    label_anchor_position,
     outline_data_to_scene,
     points_to_segments,
 )
 from qtextraplot._napari.component_controls.qt_object_outline_controls import QtObjectOutlineControls  # noqa: E402
 from qtextraplot._napari.components.overlays.object_outlines import (  # noqa: E402
+    LabelPosition,
     ObjectOutlinesOverlay,
     normalize_object_outlines,
 )
@@ -277,3 +279,122 @@ def test_image_view_exposes_object_outline_api():
     assert "outlines" in signature.parameters
     assert "color" in signature.parameters
     assert "width" in signature.parameters
+
+
+def test_normalize_outlines_without_labels_defaults_to_none():
+    outlines = normalize_object_outlines([np.array([[0, 0], [1, 1]]), np.array([[2, 2], [3, 3]])])
+
+    assert [outline.label for outline in outlines] == [None, None]
+
+
+def test_normalize_outlines_broadcasts_single_label():
+    outlines = normalize_object_outlines([np.array([[0, 0], [1, 1]]), np.array([[2, 2], [3, 3]])], label="control")
+
+    assert [outline.label for outline in outlines] == ["control", "control"]
+
+
+def test_normalize_outlines_accepts_per_outline_labels():
+    outlines = normalize_object_outlines(
+        [np.array([[0, 0], [1, 1]]), np.array([[2, 2], [3, 3]])],
+        label=["control", None],
+    )
+
+    assert [outline.label for outline in outlines] == ["control", None]
+
+
+def test_normalize_outlines_rejects_label_count_mismatch():
+    data = np.array([[0, 0], [1, 1]])
+
+    with pytest.raises(ValueError, match="single outline"):
+        normalize_object_outlines(data, label=["a", "b"])
+    with pytest.raises(ValueError, match="Label count"):
+        normalize_object_outlines([data, data], label=["a", "b", "c"])
+
+
+def test_overlay_label_settings_validation():
+    overlay = ObjectOutlinesOverlay(label_position="bottom_center", label_size=14)
+
+    assert overlay.label_position == LabelPosition.BOTTOM_CENTER
+    assert overlay.label_size == 14.0
+    with pytest.raises(ValueError, match="positive"):
+        overlay.label_size = 0
+
+
+def test_overlay_constructor_accepts_labels():
+    overlay = ObjectOutlinesOverlay(outlines=[np.array([[0, 0], [1, 1]])], label="control")
+
+    assert overlay.outlines[0].label == "control"
+
+
+@pytest.mark.parametrize(
+    ("position", "expected"),
+    [
+        (LabelPosition.TOP_LEFT, [1, 2, 0]),
+        (LabelPosition.TOP_CENTER, [3, 2, 0]),
+        (LabelPosition.BOTTOM_CENTER, [3, 8, 0]),
+    ],
+)
+def test_label_anchor_position(position, expected):
+    points = np.array([[1, 2, 0], [5, 2, 0], [5, 8, 0], [np.nan, np.nan, np.nan], [1, 8, 0]])
+
+    np.testing.assert_allclose(label_anchor_position(points, position), expected)
+
+
+def test_viewer_set_object_outlines_with_labels():
+    viewer = Viewer()
+    image = viewer.add_image(np.zeros((10, 10)), name="Target")
+
+    overlay = viewer.set_object_outlines(
+        [np.array([[0, 0], [1, 1]]), np.array([[2, 2], [3, 3]])],
+        target_layer=image,
+        label=["control", "treated"],
+        label_size=12,
+        label_position="top_center",
+    )
+
+    assert [outline.label for outline in overlay.outlines] == ["control", "treated"]
+    assert overlay.label_size == 12.0
+    assert overlay.label_position == LabelPosition.TOP_CENTER
+
+
+@pytest.mark.parametrize(
+    ("position", "expected"),
+    [
+        (LabelPosition.TOP_LEFT, [4, 0, 0]),
+        (LabelPosition.TOP_CENTER, [7, 0, 0]),
+        (LabelPosition.BOTTOM_CENTER, [5, 10, 0]),
+    ],
+)
+def test_label_anchor_position_follows_outline_edge(position, expected):
+    # L-shape (x, y): the top edge only spans x=4..10 while the bounding box starts at x=0
+    points = np.array([[4, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0], [0, 5, 0], [4, 5, 0]], dtype=float)
+
+    np.testing.assert_allclose(label_anchor_position(points, position), expected)
+
+
+def test_vispy_object_outlines_draw_labels():
+    viewer = Viewer()
+    image = viewer.add_image(np.zeros((10, 10)), name="Target")
+    overlay = viewer.set_object_outlines(
+        [np.array([[0, 0], [0, 4], [4, 4]]), np.array([[6, 6], [6, 9], [9, 9]])],
+        target_layer=image,
+        color=["red", "blue"],
+        label=["control", None],
+    )
+    visual = VispyObjectOutlinesOverlay(viewer, overlay, FontInfo())
+
+    assert visual._text.visible
+    assert list(visual._text.text) == ["control"]
+    np.testing.assert_allclose(visual._text.pos[0][:2], [0, 0])
+    np.testing.assert_allclose(visual._text.color.rgba[0], [1, 0, 0, 1])
+    assert visual._text.anchors == ("left", "top")
+
+    overlay.label_position = LabelPosition.BOTTOM_CENTER
+
+    assert visual._text.anchors == ("center", "bottom")
+    np.testing.assert_allclose(visual._text.pos[0][:2], [4, 4])  # bottom edge of the triangle is one vertex
+
+    overlay.outlines[0].label = None
+
+    assert not visual._text.visible
+    visual.close()

@@ -9,14 +9,25 @@ import numpy as np
 from napari._vispy.overlays.base import ViewerOverlayMixin, VispySceneOverlay
 from napari._vispy.utils.qt_font import FontInfo
 from napari.utils.events import disconnect_events
-from vispy.scene.visuals import Compound, Line
+from vispy.scene.visuals import Compound, Line, Text
 
-from qtextraplot._napari.components.overlays.object_outlines import ObjectOutline, ObjectOutlinesOverlay
+from qtextraplot._napari.components.overlays.object_outlines import (
+    LabelPosition,
+    ObjectOutline,
+    ObjectOutlinesOverlay,
+)
 
 if ty.TYPE_CHECKING:
     from napari.layers import Layer
 
 TARGET_LAYER_EVENTS = ("data", "set_data", "scale", "translate", "rotate", "shear", "affine")
+# The 2D image camera flips y: the "top" of an outline is its minimum scene y, and vispy text anchors are
+# flipped too, so anchor_y="top" places the text above the anchor point on screen.
+LABEL_ANCHORS: dict[LabelPosition, tuple[str, str]] = {
+    LabelPosition.TOP_LEFT: ("left", "top"),
+    LabelPosition.TOP_CENTER: ("center", "top"),
+    LabelPosition.BOTTOM_CENTER: ("center", "bottom"),
+}
 
 
 def outline_data_to_scene(data: np.ndarray, layer: Layer, displayed: ty.Sequence[int]) -> np.ndarray:
@@ -40,6 +51,21 @@ def outline_data_to_scene(data: np.ndarray, layer: Layer, displayed: ty.Sequence
     return scene
 
 
+def label_anchor_position(points: np.ndarray, position: LabelPosition) -> np.ndarray:
+    """Return the scene position of an outline label for the given label position.
+
+    Labels are anchored on the outline's top-most (or bottom-most) edge rather than its bounding box, so that
+    labels of non-rectangular outlines (e.g. L-shapes) stay attached to the outline.
+    """
+    points = points[~np.isnan(points).any(axis=1)]
+    y_edge = points[:, 1].max() if position == LabelPosition.BOTTOM_CENTER else points[:, 1].min()
+    edge_x = points[np.isclose(points[:, 1], y_edge), 0]
+    z = float(points[:, 2].mean())
+    if position == LabelPosition.TOP_LEFT:
+        return np.asarray([edge_x.min(), y_edge, z], dtype=float)
+    return np.asarray([(edge_x.min() + edge_x.max()) / 2, y_edge, z], dtype=float)
+
+
 def points_to_segments(points: np.ndarray, closed: bool) -> np.ndarray:
     """Convert ordered points to flattened line segments."""
     if len(points) < 2:
@@ -58,8 +84,9 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
     """Object outline visual."""
 
     def __init__(self, viewer, overlay: ObjectOutlinesOverlay, font_info: FontInfo, parent=None):
+        self._text = Text(text="", pos=(0, 0, 0), anchor_x="left", anchor_y="top")
         super().__init__(
-            node=Compound([], parent=parent),
+            node=Compound([self._text], parent=parent),
             viewer=viewer,
             overlay=overlay,
             font_info=font_info,
@@ -72,6 +99,8 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
         self.overlay.events.outlines.connect(self._on_outlines_change)
         self.overlay.events.closed.connect(self._on_data_change)
         self.overlay.events.target_layer.connect(self._on_target_layer_change)
+        self.overlay.events.label_size.connect(self._on_data_change)
+        self.overlay.events.label_position.connect(self._on_data_change)
         self.viewer.dims.events.displayed.connect(self._on_data_change)
         self.viewer.dims.events.ndisplay.connect(self._on_data_change)
         self.viewer.layers.events.inserted.connect(self._on_target_layer_change)
@@ -114,6 +143,7 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
             outline.events.data.connect(self._on_data_change)
             outline.events.color.connect(self._on_data_change)
             outline.events.width.connect(self._on_data_change)
+            outline.events.label.connect(self._on_data_change)
         self._connected_outlines = tuple(self.overlay.outlines)
 
     def _on_outlines_change(self, _evt=None) -> None:
@@ -144,8 +174,30 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
                 line.attach(clipper, line)
             self._line_nodes.append(line)
 
-    def _line_groups(self, layer: Layer) -> list[tuple[float, np.ndarray, np.ndarray]]:
+    def _clear_text(self) -> None:
+        self._text.text = ""
+        self._text.visible = False
+
+    def _update_text(self, labels: list[tuple[str, np.ndarray, np.ndarray]]) -> None:
+        """Draw outline labels; each item is (label, scene position, color)."""
+        if not labels:
+            self._clear_text()
+            return
+        position = LabelPosition(self.overlay.label_position)
+        self._text.anchors = LABEL_ANCHORS[position]
+        self._text.text = [label for label, _pos, _color in labels]
+        self._text.pos = np.asarray([pos for _label, pos, _color in labels], dtype=float)
+        self._text.color = np.asarray([color for _label, _pos, color in labels], dtype=float)
+        self._text.font_size = self.overlay.label_size
+        self._text.visible = True
+
+    def _line_groups(
+        self,
+        layer: Layer,
+    ) -> tuple[list[tuple[float, np.ndarray, np.ndarray]], list[tuple[str, np.ndarray, np.ndarray]]]:
         groups: dict[float, list[tuple[np.ndarray, np.ndarray]]] = {}
+        labels: list[tuple[str, np.ndarray, np.ndarray]] = []
+        position = LabelPosition(self.overlay.label_position)
         for outline in self.overlay.outlines:
             points = outline_data_to_scene(outline.data, layer, self.viewer.dims.displayed)
             segments = points_to_segments(points, closed=self.overlay.closed)
@@ -153,8 +205,10 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
                 continue
             color = np.broadcast_to(np.asarray(outline.color, dtype=float), (len(segments), 4)).copy()
             groups.setdefault(outline.width, []).append((segments, color))
+            if outline.label:
+                labels.append((outline.label, label_anchor_position(points, position), np.asarray(outline.color)))
 
-        return [
+        line_groups = [
             (
                 width,
                 np.concatenate([positions for positions, _colors in items]),
@@ -162,18 +216,21 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
             )
             for width, items in groups.items()
         ]
+        return line_groups, labels
 
     def _on_data_change(self, _evt=None) -> None:
         """Change outline data."""
         layer = self._get_target_layer()
         if layer is None or not self.overlay.outlines:
             self._clear_lines()
+            self._clear_text()
             return
 
-        groups = self._line_groups(layer)
+        groups, labels = self._line_groups(layer)
         self._ensure_line_count(len(groups))
         for line, (width, positions, colors) in zip(self._line_nodes, groups, strict=True):
             line.set_data(pos=positions, color=colors, width=width)
+        self._update_text(labels)
         self._on_blending_change()
         self.node.update()
 
@@ -198,6 +255,7 @@ class VispyObjectOutlinesOverlay(ViewerOverlayMixin, VispySceneOverlay):
 
 __all__ = [
     "VispyObjectOutlinesOverlay",
+    "label_anchor_position",
     "outline_data_to_scene",
     "points_to_segments",
 ]

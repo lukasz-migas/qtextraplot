@@ -23,6 +23,8 @@ from qtextraplot._napari.components.overlays.legend import (
 )
 from qtextraplot._napari.components.overlays.object_outlines import (
     ColorLike,
+    LabelLike,
+    LabelPosition,
     ObjectOutlinesOverlay,
     OutlineInput,
     WidthLike,
@@ -308,8 +310,15 @@ class Viewer(_ViewerModel):
         width: WidthLike = 1.0,
         closed: bool = True,
         visible: bool = True,
+        label: LabelLike = None,
+        label_size: float = 10.0,
+        label_position: LabelPosition | str = LabelPosition.TOP_LEFT,
     ) -> ObjectOutlinesOverlay:
-        """Set a named object outline overlay."""
+        """Set a named object outline overlay.
+
+        `label` is a single label for all outlines or one label (or None) per outline. `label_size` is in
+        screen points and `label_position` places each label relative to its outline's bounding box.
+        """
         resolved_target_layer = self._resolve_object_outline_target_layer(target_layer)
         overlay = self.scene.overlays.get(name)
         if not isinstance(overlay, ObjectOutlinesOverlay):
@@ -319,7 +328,9 @@ class Viewer(_ViewerModel):
         overlay.target_layer = resolved_target_layer
         overlay.closed = closed
         overlay.visible = visible
-        overlay.set_outlines(outlines, color=color, width=width)
+        overlay.label_size = label_size
+        overlay.label_position = label_position
+        overlay.set_outlines(outlines, color=color, width=width, label=label)
         return overlay
 
     def clear_object_outlines(self, name: str | None = None) -> None:
