@@ -7,7 +7,7 @@ import typing as ty
 import numpy as np
 from koyo.image import clip_hotspots
 from koyo.secret import get_short_hash
-from napari.layers import Image, Labels, Layer, Points, Shapes
+from napari.layers import Image, Labels, Points, Shapes
 from napari.utils import DirectLabelColormap
 from qtpy.QtCore import QMutex, QMutexLocker, Slot  # type: ignore[attr-defined]
 from qtpy.QtWidgets import QWidget
@@ -77,18 +77,6 @@ class NapariImageView(ViewerBase):
         # connect events
         # self.viewer.events.clear_canvas.connect(self._clear)
         self.viewer.layers.events.removed.connect(self._on_remove_layer)
-
-    def move_to_front(self, layer: Layer) -> None:
-        """Move layer to the front."""
-        if layer is None:
-            return
-        self.viewer.layers.move(self.viewer.layers.index(layer), len(self.viewer.layers))
-
-    def move_to_back(self, layer: Layer) -> None:
-        """Move layer to the back."""
-        if layer is None:
-            return
-        self.viewer.layers.move(self.viewer.layers.index(layer), 0)
 
     def _on_remove_layer(self, _evt=None):
         """Indicate if layer has been deleted."""

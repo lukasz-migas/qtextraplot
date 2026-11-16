@@ -172,3 +172,15 @@ class ViewerBase(ABC):
         """Update image data for specified layer."""
         image_layer.data = new_data
         self.update_image_contrast_limits(image_layer)
+
+    def move_to_front(self, layer: Layer) -> None:
+        """Move layer to the front."""
+        if layer is None:
+            return
+        self.viewer.layers.move(self.viewer.layers.index(layer), len(self.viewer.layers))
+
+    def move_to_back(self, layer: Layer) -> None:
+        """Move layer to the back."""
+        if layer is None:
+            return
+        self.viewer.layers.move(self.viewer.layers.index(layer), 0)
