@@ -326,6 +326,12 @@ def test_line_view_plot_roc(qtbot, _mock_opengl_capabilities) -> None:
     assert [entry.label for entry in view.viewer.legend.entries] == ["class A", "class B", "micro-average"]
     assert view.viewer.text_overlay.text == "ROC"
     assert view.viewer.axis.x_label == "False Positive Rate"
+    # the curves touch 0 and 1, so the fixed range leaves room for the line width and survives a view reset
+    view.viewer.reset_view()
+    assert view.viewer.camera.rect == (-0.02, 1.02, -0.02, 1.02)
+    view.clear()
+    assert view.viewer.camera.x_range is None
+    assert view.viewer.camera.y_range is None
 
 
 def test_line_view_plot_precision_recall_skips_micro(qtbot, _mock_opengl_capabilities) -> None:
@@ -357,6 +363,8 @@ def test_line_view_plot_confusion_matrix(qtbot, _mock_opengl_capabilities, which
     texts = [layer for layer in view.layers if "annotations" in layer.name]
     assert len(texts) == 1
     assert len(texts[0].data) == 4
+    # whole cells are visible, including the outer half of the edge pixels
+    assert view.viewer.camera.rect == (-0.5, 1.5, -0.5, 1.5)
 
 
 def test_line_view_plot_classification_report(qtbot, _mock_opengl_capabilities) -> None:
@@ -365,6 +373,12 @@ def test_line_view_plot_classification_report(qtbot, _mock_opengl_capabilities) 
     view.plot_precision_recall_f1_support(scores, ["A", "B"])
     assert view.viewer.axis.x_categories == ("precision", "recall")
     assert view.viewer.axis.y_categories == ("B", "A")
+
+
+def test_line_view_wraps_long_y_category_labels(qtbot, _mock_opengl_capabilities) -> None:
+    view = _make_view(qtbot)
+    view.viewer.axis.y_categories = ("Test (Negative)", "Brain")
+    assert view.widget.y_axis.node.axis.ticker.category_labels == ("Test\n(Negative)", "Brain")
 
 
 def test_line_view_legend_helpers(qtbot, _mock_opengl_capabilities) -> None:

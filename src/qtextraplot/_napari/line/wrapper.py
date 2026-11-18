@@ -9,6 +9,7 @@ import numpy as np
 from koyo.secret import get_short_hash
 from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events import Event
+from napari_plot.components.axis import wrap_label
 from napari_plot.layers import (
     Band,
     Bar,
@@ -74,6 +75,8 @@ class NapariLineView(ViewerBase):
         # create an instance of viewer
         self.viewer: Viewer = Viewer()
         self.viewer.axis.y_tick_formatter = tick_formatter
+        # long categorical labels (e.g. class names) are put on several lines so they fit next to the y-axis
+        self.viewer.axis.y_category_formatter = wrap_label
         self.viewer.drag_tool.active = tool
         self.viewer.camera.extent_mode = extent_mode
         self.viewer.axis.x_label = x_label
@@ -657,11 +660,14 @@ class NapariLineView(ViewerBase):
         self.viewer.text_overlay.visible = bool(title)
 
     def set_limits(self, x: tuple[float, float] | None = None, y: tuple[float, float] | None = None) -> None:
-        """Set the visible x and/or y range in data units."""
-        xmin, xmax, ymin, ymax = self.viewer.camera.rect
-        xmin, xmax = x if x is not None else (xmin, xmax)
-        ymin, ymax = y if y is not None else (ymin, ymax)
-        self.viewer.camera.set_rect(xmin, xmax, ymin, ymax)
+        """Fix the x and/or y range in data units.
+
+        The range is also used when the view is reset and is not limited by the data extent; `clear` removes it.
+        """
+        if x is not None:
+            self.viewer.camera.x_range = x
+        if y is not None:
+            self.viewer.camera.y_range = y
 
     def add_dotted_line(
         self,
@@ -670,7 +676,7 @@ class NapariLineView(ViewerBase):
         name: str = "Dotted line",
         color: ty.Any = None,
         size: float = 3,
-        n_points: int = 60,
+        n_points: int = 150,
         reuse: bool = True,
         **kwargs: ty.Any,
     ) -> Scatter:
@@ -714,7 +720,7 @@ class NapariLineView(ViewerBase):
                 if (key == "micro" and not plot_micro) or (key == "macro" and not plot_macro):
                     continue
                 color = "deeppink" if key == "micro" else "royalblue"
-                self.add_dotted_line(fpr[key], tpr[key], name=f"roc {key}", color=color, size=4, n_points=80)
+                self.add_dotted_line(fpr[key], tpr[key], name=f"roc {key}", color=color, size=4)
                 entries.append({"label": label, "marker": "disc", "color": color})
             else:
                 color = (*next(colors), 1.0)
@@ -723,7 +729,7 @@ class NapariLineView(ViewerBase):
         self.add_dotted_line([0, 1], [0, 1], name="roc chance")
         self.viewer.axis.x_label = "False Positive Rate"
         self.viewer.axis.y_label = "True Positive Rate"
-        self._finish_ml_plot(entries, title, x=(-0.05, 1.0), y=(0.0, 1.05), position="bottom_right")
+        self._finish_ml_plot(entries, title, x=(-0.02, 1.02), y=(-0.02, 1.02), position="bottom_right")
 
     def plot_precision_recall(
         self,
@@ -753,7 +759,7 @@ class NapariLineView(ViewerBase):
                 entries.append({"label": label, "marker": "hbar", "color": color})
         self.viewer.axis.x_label = "Recall"
         self.viewer.axis.y_label = "Precision"
-        self._finish_ml_plot(entries, title, x=(0.0, 1.05), y=(0.0, 1.05), position="bottom_left")
+        self._finish_ml_plot(entries, title, x=(-0.02, 1.02), y=(-0.02, 1.02), position="bottom_left")
 
     def plot_calibration(
         self,
@@ -786,7 +792,7 @@ class NapariLineView(ViewerBase):
         entries.append({"label": "Perfectly calibrated", "marker": "disc", "color": as_array("axis", CANVAS)})
         self.viewer.axis.x_label = "Predicted Probability"
         self.viewer.axis.y_label = "True Probability"
-        self._finish_ml_plot(entries, title, x=(0.0, 1.05), y=(0.0, 1.05), position="top_left")
+        self._finish_ml_plot(entries, title, x=(-0.02, 1.02), y=(-0.02, 1.02), position="top_left")
 
     def plot_confusion_matrix(
         self,
