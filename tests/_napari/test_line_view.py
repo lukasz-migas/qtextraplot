@@ -283,3 +283,103 @@ def test_line_view_shape_helpers_reuse_layers(qtbot, _mock_opengl_capabilities) 
     assert len(areas.data) == 2
     assert view.add_areas([area], name="areas") is areas
     assert len(areas.data) == 1
+
+
+def _make_view(qtbot) -> NapariLineView:
+    view = NapariLineView(None, add_toolbars=False, connect_theme=False)
+    qtbot.addWidget(view.widget)
+    return view
+
+
+def test_line_view_clear_resets_plot_state(qtbot, _mock_opengl_capabilities) -> None:
+    view = _make_view(qtbot)
+    view.viewer.boxplot({"a": [1.0, 2.0, 3.0], "b": [2.0, 3.0, 4.0]})
+    view.viewer.axis.y_scale = "log"
+    view.set_title("Title")
+    assert view.viewer.axis.x_categories == ("a", "b")
+
+    view.clear()
+    assert len(view.layers) == 0
+    assert view.viewer.axis.x_categories is None
+    assert view.viewer.axis.y_scale == "linear"
+    assert not view.viewer.text_overlay.visible
+
+
+def test_line_view_dotted_line_spreads_markers(qtbot, _mock_opengl_capabilities) -> None:
+    view = _make_view(qtbot)
+    layer = view.add_dotted_line([0, 1, 1], [0, 0, 1], n_points=5)
+    # (y, x) data, evenly spaced along the 2-unit path
+    np.testing.assert_allclose(layer.data[:, 1], [0, 0.5, 1, 1, 1])
+    np.testing.assert_allclose(layer.data[:, 0], [0, 0, 0, 0.5, 1])
+    assert not layer.scaling
+
+
+def test_line_view_plot_roc(qtbot, _mock_opengl_capabilities) -> None:
+    view = _make_view(qtbot)
+    fpr = {0: np.array([0, 0.2, 1]), 1: np.array([0, 0.5, 1]), "micro": np.array([0, 0.3, 1])}
+    tpr = {0: np.array([0, 0.8, 1]), 1: np.array([0, 0.6, 1]), "micro": np.array([0, 0.7, 1])}
+    labels = {0: "class A", 1: "class B", "micro": "micro-average"}
+    view.plot_roc(fpr, tpr, labels, plot_macro=False, title="ROC")
+
+    names = [layer.name for layer in view.layers]
+    assert names == ["roc 0", "roc 1", "roc micro", "roc chance"]
+    assert [entry.label for entry in view.viewer.legend.entries] == ["class A", "class B", "micro-average"]
+    assert view.viewer.text_overlay.text == "ROC"
+    assert view.viewer.axis.x_label == "False Positive Rate"
+
+
+def test_line_view_plot_precision_recall_skips_micro(qtbot, _mock_opengl_capabilities) -> None:
+    view = _make_view(qtbot)
+    precision = {0: np.array([1, 0.5]), "micro": np.array([1, 0.4])}
+    recall = {0: np.array([0, 1]), "micro": np.array([0, 1])}
+    view.plot_precision_recall(precision, recall, {0: "A", "micro": "micro"}, plot_micro=False)
+    assert [layer.name for layer in view.layers] == ["pr 0"]
+
+
+def test_line_view_plot_calibration_adds_ideal_diagonal(qtbot, _mock_opengl_capabilities) -> None:
+    pytest.importorskip("sklearn")
+    view = _make_view(qtbot)
+    rng = np.random.default_rng(0)
+    y_true = rng.integers(0, 2, 200)
+    probas = rng.random((200, 2))
+    probas /= probas.sum(axis=1, keepdims=True)
+    view.plot_calibration(y_true, probas, ["A", "B"])
+    assert [layer.name for layer in view.layers] == ["calibration 0", "calibration 1", "calibration ideal"]
+    assert view.viewer.legend.entries[-1].label == "Perfectly calibrated"
+
+
+@pytest.mark.parametrize("which", ["counts", "percentage", "counts_and_percentage"])
+def test_line_view_plot_confusion_matrix(qtbot, _mock_opengl_capabilities, which: str) -> None:
+    view = _make_view(qtbot)
+    view.plot_confusion_matrix(np.array([[5, 1], [2, 7]]), ["A", "B"], which=which)
+    assert view.viewer.axis.x_categories == ("A", "B")
+    assert view.viewer.axis.x_label == "Predicted"
+    texts = [layer for layer in view.layers if "annotations" in layer.name]
+    assert len(texts) == 1
+    assert len(texts[0].data) == 4
+
+
+def test_line_view_plot_classification_report(qtbot, _mock_opengl_capabilities) -> None:
+    view = _make_view(qtbot)
+    scores = {"precision": {"A": 0.5, "B": 0.9}, "recall": {"A": 0.6, "B": 0.8}}
+    view.plot_precision_recall_f1_support(scores, ["A", "B"])
+    assert view.viewer.axis.x_categories == ("precision", "recall")
+    assert view.viewer.axis.y_categories == ("B", "A")
+
+
+def test_line_view_legend_helpers(qtbot, _mock_opengl_capabilities) -> None:
+    """Legend helpers should forward to the napari-plot legend overlay."""
+    view = NapariLineView(None)
+    qtbot.addWidget(view.widget)
+
+    view.set_legend([{"label": "A", "marker": "disc", "color": "red"}], position="bottom_right")
+    assert view.viewer.legend.visible
+    assert [entry.label for entry in view.viewer.legend.entries] == ["A"]
+
+    view.clear_legend()
+    assert not view.viewer.legend.visible
+    assert not view.viewer.legend.entries
+
+    view.plot(np.arange(3), np.arange(3), name="Series")
+    view.set_legend_from_layers()
+    assert [entry.label for entry in view.viewer.legend.entries] == ["Series"]

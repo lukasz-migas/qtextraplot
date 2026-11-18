@@ -10,7 +10,6 @@ from koyo.secret import get_short_hash
 from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events import Event
 from napari_plot.layers import (
-    Areas,
     Band,
     Bar,
     Centroids,
@@ -35,6 +34,9 @@ from qtextraplot._napari.line._vispy.overrides.axis import tick_formatter
 from qtextraplot._napari.line.config import Config
 from qtextraplot._napari.line.qt_viewer import QtViewer, as_array
 from qtextraplot.config import CANVAS
+
+if ty.TYPE_CHECKING:
+    from napari_plot.layers import Areas
 
 MUTEX = QMutex()
 
@@ -295,6 +297,8 @@ class NapariLineView(ViewerBase):
         With ``orientation="vertical"`` `t` is x and `lo`/`hi` are y values; ``"horizontal"`` swaps them.
         `fill_color` is one color or one per area.
         """
+        from napari_plot.layers import Areas  # added after napari-plot 0.4.2
+
         if fill_color is None:
             fill_color = as_array("line", CANVAS)
         data = [np.asarray(area, dtype=float) for area in areas]
@@ -444,6 +448,21 @@ class NapariLineView(ViewerBase):
             attrs,
             lambda: self.viewer.add_multi_line(name=name, **attrs),
         )
+
+    def set_legend(self, entries: ty.Any, **kwargs: ty.Any) -> ty.Any:
+        """Show a legend built from explicit entries, e.g. ``[{"label": "A", "marker": "disc", "color": "red"}]``.
+
+        Keyword arguments (``position``, ``font_size``, ...) are passed to `napari_plot` ``ViewerModel.set_legend``.
+        """
+        return self.viewer.set_legend(entries, **kwargs)
+
+    def set_legend_from_layers(self, **kwargs: ty.Any) -> ty.Any:
+        """Show a legend with one entry per visible plot layer, kept in sync with the layer list by default."""
+        return self.viewer.set_legend_from_layers(**kwargs)
+
+    def clear_legend(self) -> None:
+        """Clear and hide the legend."""
+        self.viewer.clear_legend()
 
     def _add_or_update(
         self,
@@ -624,6 +643,224 @@ class NapariLineView(ViewerBase):
             if data.shape[0] == len(x):
                 data[:, 0] = x
                 layer.data = data
+
+    def clear(self) -> None:
+        """Clear canvas and reset what plots leave behind (categorical axes, log scales, legend and title)."""
+        super().clear()
+        self.viewer.reset_plot()
+        self.set_title("")
+
+    def set_title(self, title: str) -> None:
+        """Show `title` at the top of the canvas (empty string hides it)."""
+        self.viewer.text_overlay.text = title
+        self.viewer.text_overlay.position = "top_center"
+        self.viewer.text_overlay.visible = bool(title)
+
+    def set_limits(self, x: tuple[float, float] | None = None, y: tuple[float, float] | None = None) -> None:
+        """Set the visible x and/or y range in data units."""
+        xmin, xmax, ymin, ymax = self.viewer.camera.rect
+        xmin, xmax = x if x is not None else (xmin, xmax)
+        ymin, ymax = y if y is not None else (ymin, ymax)
+        self.viewer.camera.set_rect(xmin, xmax, ymin, ymax)
+
+    def add_dotted_line(
+        self,
+        x: ty.Iterable | np.ndarray,
+        y: ty.Iterable | np.ndarray,
+        name: str = "Dotted line",
+        color: ty.Any = None,
+        size: float = 3,
+        n_points: int = 60,
+        reuse: bool = True,
+        **kwargs: ty.Any,
+    ) -> Scatter:
+        """Draw a dotted polyline through (`x`, `y`) as evenly spaced markers.
+
+        napari-plot lines cannot be dashed, so dotted/dashed reference lines are drawn as a Scatter layer with
+        `n_points` markers (sized in screen pixels) spread uniformly along the path length.
+        """
+        if color is None:
+            color = as_array("axis", CANVAS)
+        x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+        steps = np.hypot(np.diff(x), np.diff(y))
+        distance = np.r_[0.0, np.cumsum(steps)]
+        if len(x) < 2 or distance[-1] == 0:
+            samples_x, samples_y = x, y
+        else:
+            targets = np.linspace(0.0, distance[-1], max(int(n_points), 2))
+            samples_x, samples_y = np.interp(targets, distance, x), np.interp(targets, distance, y)
+        kwargs.setdefault("scaling", False)
+        return self.add_scatter(samples_x, samples_y, name=name, color=color, size=size, reuse=reuse, **kwargs)
+
+    def plot_roc(
+        self,
+        fpr: dict[ty.Any, np.ndarray],
+        tpr: dict[ty.Any, np.ndarray],
+        labels: dict[ty.Any, str],
+        plot_micro: bool = True,
+        plot_macro: bool = True,
+        title: str = "ROC Curves",
+        **_kwargs: ty.Any,
+    ) -> None:
+        """Plot ROC curves (one per key of `fpr`), dotted micro/macro averages and the chance diagonal."""
+        from seaborn import color_palette
+
+        self.clear()
+        colors = iter(color_palette(n_colors=max(len(fpr), 1)))
+        entries = []
+        for index, key in enumerate(fpr):
+            label = str(labels[key])
+            if key in ("micro", "macro"):
+                if (key == "micro" and not plot_micro) or (key == "macro" and not plot_macro):
+                    continue
+                color = "deeppink" if key == "micro" else "royalblue"
+                self.add_dotted_line(fpr[key], tpr[key], name=f"roc {key}", color=color, size=4, n_points=80)
+                entries.append({"label": label, "marker": "disc", "color": color})
+            else:
+                color = (*next(colors), 1.0)
+                self.plot(fpr[key], tpr[key], name=f"roc {index}", color=color, width=2)
+                entries.append({"label": label, "marker": "hbar", "color": color})
+        self.add_dotted_line([0, 1], [0, 1], name="roc chance")
+        self.viewer.axis.x_label = "False Positive Rate"
+        self.viewer.axis.y_label = "True Positive Rate"
+        self._finish_ml_plot(entries, title, x=(-0.05, 1.0), y=(0.0, 1.05), position="bottom_right")
+
+    def plot_precision_recall(
+        self,
+        precision: dict[ty.Any, np.ndarray],
+        recall: dict[ty.Any, np.ndarray],
+        labels: dict[ty.Any, str],
+        plot_micro: bool = True,
+        title: str = "Precision-Recall Curve",
+        **_kwargs: ty.Any,
+    ) -> None:
+        """Plot precision-recall curves (one per key of `precision`) with a dotted micro average."""
+        from seaborn import color_palette
+
+        self.clear()
+        colors = iter(color_palette(n_colors=max(len(precision), 1)))
+        entries = []
+        for index, key in enumerate(precision):
+            label = str(labels[key])
+            if key == "micro":
+                if not plot_micro:
+                    continue
+                self.add_dotted_line(recall[key], precision[key], name="pr micro", color="royalblue", size=4)
+                entries.append({"label": label, "marker": "disc", "color": "royalblue"})
+            else:
+                color = (*next(colors), 1.0)
+                self.plot(recall[key], precision[key], name=f"pr {index}", color=color, width=2)
+                entries.append({"label": label, "marker": "hbar", "color": color})
+        self.viewer.axis.x_label = "Recall"
+        self.viewer.axis.y_label = "Precision"
+        self._finish_ml_plot(entries, title, x=(0.0, 1.05), y=(0.0, 1.05), position="bottom_left")
+
+    def plot_calibration(
+        self,
+        y_true: np.ndarray,
+        y_probas: np.ndarray,
+        classes: list[str],
+        title: str = "Calibration Curve",
+        n_bins: int = 10,
+        **_kwargs: ty.Any,
+    ) -> None:
+        """Plot per-class calibration curves against the dotted "perfectly calibrated" diagonal."""
+        from seaborn import color_palette
+        from sklearn.calibration import calibration_curve
+
+        self.clear()
+        y_true, y_probas = np.asarray(y_true), np.asarray(y_probas)
+        entries = []
+        for index, (cls_name, rgb) in enumerate(zip(classes, color_palette(n_colors=max(len(classes), 1)))):
+            probas = y_probas[:, index] if y_probas.ndim == 2 else y_probas
+            fraction_pos, mean_pred = calibration_curve(
+                (y_true == index).astype(int),
+                probas,
+                n_bins=n_bins,
+                strategy="uniform",
+            )
+            color = (*rgb, 1.0)
+            self.plot(mean_pred, fraction_pos, name=f"calibration {index}", color=color, width=2)
+            entries.append({"label": str(cls_name), "marker": "hbar", "color": color})
+        self.add_dotted_line([0, 1], [0, 1], name="calibration ideal")
+        entries.append({"label": "Perfectly calibrated", "marker": "disc", "color": as_array("axis", CANVAS)})
+        self.viewer.axis.x_label = "Predicted Probability"
+        self.viewer.axis.y_label = "True Probability"
+        self._finish_ml_plot(entries, title, x=(0.0, 1.05), y=(0.0, 1.05), position="top_left")
+
+    def plot_confusion_matrix(
+        self,
+        matrix: np.ndarray,
+        labels: list[str],
+        which: str = "counts",
+        title: str = "Confusion Matrix",
+        cmap: ty.Any = "rocket",
+        **_kwargs: ty.Any,
+    ) -> list:
+        """Plot an annotated confusion matrix (`which` is "counts", "percentage" or "counts_and_percentage")."""
+        matrix = np.asarray(matrix)
+        total = max(float(np.sum(matrix)), 1.0)
+        labels = [str(label) for label in labels]
+        self.clear()
+        if which == "counts":
+            layers = self.viewer.heatmap(matrix, annot=True, fmt="d", cmap=cmap, xticklabels=labels, yticklabels=labels)
+        elif which == "percentage":
+            layers = self.viewer.heatmap(
+                matrix / total,
+                annot=True,
+                fmt=".2%",
+                cmap=cmap,
+                xticklabels=labels,
+                yticklabels=labels,
+            )
+        else:
+            annot = np.asarray([f"{value:0.0f}\n{value / total:.2%}" for value in matrix.ravel()]).reshape(matrix.shape)
+            layers = self.viewer.heatmap(matrix, annot=annot, fmt="", cmap=cmap, xticklabels=labels, yticklabels=labels)
+        self.viewer.axis.x_label = "Predicted"
+        self.viewer.axis.y_label = "Actual"
+        self.set_title(title)
+        return layers
+
+    def plot_precision_recall_f1_support(
+        self,
+        scores: dict[str, dict[str, float]],
+        labels: list[str],
+        title: str = "Classification Report",
+        cmap: ty.Any = "Blues",
+        **_kwargs: ty.Any,
+    ) -> list:
+        """Plot the classification report as an annotated `class x metric` heatmap (values in 0-1)."""
+        metrics = list(scores)
+        grid = np.asarray([[scores[metric][cls] for metric in metrics] for cls in labels], dtype=float)
+        self.clear()
+        layers = self.viewer.heatmap(
+            grid,
+            vmin=0,
+            vmax=1,
+            cmap=cmap,
+            annot=True,
+            fmt="0.3f",
+            xticklabels=metrics,
+            yticklabels=[str(label) for label in labels],
+        )
+        self.viewer.axis.x_label = ""
+        self.viewer.axis.y_label = ""
+        self.set_title(title)
+        return layers
+
+    def _finish_ml_plot(
+        self,
+        entries: list[dict],
+        title: str,
+        x: tuple[float, float],
+        y: tuple[float, float],
+        position: str,
+    ) -> None:
+        """Apply legend, title and fixed limits shared by the curve plots."""
+        if entries:
+            self.viewer.set_legend(entries, position=position)
+        self.set_title(title)
+        self.set_limits(x=x, y=y)
 
 
 if __name__ == "__main__":  # pragma: no cover
