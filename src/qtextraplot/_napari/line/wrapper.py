@@ -8,7 +8,7 @@ from contextlib import suppress
 import numpy as np
 from koyo.secret import get_short_hash
 from napari.utils.events import Event
-from napari_plot.layers import Centroids, InfLine, Line, Region, Scatter, Shapes
+from napari_plot.layers import Band, Bar, Centroids, ErrorBar, InfLine, Line, Region, Scatter, Text
 from napari_plot.layers.base import update_layer_attributes
 from napari_plot.viewer import ViewerModel as Viewer
 from qtpy.QtCore import QMutex
@@ -24,6 +24,7 @@ from qtextraplot.config import CANVAS
 MUTEX = QMutex()
 
 LINE_NAME, CENTROID_NAME, SCATTER_NAME, REGION_NAME = "Line", "Centroids", "Scatter", "Region"
+BAR_NAME, BAND_NAME, ERROR_BAR_NAME, TEXT_NAME = "Bar", "Band", "Error bars", "Text"
 EXTRACT_NAME = "Extract mask"
 
 
@@ -181,22 +182,155 @@ class NapariLineView(ViewerBase):
     def add_histogram(
         self,
         array: np.ndarray,
-        bins: int = 10,
+        bins: int | np.ndarray = 10,
         rel_width: float = 0.8,
         name: str = "Histogram",
         orientation: str = "vertical",
-        face_color: str = "red",
+        face_color: ty.Any = "red",
         reuse: bool = True,
         **kwargs: ty.Any,
-    ) -> Shapes:
-        """Add histogram using Shapes layer."""
-        from qtextraplot._napari.line.plotting import convert_hist_to_shapes
+    ) -> Bar:
+        """Add histogram of `array` using a Bar layer.
 
-        shapes = convert_hist_to_shapes(array, bins, orientation, rel_width)
-        layer = self.try_reuse(name, Shapes, reuse=reuse)
-        if layer:
-            self.remove_layer(layer)
-        return self.viewer.add_shapes(shapes, edge_width=0, name=name, face_color=face_color, **kwargs)
+        Parameters
+        ----------
+        array : np.ndarray
+            Values to bin.
+        bins : int or np.ndarray
+            Number of bins or explicit bin edges, as accepted by `np.histogram`.
+        rel_width : float
+            Bar width relative to the mean bin width.
+        name : str
+            Layer name.
+        orientation : str
+            Bars extend vertically (``"vertical"``) or horizontally (``"horizontal"``).
+        face_color : color
+            Bar fill color.
+        reuse : bool
+            Update an existing layer with the same name instead of creating a new one.
+        **kwargs
+            Extra attributes passed to the Bar layer.
+        """
+        counts, edges = np.histogram(np.asarray(array), bins=bins)
+        centers = (edges[:-1] + edges[1:]) / 2
+        width = rel_width * float(np.mean(np.diff(edges))) if len(edges) > 1 else rel_width
+        kwargs.setdefault("border_width", 0)
+        return self.add_bar(
+            centers,
+            counts,
+            name=name,
+            orientation=orientation,
+            width=width,
+            fill_color=face_color,
+            reuse=reuse,
+            **kwargs,
+        )
+
+    def add_bar(
+        self,
+        x: ty.Iterable | np.ndarray,
+        height: ty.Iterable | np.ndarray,
+        name: str = BAR_NAME,
+        orientation: str = "vertical",
+        width: float = 0.8,
+        fill_color: ty.Any = None,
+        reuse: bool = True,
+        **kwargs: ty.Any,
+    ) -> Bar:
+        """Add bars at positions `x` with values `height`.
+
+        For ``orientation="horizontal"``, `x` holds the y-axis positions and `height` the bar lengths.
+        """
+        if fill_color is None:
+            fill_color = as_array("line", CANVAS)
+        data = np.c_[np.asarray(x, dtype=float), np.asarray(height, dtype=float)]
+        attrs = {"data": data, "orientation": orientation, "width": width, "fill_color": fill_color, **kwargs}
+        return self._add_or_update(name, Bar, reuse, attrs, lambda: self.viewer.add_bar(name=name, **attrs))
+
+    def fill_between(
+        self,
+        x: ty.Iterable | np.ndarray,
+        y1: ty.Iterable | np.ndarray | float,
+        y2: ty.Iterable | np.ndarray | float = 0,
+        name: str = BAND_NAME,
+        fill_color: ty.Any = None,
+        reuse: bool = True,
+        **kwargs: ty.Any,
+    ) -> Band:
+        """Fill the area between `y1` and `y2` on a shared, monotonic `x` grid. NaN bounds leave gaps."""
+        if fill_color is None:
+            fill_color = as_array("line", CANVAS)
+        x = np.asarray(x, dtype=float)
+        bounds = [np.broadcast_to(np.asarray(bound, dtype=float), x.shape) for bound in (y1, y2)]
+        attrs = {"data": np.column_stack((x, *bounds)), "fill_color": fill_color, **kwargs}
+        return self._add_or_update(name, Band, reuse, attrs, lambda: self.viewer.add_band(name=name, **attrs))
+
+    def add_error_bar(
+        self,
+        x: ty.Iterable | np.ndarray,
+        y: ty.Iterable | np.ndarray,
+        xerr: ty.Iterable | np.ndarray | float | None = None,
+        yerr: ty.Iterable | np.ndarray | float | None = None,
+        name: str = ERROR_BAR_NAME,
+        color: ty.Any = None,
+        reuse: bool = True,
+        **kwargs: ty.Any,
+    ) -> ErrorBar:
+        """Add error bars around (`x`, `y`) points.
+
+        Errors can be a scalar, one value per point or a `(2, N)` array of lower and upper offsets.
+        """
+        if color is None:
+            color = as_array("line", CANVAS)
+        x = np.asarray(x, dtype=float)
+        count = len(x)
+        offsets = []
+        for error in (xerr, yerr):
+            values = np.asarray(np.nan if error is None else error, dtype=float)
+            offsets.append(np.broadcast_to(values, (2, count)).T)
+        data = np.column_stack((x, np.asarray(y, dtype=float), *offsets))
+        attrs = {"data": data, "color": color, **kwargs}
+        return self._add_or_update(name, ErrorBar, reuse, attrs, lambda: self.viewer.add_error_bar(name=name, **attrs))
+
+    def add_text(
+        self,
+        x: ty.Iterable | np.ndarray,
+        y: ty.Iterable | np.ndarray,
+        text: str | ty.Sequence[str],
+        name: str = TEXT_NAME,
+        color: ty.Any = None,
+        reuse: bool = True,
+        **kwargs: ty.Any,
+    ) -> Text:
+        """Add text labels at (`x`, `y`) data coordinates."""
+        if color is None:
+            color = as_array("axis", CANVAS)
+        data = np.c_[np.atleast_1d(np.asarray(x, dtype=float)), np.atleast_1d(np.asarray(y, dtype=float))]
+        attrs = {"data": data, "text": text, "color": color, **kwargs}
+        return self._add_or_update(name, Text, reuse, attrs, lambda: self.viewer.add_text(name=name, **attrs))
+
+    def _add_or_update(
+        self,
+        name: str,
+        layer_type: type,
+        reuse: bool,
+        attrs: dict[str, ty.Any],
+        create: ty.Callable[[], ty.Any],
+    ) -> ty.Any:
+        """Update an existing layer of `layer_type` with `attrs`, or create it if missing or incompatible."""
+        layer = self.try_reuse(name, layer_type, reuse=reuse)
+        if layer is not None:
+            try:
+                update_layer_attributes(layer, True, **attrs)
+                layer.visible = attrs.get("visible", True)
+            except (AttributeError, TypeError, ValueError):
+                self.remove_layer(layer)
+                layer = None
+        if layer is None:
+            # a layer with the same name but different type (e.g. legacy Shapes histogram) would clash
+            self.remove_layer(name, silent=True)
+            layer = create()
+        return layer
 
     def add_scatter(
         self,
@@ -243,7 +377,7 @@ class NapariLineView(ViewerBase):
         if layer:
             update_layer_attributes(layer, False, data=[position], color=color, **kwargs)
         else:
-            layer = self.viewer.add_inf_line([position], name=name, color=color, orientation=orientation)
+            layer = self.viewer.add_inf_line([position], name=name, color=color, orientation=orientation, **kwargs)
         return layer
 
     def add_centroids(

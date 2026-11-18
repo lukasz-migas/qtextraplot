@@ -177,3 +177,73 @@ def test_line_view_close_removes_instance(qtbot, _mock_opengl_capabilities) -> N
     assert view in NapariLineView._instances
     view.close()
     assert view not in NapariLineView._instances
+
+
+def test_line_view_histogram_uses_bar_centers(qtbot, _mock_opengl_capabilities) -> None:
+    """Histogram bars should be centered on bins and reuse the same Bar layer."""
+    from napari_plot.layers import Bar
+
+    view = NapariLineView(None)
+    qtbot.addWidget(view.widget)
+
+    values = np.array([0.0, 0.5, 1.5, 2.5, 3.5, 3.9])
+    layer = view.add_histogram(values, bins=4, rel_width=0.5)
+    counts, edges = np.histogram(values, bins=4)
+
+    assert isinstance(layer, Bar)
+    np.testing.assert_allclose(layer.data[:, 0], (edges[:-1] + edges[1:]) / 2)
+    np.testing.assert_allclose(layer.data[:, 1], counts)
+    assert layer.width == pytest.approx(0.5 * np.diff(edges).mean())
+
+    updated = view.add_histogram(values, bins=2)
+    assert updated is layer
+    assert len(layer.data) == 2
+
+
+def test_line_view_new_layer_helpers_reuse_layers(qtbot, _mock_opengl_capabilities) -> None:
+    """Bar, Band, ErrorBar and Text helpers should create once and update on reuse."""
+    from napari_plot.layers import Band, Bar, ErrorBar, Text
+
+    view = NapariLineView(None)
+    qtbot.addWidget(view.widget)
+    x = np.arange(5, dtype=float)
+
+    bar = view.add_bar(x, x * 2, name="bars", orientation="horizontal", width=0.5)
+    assert isinstance(bar, Bar)
+    assert bar.orientation == "horizontal"
+    assert view.add_bar(x[:3], x[:3], name="bars") is bar
+    assert len(bar.data) == 3
+
+    band = view.fill_between(x, x - 1, x + 1, name="band", opacity=0.5)
+    assert isinstance(band, Band)
+    assert band.opacity == pytest.approx(0.5)
+    np.testing.assert_allclose(band.data[:, 1:], np.c_[x - 1, x + 1])
+    assert view.fill_between(x, 1.0, name="band") is band
+    np.testing.assert_allclose(band.data[:, 1:], np.c_[np.ones(5), np.zeros(5)])
+
+    errors = view.add_error_bar(x, x, yerr=0.5, name="errors")
+    assert isinstance(errors, ErrorBar)
+    np.testing.assert_allclose(errors.data[:, 4:], 0.5)
+    assert np.isnan(errors.data[:, 2:4]).all()
+    assert view.add_error_bar(x, x, xerr=[np.zeros(5), np.ones(5)], name="errors") is errors
+    np.testing.assert_allclose(errors.data[:, 3], 1.0)
+
+    text = view.add_text([1.0, 2.0], [3.0, 4.0], ["a", "b"], name="labels")
+    assert isinstance(text, Text)
+    assert list(text.text) == ["a", "b"]
+    assert view.add_text(1.0, 1.0, "c", name="labels") is text
+    assert list(text.text) == ["c"]
+
+
+def test_line_view_replaces_layer_of_other_type_with_same_name(qtbot, _mock_opengl_capabilities) -> None:
+    """A legacy layer sharing the requested name should be replaced, not duplicated."""
+    from napari_plot.layers import Bar
+
+    view = NapariLineView(None)
+    qtbot.addWidget(view.widget)
+    view.plot(np.arange(3), np.arange(3), name="Histogram")
+
+    layer = view.add_histogram(np.arange(10), bins=3)
+
+    assert isinstance(layer, Bar)
+    assert [lyr.name for lyr in view.viewer.layers] == ["Histogram"]
