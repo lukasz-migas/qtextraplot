@@ -247,3 +247,39 @@ def test_line_view_replaces_layer_of_other_type_with_same_name(qtbot, _mock_open
 
     assert isinstance(layer, Bar)
     assert [lyr.name for lyr in view.viewer.layers] == ["Histogram"]
+
+
+def test_line_view_shape_helpers_reuse_layers(qtbot, _mock_opengl_capabilities) -> None:
+    """Rectangles, Vectors, MultiLine and Areas helpers should create once and update on reuse."""
+    from napari_plot.layers import Areas, MultiLine, Rectangles, Vectors
+
+    view = NapariLineView(None)
+    qtbot.addWidget(view.widget)
+
+    rects = view.add_rectangles([1.0, 2.0], [3.0, 4.0], height=2.0, width=[0.5, 1.0], name="rects")
+    assert isinstance(rects, Rectangles)
+    np.testing.assert_allclose(rects.data, [[1.0, 3.0, 2.0, 0.5], [2.0, 4.0, 2.0, 1.0]])
+    assert view.add_rectangles([5.0], [6.0], 1.0, 1.0, name="rects") is rects
+    np.testing.assert_allclose(rects.data, [[5.0, 6.0, 1.0, 1.0]])
+
+    vectors = view.add_vectors([0.0, 1.0], [2.0, 3.0], dx=1.0, dy=[0.5, -0.5], name="arrows", vector_style="line")
+    assert isinstance(vectors, Vectors)
+    # napari stores (row, col) = (y, x) for both start and projection
+    np.testing.assert_allclose(vectors.data[:, 0], [[2.0, 0.0], [3.0, 1.0]])
+    np.testing.assert_allclose(vectors.data[:, 1], [[0.5, 1.0], [-0.5, 1.0]])
+    assert view.add_vectors([0.0], [0.0], 1.0, 1.0, name="arrows") is vectors
+    assert len(vectors.data) == 1
+
+    x = np.arange(5, dtype=float)
+    multi = view.add_multi_line(x, [x, x * 2, x * 3], name="multi", color=["red", "green", "blue"])
+    assert isinstance(multi, MultiLine)
+    assert len(multi.data["ys"]) == 3
+    assert view.add_multi_line(x, [x], name="multi") is multi
+    assert len(multi.data["ys"]) == 1
+
+    area = np.c_[x, x - 1, x + 1]
+    areas = view.add_areas([area, area + 10], name="areas", fill_color=["red", "blue"])
+    assert isinstance(areas, Areas)
+    assert len(areas.data) == 2
+    assert view.add_areas([area], name="areas") is areas
+    assert len(areas.data) == 1

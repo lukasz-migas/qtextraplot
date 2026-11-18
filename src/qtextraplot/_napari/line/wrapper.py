@@ -7,8 +7,23 @@ from contextlib import suppress
 
 import numpy as np
 from koyo.secret import get_short_hash
+from napari.utils.colormaps.standardize_color import transform_color
 from napari.utils.events import Event
-from napari_plot.layers import Band, Bar, Centroids, ErrorBar, InfLine, Line, Region, Scatter, Text
+from napari_plot.layers import (
+    Areas,
+    Band,
+    Bar,
+    Centroids,
+    ErrorBar,
+    InfLine,
+    Line,
+    MultiLine,
+    Rectangles,
+    Region,
+    Scatter,
+    Text,
+    Vectors,
+)
 from napari_plot.layers.base import update_layer_attributes
 from napari_plot.viewer import ViewerModel as Viewer
 from qtpy.QtCore import QMutex
@@ -25,6 +40,7 @@ MUTEX = QMutex()
 
 LINE_NAME, CENTROID_NAME, SCATTER_NAME, REGION_NAME = "Line", "Centroids", "Scatter", "Region"
 BAR_NAME, BAND_NAME, ERROR_BAR_NAME, TEXT_NAME = "Bar", "Band", "Error bars", "Text"
+RECTANGLES_NAME, VECTORS_NAME, MULTI_LINE_NAME, AREAS_NAME = "Rectangles", "Vectors", "MultiLine", "Areas"
 EXTRACT_NAME = "Extract mask"
 
 
@@ -265,6 +281,26 @@ class NapariLineView(ViewerBase):
         attrs = {"data": np.column_stack((x, *bounds)), "fill_color": fill_color, **kwargs}
         return self._add_or_update(name, Band, reuse, attrs, lambda: self.viewer.add_band(name=name, **attrs))
 
+    def add_areas(
+        self,
+        areas: ty.Sequence[np.ndarray],
+        name: str = AREAS_NAME,
+        orientation: str = "vertical",
+        fill_color: ty.Any = None,
+        reuse: bool = True,
+        **kwargs: ty.Any,
+    ) -> Areas:
+        """Fill many regions in one layer, each given as an `(N, 3)` array of `(t, lo, hi)` rows.
+
+        With ``orientation="vertical"`` `t` is x and `lo`/`hi` are y values; ``"horizontal"`` swaps them.
+        `fill_color` is one color or one per area.
+        """
+        if fill_color is None:
+            fill_color = as_array("line", CANVAS)
+        data = [np.asarray(area, dtype=float) for area in areas]
+        attrs = {"data": data, "orientation": orientation, "fill_color": fill_color, **kwargs}
+        return self._add_or_update(name, Areas, reuse, attrs, lambda: self.viewer.add_areas(name=name, **attrs))
+
     def add_error_bar(
         self,
         x: ty.Iterable | np.ndarray,
@@ -308,6 +344,106 @@ class NapariLineView(ViewerBase):
         data = np.c_[np.atleast_1d(np.asarray(x, dtype=float)), np.atleast_1d(np.asarray(y, dtype=float))]
         attrs = {"data": data, "text": text, "color": color, **kwargs}
         return self._add_or_update(name, Text, reuse, attrs, lambda: self.viewer.add_text(name=name, **attrs))
+
+    def add_rectangles(
+        self,
+        x: ty.Iterable | np.ndarray,
+        y: ty.Iterable | np.ndarray,
+        height: ty.Iterable | np.ndarray | float,
+        width: ty.Iterable | np.ndarray | float,
+        name: str = RECTANGLES_NAME,
+        color: ty.Any = None,
+        reuse: bool = True,
+        **kwargs: ty.Any,
+    ) -> Rectangles:
+        """Add rectangle outlines centered on (`x`, `y`) with `height` and `width` in data units.
+
+        Extra keyword arguments (e.g. ``text``, ``show_markers``, ``marker_color``) are passed to the layer.
+        """
+        if color is None:
+            color = as_array("line", CANVAS)
+        x = np.atleast_1d(np.asarray(x, dtype=float))
+        count = len(x)
+        data = np.c_[
+            x,
+            np.atleast_1d(np.asarray(y, dtype=float)),
+            np.broadcast_to(np.asarray(height, dtype=float), (count,)),
+            np.broadcast_to(np.asarray(width, dtype=float), (count,)),
+        ]
+        attrs = {"data": data, "outline_color": color, **kwargs}
+
+        def _create() -> Rectangles:
+            create_attrs = dict(attrs)
+            return self.viewer.add_rectangles(create_attrs.pop("data"), name=name, **create_attrs)
+
+        return self._add_or_update(name, Rectangles, reuse, attrs, _create)
+
+    def add_vectors(
+        self,
+        x: ty.Iterable | np.ndarray,
+        y: ty.Iterable | np.ndarray,
+        dx: ty.Iterable | np.ndarray | float,
+        dy: ty.Iterable | np.ndarray | float,
+        name: str = VECTORS_NAME,
+        color: ty.Any = None,
+        width: float = 1.0,
+        vector_style: str = "arrow",
+        reuse: bool = True,
+        **kwargs: ty.Any,
+    ) -> Vectors:
+        """Add arrows starting at (`x`, `y`) with components (`dx`, `dy`), similar to `matplotlib.quiver`.
+
+        Use ``vector_style="line"`` to draw plain segments (e.g. graph edges) efficiently.
+        """
+        if color is None:
+            color = as_array("line", CANVAS)
+        x = np.atleast_1d(np.asarray(x, dtype=float))
+        count = len(x)
+        start = np.c_[np.atleast_1d(np.asarray(y, dtype=float)), x]  # napari layers use (row, col) = (y, x)
+        delta = np.c_[
+            np.broadcast_to(np.asarray(dy, dtype=float), (count,)),
+            np.broadcast_to(np.asarray(dx, dtype=float), (count,)),
+        ]
+        attrs = {
+            "data": np.stack((start, delta), axis=1),
+            "edge_color": color,
+            "edge_width": width,
+            "vector_style": vector_style,
+            **kwargs,
+        }
+        return self._add_or_update(name, Vectors, reuse, attrs, lambda: self.viewer.add_vectors(name=name, **attrs))
+
+    def add_multi_line(
+        self,
+        xs: ty.Sequence[np.ndarray] | np.ndarray,
+        ys: ty.Sequence[np.ndarray],
+        name: str = MULTI_LINE_NAME,
+        color: ty.Any = None,
+        reuse: bool = True,
+        **kwargs: ty.Any,
+    ) -> MultiLine:
+        """Add many lines in a single layer.
+
+        `xs` is either one shared x-array or one x-array per line in `ys`. `color` is one color or one per line.
+        """
+        if color is None:
+            color = as_array("line", CANVAS)
+        ys = [np.asarray(y, dtype=float) for y in ys]
+        if isinstance(xs, np.ndarray) and xs.ndim == 1:
+            xs = [xs] * len(ys)
+        data = {"xs": [np.asarray(x, dtype=float) for x in xs], "ys": ys}
+        # the layer's color setter requires one RGBA row per line
+        colors = transform_color(color)
+        if len(colors) == 1:
+            colors = np.broadcast_to(colors, (len(ys), 4)).copy()
+        attrs = {"data": data, "color": colors, **kwargs}
+        return self._add_or_update(
+            name,
+            MultiLine,
+            reuse,
+            attrs,
+            lambda: self.viewer.add_multi_line(name=name, **attrs),
+        )
 
     def _add_or_update(
         self,
