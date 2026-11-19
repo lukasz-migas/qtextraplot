@@ -8,11 +8,15 @@ import pytest
 napari = pytest.importorskip("napari", reason="napari is not installed")
 pytest.importorskip("napari_plot", reason="napari-plot is not installed")
 
+from app_model.backends.qt import QModelMenu  # noqa: E402
 from napari._app_model import get_app_model  # noqa: E402
 from napari._app_model.constants import MenuId  # noqa: E402
 from napari._app_model.context import get_context  # noqa: E402
 from napari._qt._qapp_model import build_qmodel_menu  # noqa: E402
+from napari._qt.containers.qt_layer_model import LockedRole  # noqa: E402
+from napari.components import LayerList  # noqa: E402
 from napari_plot.viewer import ViewerModel  # noqa: E402
+from pytestqt.qtbot import QtBot  # noqa: E402
 from qtpy.QtCore import QPoint, Qt  # noqa: E402
 from qtpy.QtWidgets import QWidget  # noqa: E402
 
@@ -89,6 +93,39 @@ def test_line_layer_context_menu_uses_napari_context_keys(qtbot, _mock_opengl_ca
 
     assert len(view.viewer.layers) == 2
     assert type(view.viewer.layers[1]) is type(view.viewer.layers[0])
+
+
+def test_line_layer_context_menu_toggles_lock_on_clicked_view(
+    qtbot: QtBot,
+    _mock_opengl_capabilities: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Route the native lock action to the embedded list even with another viewer current."""
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    plot = NapariLineView(parent, add_toolbars=False, connect_theme=False)
+    qtbot.addWidget(plot.widget)
+    plot_layer = plot.viewer.add_line([[0, 0], [1, 1]])
+    other = NapariLineView(parent, add_toolbars=False, connect_theme=False)
+    qtbot.addWidget(other.widget)
+    other_layer = other.viewer.add_line([[2, 2], [3, 3]])
+    active_layers = get_app_model().injection_store.provide(LayerList)
+    assert getattr(active_layers, "__wrapped__", active_layers) is other.viewer.layers
+
+    def toggle_lock(menu: QModelMenu, _position: QPoint) -> None:
+        action = next(action for action in menu.actions() if action.objectName() == "napari.layer.toggle_lock")
+        assert action.isEnabled()
+        action.trigger()
+
+    monkeypatch.setattr(QModelMenu, "exec", toggle_lock)
+    layer_list = plot.widget.layers
+    model = layer_list.model()
+    index = model.index(0, 0)
+    for locked in (True, False):
+        layer_list.itemDelegate().show_context_menu(index, model, QPoint(), layer_list)
+        assert bool(plot_layer.locked) is locked
+        assert bool(index.data(LockedRole)) is locked
+        assert not other_layer.locked
 
 
 @pytest.mark.xfail(reason="flaky")
