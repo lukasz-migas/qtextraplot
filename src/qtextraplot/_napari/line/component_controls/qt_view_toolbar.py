@@ -134,7 +134,7 @@ class QtViewRightToolbar(QtMiniToolbar):
             func=self._open_tools_menu,
         )
         self.tools_grid_btn = self.add_qta_tool(
-            "grid",
+            "coordinate_grid",
             tooltip="Show/hide grid",
             checkable=True,
             check=viewer.grid_lines.visible,

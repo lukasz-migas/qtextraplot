@@ -8,13 +8,13 @@ from contextlib import suppress
 import numpy as np
 import qtextra.helpers as hp
 from napari._qt._qapp_model.qactions import init_qactions as init_napari_qactions
-from napari._qt.containers.qt_layer_list import QtLayerList
 from napari._qt.qt_main_window import _QtMainWindow as _NapariQtMainWindow
 from napari._qt.widgets.qt_dims import QtDims
 from napari._vispy.utils.qt_font import QtFontManager
 from napari.utils.key_bindings import KeymapHandler
 from napari_plot._qt._qapp_model import init_qactions as init_napari_plot_qactions
 from napari_plot._qt._qapp_model import reset_default_keymap
+from napari_plot._qt.qt_layer_list import QtLayerList
 from napari_plot._qt.qt_main_window import Window, _QtMainWindow
 from napari_plot._qt.qt_viewer import QtViewer as _QtViewer
 from napari_plot._vispy.overlays import register_vispy_overlays as register_napari_plot_vispy_overlays
