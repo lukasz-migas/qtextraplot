@@ -434,3 +434,67 @@ def test_line_view_legend_helpers(qtbot, _mock_opengl_capabilities) -> None:
     view.plot(np.arange(3), np.arange(3), name="Series")
     view.set_legend_from_layers()
     assert [entry.label for entry in view.viewer.legend.entries] == ["Series"]
+
+
+def test_line_view_point_picking(qtbot, _mock_opengl_capabilities, monkeypatch) -> None:
+    """Hover, click and double-click report the nearest visible scatter point within the pixel tolerance."""
+    import qtextraplot._napari.line.picking as picking_module
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = NapariLineView(parent, add_toolbars=False, connect_theme=False)
+    qtbot.addWidget(view.widget)
+    first = view.add_scatter([1.0, 5.0], [1.0, 5.0], name="first")
+    second = view.add_scatter([9.0], [9.0], name="second")
+    view.viewer.camera.rect = (0.0, 10.0, 0.0, 10.0)
+    height, width = view.widget.canvas.size
+    shown: list[str] = []
+    monkeypatch.setattr(picking_module.QToolTip, "showText", lambda _pos, text, _widget: shown.append(text))
+    clicked: list[tuple[str, int]] = []
+    activated: list[tuple[str, int]] = []
+
+    picker = view.connect_point_picking(
+        ["first", second],
+        on_hover=lambda layer, index: f"{layer.name}:{index}",
+        on_click=lambda layer, index: clicked.append((layer.name, index)),
+        on_double_click=lambda layer, index: activated.append((layer.name, index)),
+        max_px=6,
+    )
+    near = 3.0 * 10.0 / max(width, height)  # data distance of ~3 pixels
+
+    assert picker.pick(5.0 + near, 5.0) == (first, 1)
+    assert picker.pick(9.0, 9.0 - near) == (second, 0)
+    assert picker.pick(3.0, 3.0) is None
+    second.visible = False
+    assert picker.pick(9.0, 9.0) is None
+    second.visible = True
+
+    picker._on_move(None, _FakeMouseEvent((0, 0), (1.0, 1.0)))  # position is (y, x)
+    assert shown == ["first:0"]
+
+    _run_drag_callback(picker._click_callback, _FakeMouseEvent((10, 10), (5.0, 5.0)), [])
+    assert clicked == [("first", 1)]
+
+    picker._on_double_click(None, _FakeMouseEvent((0, 0), (9.0, 9.0)))
+    assert activated == [("second", 0)]
+
+    picker.disconnect()
+    assert picker._on_move not in view.viewer.mouse_move_callbacks
+    assert picker._on_double_click not in view.viewer.mouse_double_click_callbacks
+    assert not any(callback is picker._click_callback for callback in view.viewer.mouse_drag_callbacks)
+
+
+def test_nearest_point_handles_log_axes(qtbot, _mock_opengl_capabilities) -> None:
+    """Distances are measured on the displayed (logarithmic) axis."""
+    from qtextraplot._napari.line.picking import nearest_point
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    view = NapariLineView(parent, add_toolbars=False, connect_theme=False)
+    qtbot.addWidget(view.widget)
+    layer = view.add_scatter([1.0, 2.0], [10.0, 1000.0], name="points")
+    view.viewer.axis.y_scale = "log"
+    view.viewer.camera.rect = (0.0, 3.0, 1.0, 10000.0)
+
+    assert nearest_point(view, [layer], 2.0, 900.0) == (layer, 1)
+    assert nearest_point(view, [layer], 2.0, 100.0) is None

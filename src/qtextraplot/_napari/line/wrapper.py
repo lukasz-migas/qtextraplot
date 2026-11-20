@@ -39,6 +39,8 @@ from qtextraplot.config import CANVAS
 if ty.TYPE_CHECKING:
     from napari_plot.layers import Areas
 
+    from qtextraplot._napari.line.picking import PointPicker
+
 MUTEX = QMutex()
 
 LINE_NAME, CENTROID_NAME, SCATTER_NAME, REGION_NAME = "Line", "Centroids", "Scatter", "Region"
@@ -157,6 +159,25 @@ class NapariLineView(ViewerBase):
 
         self.viewer.mouse_drag_callbacks.append(_on_click)
         return _on_click
+
+    def connect_point_picking(
+        self,
+        layers: ty.Sequence[Scatter | str],
+        on_hover: ty.Callable[[Scatter, int], str | None] | None = None,
+        on_click: ty.Callable[[Scatter, int], None] | None = None,
+        on_double_click: ty.Callable[[Scatter, int], None] | None = None,
+        max_px: float = 8.0,
+    ) -> PointPicker:
+        """Call back with `(layer, index)` of the scatter point under the cursor.
+
+        `on_hover` returns the tooltip text for a point (or None for no tooltip); `on_click` and `on_double_click`
+        are called for clicks without dragging on a point. Points count when they are within `max_px` screen pixels
+        of the cursor. Call `disconnect` on the returned picker to stop; `picker.layers` can be updated when the plot
+        is redrawn.
+        """
+        from qtextraplot._napari.line.picking import PointPicker
+
+        return PointPicker(self, layers, on_hover, on_click, on_double_click, max_px)
 
     def disconnect_click(self, callback: ty.Callable) -> None:
         """Remove callback added by `connect_click`."""
