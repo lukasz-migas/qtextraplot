@@ -65,12 +65,32 @@ class CanvasThemes(ConfigBase):
         self.themes = {}
         self._theme = "light"
         self._integrate_canvas: bool = False
+        self._sync_with_theme: bool = False
 
         self.add_theme("dark", CanvasTheme(**DARK_THEME))
         self.add_theme("light", CanvasTheme(**LIGHT_THEME))
 
         for theme in self.themes.values():
             theme.events.connect(self._on_theme_model_changed)
+        THEMES.evt_theme_changed.connect(self._on_app_theme_changed)
+
+    @property
+    def sync_with_theme(self) -> bool:
+        """Automatically switch between the dark and light canvas themes to match the application theme."""
+        return self._sync_with_theme
+
+    @sync_with_theme.setter
+    def sync_with_theme(self, value: bool) -> None:
+        self._sync_with_theme = value
+        if value:
+            self._on_app_theme_changed()
+
+    def _on_app_theme_changed(self) -> None:
+        """Follow the application theme and refresh the integrated canvas background."""
+        if self._sync_with_theme:
+            self.theme = "dark" if THEMES.is_dark else "light"
+        if self._integrate_canvas:
+            self.integrate_canvas = True
 
     @property
     def integrate_canvas(self):

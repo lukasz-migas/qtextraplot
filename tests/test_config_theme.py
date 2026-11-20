@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
+from pydantic_extra_types.color import Color
+from qtextra.config import THEMES
 
 from qtextraplot.config.theme import CANVAS, DARK_THEME, LIGHT_THEME, CanvasTheme, CanvasThemes
 
@@ -85,3 +88,49 @@ class TestGlobalCanvas:
 
     def test_canvas_has_active(self):
         assert CANVAS.active is not None
+
+
+class TestCanvasSyncWithTheme:
+    """Canvas themes following the application theme."""
+
+    @pytest.fixture(autouse=True)
+    def _restore_app_theme(self):
+        original = THEMES.theme
+        yield
+        THEMES.theme = original
+
+    def test_sync_disabled_by_default(self):
+        assert CanvasThemes().sync_with_theme is False
+
+    def test_follows_app_theme_when_synced(self):
+        THEMES.theme = "light"
+        themes = CanvasThemes()
+        themes.sync_with_theme = True
+        assert themes.theme == "light"
+
+        THEMES.theme = "dark"
+        assert themes.theme == "dark"
+        THEMES.theme = "light"
+        assert themes.theme == "light"
+
+    def test_enabling_sync_applies_immediately(self):
+        THEMES.theme = "dark"
+        themes = CanvasThemes()
+        assert themes.theme == "light"
+        themes.sync_with_theme = True
+        assert themes.theme == "dark"
+
+    def test_ignores_app_theme_when_not_synced(self):
+        THEMES.theme = "light"
+        themes = CanvasThemes()
+        THEMES.theme = "dark"
+        assert themes.theme == "light"
+
+    def test_integrated_canvas_refreshes_on_app_theme_change(self):
+        THEMES.theme = "light"
+        themes = CanvasThemes()
+        themes.integrate_canvas = True
+        assert themes.as_hex("canvas") == Color(THEMES.active.background).as_hex()
+
+        THEMES.theme = "dark"
+        assert themes.as_hex("canvas") == Color(THEMES.active.background).as_hex()
